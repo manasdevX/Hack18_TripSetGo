@@ -13,7 +13,9 @@ class GroupMemberBase(BaseModel):
 
 
 class GroupMemberCreate(GroupMemberBase):
-    pass
+    # Optional: if provided by the frontend after verify/{email}, the backend
+    # will use this directly instead of doing a second DB lookup by email.
+    user_id: Optional[UUID] = None
 
 
 class GroupMemberResponse(GroupMemberBase):

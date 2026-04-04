@@ -192,7 +192,7 @@
 /******/ 	
 /******/ 	/* webpack/runtime/getFullHash */
 /******/ 	!function() {
-/******/ 		__webpack_require__.h = function() { return "8bc906db21ec1648"; }
+/******/ 		__webpack_require__.h = function() { return "84d9b80f21665fc1"; }
 /******/ 	}();
 /******/ 	
 /******/ 	/* webpack/runtime/global */
@@ -843,7 +843,7 @@
 /******/ 					if(installedChunkData) {
 /******/ 						promises.push(installedChunkData[2]);
 /******/ 					} else {
-/******/ 						if(/^(app(\/(dashboard\/((|subscription\/)page|layout)|(|login\/|signup\/)page|layout)|\-pages\-internals)|main\-app)$/.test(chunkId)) {
+/******/ 						if(!/^(css\-(node_modules_next_font_google_target_css\-node_modules_next_font_google_target|src_app_globals)_css|webpack)$/.test(chunkId)) {
 /******/ 							// setup Promise in chunk cache
 /******/ 							var promise = new Promise(function(resolve, reject) { installedChunkData = installedChunks[chunkId] = [resolve, reject]; });
 /******/ 							promises.push(installedChunkData[2] = promise);
