@@ -67,9 +67,8 @@ app.include_router(payment_router, prefix="/api/v1/payments", tags=["Payments"])
 # Subscription Router: Full Razorpay subscription system
 app.include_router(subscription_router, prefix="/api/v1/subscription", tags=["Subscription"])
 
-# Trips Router: delegates trip planning to Orchestrator multi-agent pipeline
-# TODO: Implement trips router when orchestrator integration is ready
-# app.include_router(trips_router, prefix="/api/v1/trips", tags=["Trips"])
+# Trips Router: Deterministic planning engine (replaces LLM orchestrator)
+app.include_router(trips_router, prefix="/api/v1/trips", tags=["Trip Planning"])
 
 # Discover Router: Social travel feed, likes, saves, comments, clone
 app.include_router(discover_router, prefix="/api/v1", tags=["Discover"])

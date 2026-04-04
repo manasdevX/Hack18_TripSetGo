@@ -105,7 +105,7 @@ async def discover_feed(
     group_type: Optional[str] = None,
     duration_min: Optional[int] = None,
     duration_max: Optional[int] = None,
-    sort: Optional[str] = Query("trending", regex="^(trending|newest|popular|budget)$"),
+    sort: Optional[str] = Query("trending", pattern="^(trending|newest|popular|budget)$"),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):

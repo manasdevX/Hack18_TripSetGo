@@ -21,13 +21,9 @@ services:
     ports:
       - "8000:8000"
     env_file: ./backend/.env
-    
-    environment:
-      - ORCHESTRATOR_URL=http://orchestrator:8004
     depends_on:
       - postgres
       - redis
-      - orchestrator
 
   intent-agent:
     build:
