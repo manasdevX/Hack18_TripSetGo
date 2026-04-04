@@ -1,12 +1,14 @@
 import { create } from "zustand";
 import api from "../lib/api";
 
-export const useTripStore = create((set) => ({
+export const useTripStore = create((set, get) => ({
   tripData: null,
   isLoading: false,
   error: null,
+  trips: [],            // all trips list
+  tripsLoaded: false,
 
-  // Convert orchestrator response into the shape Dashboard currently renders.
+  // Convert deterministic engine response into the shape Dashboard renders.
   _mapOrchestratorToDashboardTrip: (orchestratorResponse, searchParams) => {
     const status = orchestratorResponse?.status;
     const data = orchestratorResponse?.data;
@@ -20,7 +22,6 @@ export const useTripStore = create((set) => ({
     const tempMatch = weatherSummary.match(/(-?\d+)\s*°?\s*C/i);
     const tempC = tempMatch ? `${parseInt(tempMatch[1], 10)}°C` : null;
 
-    // "Sunny and pleasant, highs around 22°C." -> "Sunny and pleasant"
     const condition = weatherSummary
       ? weatherSummary.split(",")[0].trim().replace(/highs around\s*/i, "").trim()
       : "Sunny";
@@ -31,7 +32,6 @@ export const useTripStore = create((set) => ({
         ? `${Math.floor(durationMinutes / 60)}h ${durationMinutes % 60}m`
         : "—";
 
-    // We don't have distance_km in current TransportOption schema; use route endpoints instead.
     const distanceText =
       transport0?.departure && transport0?.arrival
         ? `${transport0.departure} → ${transport0.arrival}`
@@ -115,26 +115,24 @@ export const useTripStore = create((set) => ({
     };
   },
 
-  // Action to update the store when the form is submitted
+  // Generate a new trip via planning engine
   generateTrip: async (searchParams) => {
     set({ isLoading: true, error: null, tripData: null });
 
     try {
       const payload = {
-        source: searchParams.origin,
+        source: searchParams.source || searchParams.origin,
         destination: searchParams.destination,
-        start_date: searchParams.startDate,
-        return_date: searchParams.endDate,
+        start_date: searchParams.startDate || searchParams.start_date,
+        end_date: searchParams.endDate || searchParams.end_date,
         budget: Number(searchParams.budget),
-        num_travelers: Number(searchParams.travellers) || 1,
+        num_travelers: Number(searchParams.travelers || searchParams.travellers) || 1,
+        group_type: searchParams.groupType || searchParams.group_type || "friends",
         preferences: searchParams.preferences || null,
-        use_cache: true,
-        use_api: true,
-        use_web_fallback: true,
       };
 
       const response = await api.post("/trips", payload);
-      const mapped = useTripStore.getState()._mapOrchestratorToDashboardTrip(
+      const mapped = get()._mapOrchestratorToDashboardTrip(
         response.data,
         searchParams
       );
@@ -152,6 +150,44 @@ export const useTripStore = create((set) => ({
         isLoading: false,
         error: err?.response?.data?.detail || err?.message || "Failed to generate trip. Please try again.",
       });
+    }
+  },
+
+  // Fetch all saved trips for the current user
+  fetchMyTrips: async () => {
+    try {
+      const res = await api.get("/trips/my");
+      const trips = Array.isArray(res.data) ? res.data : (res.data?.trips || []);
+      set({ trips, tripsLoaded: true });
+      return trips;
+    } catch (err) {
+      console.error("[tripStore] fetchMyTrips failed:", err);
+      set({ trips: [], tripsLoaded: true });
+      return [];
+    }
+  },
+
+  // Load a saved trip into the active viewer
+  loadTrip: (trip) => {
+    // If the trip has raw trip_data from the API, map it; otherwise use as-is
+    const tripDataToLoad = trip.trip_data_mapped || trip;
+    set({ tripData: tripDataToLoad, error: null });
+  },
+
+  // Activate a planned trip (change status to active)
+  activateTrip: async (tripId) => {
+    try {
+      await api.patch(`/trips/${tripId}/activate`);
+      // Update trips list locally
+      set((state) => ({
+        trips: state.trips.map((t) =>
+          t.id === tripId ? { ...t, status: "active" } : t
+        ),
+      }));
+      return true;
+    } catch (err) {
+      console.error("[tripStore] activateTrip failed:", err);
+      return false;
     }
   },
 

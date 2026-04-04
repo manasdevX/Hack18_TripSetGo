@@ -484,8 +484,8 @@ export default function ExpensesPage() {
       {/* HEADER SECTION */}
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-12 gap-6">
         <div>
-          <h1 className="text-6xl font-black text-slate-900 tracking-tighter lowercase">SplitCosts<span className="text-indigo-600">.</span></h1>
-          <p className="text-slate-400 font-bold mt-2 tracking-tight">Precision financial tracking for travel groups.</p>
+          <h1 className="text-6xl font-black text-main-pure tracking-tighter lowercase">SplitCosts<span className="text-[var(--accent-primary)]">.</span></h1>
+          <p className="text-muted-pure font-bold mt-2 tracking-tight">Precision financial tracking for travel groups.</p>
         </div>
         <div className="flex flex-wrap gap-3">
           <button onClick={() => setShowAddGroupModal(true)} disabled={isSubmitting} className="flex items-center gap-2 px-6 py-4 bg-slate-900 text-white rounded-2xl font-black shadow-xl hover:bg-slate-800 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
@@ -515,23 +515,23 @@ export default function ExpensesPage() {
       {/* GROUP NAVIGATOR */}
       <div className="flex gap-4 mb-10 overflow-x-auto pb-4 no-scrollbar">
         {groups.length > 0 ? groups.map(g => (
-          <button key={g.id} onClick={() => setSelectedGroup(g.id)} className={`px-8 py-4 rounded-2xl font-black transition-all whitespace-nowrap ${selectedGroup === g.id ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200 scale-105' : 'bg-white text-slate-400 border border-slate-100 hover:bg-slate-50'}`}>
+          <button key={g.id} onClick={() => setSelectedGroup(g.id)} className={`px-8 py-4 rounded-2xl font-black transition-all whitespace-nowrap ${selectedGroup === g.id ? 'bg-[var(--accent-primary)] text-white shadow-lg scale-105' : 'card-pure text-muted-pure border border-pure hover:bg-secondary-pure'}`}>
             {g.name}
           </button>
         )) : (
-            <div className="w-full p-8 bg-white border-2 border-dashed border-slate-100 rounded-[32px] text-center">
-                <Users size={32} className="mx-auto text-slate-200 mb-2" />
-                <p className="text-slate-300 font-black uppercase tracking-widest text-[10px]">Create your first group to begin</p>
+            <div className="w-full p-8 card-pure border-2 border-dashed border-pure rounded-[32px] text-center">
+                <Users size={32} className="mx-auto text-muted-pure mb-2 opacity-30" />
+                <p className="text-muted-pure font-black uppercase tracking-widest text-[10px]">Create your first group to begin</p>
             </div>
         )}
       </div>
 
       {/* TABS */}
-      <div className="flex gap-10 border-b border-slate-100 mb-10 overflow-x-auto no-scrollbar">
+      <div className="flex gap-10 border-b border-pure mb-10 overflow-x-auto no-scrollbar">
         {['overview', 'expenses', 'settlements', 'members'].map(t => (
-          <button key={t} onClick={() => setActiveTab(t)} className={`pb-6 text-xs font-black uppercase tracking-[0.2em] transition-all relative ${activeTab === t ? 'text-indigo-600' : 'text-slate-400'}`}>
+          <button key={t} onClick={() => setActiveTab(t)} className={`pb-6 text-xs font-black uppercase tracking-[0.2em] transition-all relative ${activeTab === t ? 'text-[var(--accent-primary)]' : 'text-muted-pure'}`}>
             {t}
-            {activeTab === t && <div className="absolute bottom-0 left-0 right-0 h-1 bg-indigo-600 rounded-full animate-in slide-in-from-left duration-300" />}
+            {activeTab === t && <div className="absolute bottom-0 left-0 right-0 h-1 bg-[var(--accent-primary)] rounded-full animate-in slide-in-from-left duration-300" />}
           </button>
         ))}
       </div>
@@ -554,12 +554,12 @@ export default function ExpensesPage() {
           </div>
 
           {/* MEMBERS CARD */}
-          <div className="lg:col-span-8 bg-white p-10 rounded-[48px] border border-slate-100 shadow-sm">
-            <h3 className="text-2xl font-black mb-10 flex items-center gap-3"><Users className="text-indigo-600" /> Members</h3>
+          <div className="lg:col-span-8 card-pure p-10 rounded-[48px] border border-pure shadow-sm">
+            <h3 className="text-2xl font-black text-main-pure mb-10 flex items-center gap-3"><Users className="text-[var(--accent-primary)]" /> Members</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {currentGroup.members.map(m => (
-                <div key={m.id} className="p-8 bg-slate-50/50 rounded-[32px] border-2 border-transparent hover:border-indigo-100 transition-all group">
-                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{m.name}</p>
+                <div key={m.id} className="p-8 bg-secondary-pure rounded-[32px] border-2 border-transparent hover:border-[var(--accent-soft)] transition-all group">
+                   <p className="text-[10px] font-black text-muted-pure uppercase tracking-widest mb-1">{m.name}</p>
                    <p className={`text-3xl font-black ${balances[m.id] >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
                      {balances[m.id] >= 0 ? '+' : '-'}{formatCurrency(balances[m.id])}
                    </p>
@@ -569,14 +569,14 @@ export default function ExpensesPage() {
           </div>
 
           {/* SMART SETTLE */}
-          <div className="lg:col-span-5 bg-emerald-50 p-10 rounded-[48px] border border-emerald-100 relative overflow-hidden">
-             <h3 className="text-2xl font-black text-emerald-900 mb-8 flex items-center gap-3"><TrendingUp /> Smart Settlement</h3>
+          <div className="lg:col-span-5 bg-emerald-50 dark:bg-emerald-950/30 p-10 rounded-[48px] border border-emerald-100 dark:border-emerald-900 relative overflow-hidden">
+             <h3 className="text-2xl font-black text-emerald-900 dark:text-emerald-300 mb-8 flex items-center gap-3"><TrendingUp /> Smart Settlement</h3>
              <div className="space-y-4">
                 {simplifiedDebts.length > 0 ? simplifiedDebts.map((d, i) => (
-                  <div key={i} className="p-6 bg-white rounded-[32px] shadow-sm flex justify-between items-center group transition-all hover:scale-[1.02]">
+                  <div key={i} className="p-6 card-pure rounded-[32px] shadow-sm flex justify-between items-center group transition-all hover:scale-[1.02] border border-pure">
                     <div>
-                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{getMemberName(d.from)} pays</p>
-                      <p className="font-black text-slate-900 text-lg">{getMemberName(d.to)}</p>
+                      <p className="text-[10px] font-black text-muted-pure uppercase tracking-widest mb-1">{getMemberName(d.from)} pays</p>
+                      <p className="font-black text-main-pure text-lg">{getMemberName(d.to)}</p>
                     </div>
                     <div className="text-right">
                        <p className="text-2xl font-black text-emerald-600 mb-2">{formatCurrency(d.amount)}</p>
@@ -590,26 +590,26 @@ export default function ExpensesPage() {
                 )) : (
                     <div className="text-center py-20 opacity-40">
                         <CheckCircle2 size={48} className="mx-auto text-emerald-600 mb-4" />
-                        <p className="font-black uppercase tracking-widest text-xs">Everything Settled</p>
+                        <p className="font-black uppercase tracking-widest text-muted-pure text-xs">Everything Settled</p>
                     </div>
                 )}
              </div>
           </div>
 
           {/* CATEGORIES */}
-          <div className="lg:col-span-7 bg-white p-10 rounded-[48px] border border-slate-100 shadow-sm">
-             <h3 className="text-2xl font-black mb-10 flex items-center gap-3"><PieChart className="text-indigo-600" /> Category Spend</h3>
+          <div className="lg:col-span-7 card-pure p-10 rounded-[48px] border border-pure shadow-sm">
+             <h3 className="text-2xl font-black text-main-pure mb-10 flex items-center gap-3"><PieChart className="text-[var(--accent-primary)]" /> Category Spend</h3>
              <div className="space-y-6">
                 {Object.entries(categoryBreakdown.stats).map(([cat, val]) => (
                   <div key={cat} className="space-y-2">
                     <div className="flex justify-between items-end">
-                      <p className="text-xs font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
+                      <p className="text-xs font-black uppercase tracking-widest text-muted-pure flex items-center gap-2">
                         {getCatIcon(cat)} {cat}
                       </p>
-                      <p className="font-black text-slate-900">{formatCurrency(val)}</p>
+                      <p className="font-black text-main-pure">{formatCurrency(val)}</p>
                     </div>
-                    <div className="h-3 w-full bg-slate-50 rounded-full overflow-hidden">
-                      <div className="h-full bg-indigo-600 transition-all duration-1000" style={{ width: `${categoryBreakdown.total > 0 ? (val / categoryBreakdown.total) * 100 : 0}%` }} />
+                    <div className="h-3 w-full bg-secondary-pure rounded-full overflow-hidden">
+                      <div className="h-full bg-[var(--accent-primary)] transition-all duration-1000" style={{ width: `${categoryBreakdown.total > 0 ? (val / categoryBreakdown.total) * 100 : 0}%` }} />
                     </div>
                   </div>
                 ))}
@@ -621,26 +621,26 @@ export default function ExpensesPage() {
       {/* ===== EXPENSES TAB ===== */}
       {activeTab === 'expenses' && (
         <div className="space-y-8">
-          <div className="bg-white p-6 rounded-[32px] border border-slate-100">
+          <div className="card-pure p-6 rounded-[32px] border border-pure">
              <div className="relative">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={20} />
-                <input value={expenseSearchQuery} onChange={e => setExpenseSearchQuery(e.target.value)} placeholder="Filter expenses..." className="w-full pl-12 pr-6 py-4 bg-slate-50 rounded-2xl border-none outline-none font-bold" />
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-pure" size={20} />
+                <input value={expenseSearchQuery} onChange={e => setExpenseSearchQuery(e.target.value)} placeholder="Filter expenses..." className="input-pure w-full pl-12 pr-6 py-4 rounded-2xl font-bold" />
              </div>
           </div>
           <div className="grid grid-cols-1 gap-4">
             {filteredExpenses.length > 0 ? filteredExpenses.map(exp => (
-              <div key={exp.id} className="bg-white p-8 rounded-[40px] border border-slate-100 flex justify-between items-center group transition-all hover:shadow-xl">
+              <div key={exp.id} className="card-pure p-8 rounded-[40px] border border-pure flex justify-between items-center group transition-all hover:shadow-xl">
                 <div className="flex items-center gap-6">
-                  <div className="w-16 h-16 rounded-[24px] bg-indigo-50 text-indigo-600 flex items-center justify-center">{getCatIcon(exp.category)}</div>
+                  <div className="w-16 h-16 rounded-[24px] bg-[var(--accent-soft)] text-[var(--accent-primary)] flex items-center justify-center">{getCatIcon(exp.category)}</div>
                   <div>
-                    <h4 className="text-xl font-black text-slate-900 tracking-tight">{exp.title}</h4>
-                    <p className="text-slate-400 font-bold text-sm uppercase tracking-widest text-[10px]">{getMemberName(exp.paidBy || exp.paid_by)} • {exp.date || (exp.created_at && exp.created_at.split('T')[0])}</p>
+                    <h4 className="text-xl font-black text-main-pure tracking-tight">{exp.title}</h4>
+                    <p className="text-muted-pure font-bold text-sm uppercase tracking-widest text-[10px]">{getMemberName(exp.paidBy || exp.paid_by)} • {exp.date || (exp.created_at && exp.created_at.split('T')[0])}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-6">
-                   <p className="text-3xl font-black text-slate-900">{formatCurrency(exp.amount)}</p>
+                   <p className="text-3xl font-black text-main-pure">{formatCurrency(exp.amount)}</p>
                    <div className="flex gap-2">
-                      <button onClick={() => { setEditingExpenseId(exp.id); setNewExpense({...exp, amount: exp.amount.toString(), paidBy: exp.paidBy || exp.paid_by, splitType: exp.splitType || exp.split_type}); setShowAddExpenseModal(true); }} disabled={isSubmitting} className="p-3 bg-slate-50 rounded-xl text-slate-400 hover:text-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed">
+                      <button onClick={() => { setEditingExpenseId(exp.id); setNewExpense({...exp, amount: exp.amount.toString(), paidBy: exp.paidBy || exp.paid_by, splitType: exp.splitType || exp.split_type}); setShowAddExpenseModal(true); }} disabled={isSubmitting} className="p-3 bg-secondary-pure rounded-xl text-muted-pure hover:text-[var(--accent-primary)] disabled:opacity-50 disabled:cursor-not-allowed">
                         {isSubmitting ? <Loader2 size={18} className="animate-spin" /> : <Edit3 size={18} />}
                       </button>
                       <button onClick={async () => {
@@ -675,12 +675,12 @@ export default function ExpensesPage() {
       {activeTab === 'settlements' && (
         <div className="grid grid-cols-1 gap-4">
           {settlements.filter(s => s.groupId === selectedGroup || s.group_id === selectedGroup).length > 0 ? settlements.filter(s => s.groupId === selectedGroup || s.group_id === selectedGroup).map(s => (
-            <div key={s.id} className="bg-white p-8 rounded-[40px] border border-slate-100 flex justify-between items-center group transition-all">
+            <div key={s.id} className="card-pure p-8 rounded-[40px] border border-pure flex justify-between items-center group transition-all">
                <div className="flex items-center gap-6">
-                  <div className="w-16 h-16 rounded-[24px] bg-emerald-50 text-emerald-600 flex items-center justify-center"><Handshake size={32} /></div>
+                  <div className="w-16 h-16 rounded-[24px] bg-emerald-500/10 text-emerald-600 flex items-center justify-center"><Handshake size={32} /></div>
                   <div>
-                    <h4 className="text-xl font-black text-slate-900 tracking-tight">{getMemberName(s.from || s.from_member)} paid {getMemberName(s.to || s.to_member)}</h4>
-                    <p className="text-slate-400 font-bold text-sm uppercase tracking-widest text-[10px]">{s.date || (s.created_at && s.created_at.split('T')[0])} • {s.method}</p>
+                    <h4 className="text-xl font-black text-main-pure tracking-tight">{getMemberName(s.from || s.from_member)} paid {getMemberName(s.to || s.to_member)}</h4>
+                    <p className="text-muted-pure font-bold text-sm uppercase tracking-widest text-[10px]">{s.date || (s.created_at && s.created_at.split('T')[0])} • {s.method}</p>
                   </div>
                </div>
                <div className="flex items-center gap-6">
@@ -697,15 +697,15 @@ export default function ExpensesPage() {
                     } finally {
                       setIsSubmitting(false);
                     }
-                  }} disabled={isSubmitting} className="p-3 text-slate-300 hover:text-rose-600 disabled:opacity-50 disabled:cursor-not-allowed">
+                  }} disabled={isSubmitting} className="p-3 text-muted-pure hover:text-rose-600 disabled:opacity-50 disabled:cursor-not-allowed">
                     {isSubmitting ? <Loader2 size={18} className="animate-spin" /> : <Trash2 size={18}/>}
                   </button>
                </div>
             </div>
           )) : (
-            <div className="text-center py-40 bg-white rounded-[48px] border-2 border-dashed border-slate-100">
-                <HistoryIcon size={48} className="mx-auto text-slate-200 mb-4" />
-                <p className="font-black text-slate-300 uppercase tracking-widest text-xs">No records found</p>
+            <div className="text-center py-40 card-pure rounded-[48px] border-2 border-dashed border-pure">
+                <HistoryIcon size={48} className="mx-auto text-muted-pure mb-4 opacity-30" />
+                <p className="font-black text-muted-pure uppercase tracking-widest text-xs">No records found</p>
             </div>
           )}
         </div>
@@ -714,10 +714,10 @@ export default function ExpensesPage() {
       {/* ===== MEMBERS TAB ===== */}
       {activeTab === 'members' && currentGroup && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-           <div className="lg:col-span-8 bg-white p-10 rounded-[48px] border border-slate-100 shadow-sm">
+           <div className="lg:col-span-8 card-pure p-10 rounded-[48px] border border-pure shadow-sm">
               <div className="flex justify-between items-center mb-10">
-                <h3 className="text-2xl font-black flex items-center gap-3"><Users className="text-indigo-600" /> Members</h3>
-                <button onClick={() => setShowAddMemberModal(true)} disabled={isSubmitting} className="flex items-center gap-2 px-6 py-3 bg-indigo-50 text-indigo-600 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-indigo-100 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                <h3 className="text-2xl font-black text-main-pure flex items-center gap-3"><Users className="text-[var(--accent-primary)]" /> Members</h3>
+                <button onClick={() => setShowAddMemberModal(true)} disabled={isSubmitting} className="flex items-center gap-2 px-6 py-3 bg-[var(--accent-soft)] text-[var(--accent-primary)] rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-[var(--accent-primary)] hover:text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed">
                   {isSubmitting ? <>
                     <Loader2 className="w-4 h-4 animate-spin" /> Adding...
                   </> : <>
@@ -727,12 +727,12 @@ export default function ExpensesPage() {
               </div>
               <div className="space-y-4">
                 {currentGroup.members.map(m => (
-                  <div key={m.id} className="p-6 bg-slate-50/50 rounded-3xl flex justify-between items-center group transition-all">
+                  <div key={m.id} className="p-6 bg-secondary-pure rounded-3xl flex justify-between items-center group transition-all">
                     <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center font-black text-indigo-600 shadow-sm">{m.name.charAt(0)}</div>
+                      <div className="w-12 h-12 card-pure rounded-2xl flex items-center justify-center font-black text-[var(--accent-primary)] shadow-sm border border-pure">{m.name.charAt(0)}</div>
                       <div>
-                        <p className="font-black text-slate-900">{m.name} {m.user_id === currentUserId && <span className="text-indigo-400 text-xs">· You</span>}</p>
-                        <p className="text-xs font-bold text-slate-400">{m.email}</p>
+                        <p className="font-black text-main-pure">{m.name} {m.user_id === currentUserId && <span className="text-[var(--accent-primary)] text-xs">· You</span>}</p>
+                        <p className="text-xs font-bold text-muted-pure">{m.email}</p>
                       </div>
                     </div>
                     {m.user_id !== currentUserId && (
@@ -774,16 +774,16 @@ export default function ExpensesPage() {
       {/* ADD MEMBER */}
       {showAddMemberModal && (
         <div className="fixed inset-0 z-[150] bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-md rounded-[40px] p-10 shadow-2xl animate-in zoom-in-95">
+          <div className="card-pure w-full max-w-md rounded-[40px] p-10 shadow-2xl animate-in zoom-in-95">
              <div className="flex justify-between items-center mb-8">
-                <h3 className="text-2xl font-black">Add Member</h3>
-                <button onClick={() => setShowAddMemberModal(false)} className="p-3 bg-slate-50 rounded-full transition-all hover:rotate-90"><X /></button>
+                <h3 className="text-2xl font-black text-main-pure">Add Member</h3>
+                <button onClick={() => setShowAddMemberModal(false)} className="p-3 bg-secondary-pure rounded-full transition-all hover:rotate-90"><X className="text-main-pure" /></button>
              </div>
              <form onSubmit={handleAddMember} className="space-y-6">
-                <input required value={newMember.name} onChange={e => setNewMember({...newMember, name: e.target.value})} placeholder="Full Name" className="w-full p-5 bg-slate-50 rounded-2xl border-none font-bold" />
-                <input required type="email" value={newMember.email} onChange={e => setNewMember({...newMember, email: e.target.value})} placeholder="Email Address" className="w-full p-5 bg-slate-50 rounded-2xl border-none font-bold" />
+                <input required value={newMember.name} onChange={e => setNewMember({...newMember, name: e.target.value})} placeholder="Full Name" className="input-pure w-full p-5 rounded-2xl font-bold" />
+                <input required type="email" value={newMember.email} onChange={e => setNewMember({...newMember, email: e.target.value})} placeholder="Email Address" className="input-pure w-full p-5 rounded-2xl font-bold" />
                 {memberError && <p className="text-rose-500 text-sm font-bold ml-1">{memberError}</p>}
-                <button type="submit" disabled={isSubmitting} className="w-full py-6 bg-indigo-600 text-white rounded-[32px] font-black text-xl hover:bg-indigo-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+                <button type="submit" disabled={isSubmitting} className="w-full py-6 bg-[var(--accent-primary)] text-white rounded-[32px] font-black text-xl hover:bg-[var(--accent-hover)] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
                   {isSubmitting ? <>
                     <Loader2 className="w-5 h-5 animate-spin" /> Adding...
                   </> : "Add to Group"}

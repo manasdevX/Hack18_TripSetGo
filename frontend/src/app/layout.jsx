@@ -28,6 +28,16 @@ export default function RootLayout({ children }) {
     setMounted(true);
   }, []);
 
+  // Sync dark class on every change (ensures instant toggle from Sidebar)
+  useEffect(() => {
+    if (!mounted) return;
+    if (darkMode) {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+  }, [darkMode, mounted]);
+
   return (
     <html 
       lang="en" 

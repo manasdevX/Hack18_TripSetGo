@@ -1,35 +1,27 @@
 {
-<<<<<<< HEAD
   "/_not-found/page": "app/_not-found/page.js",
-  "/auth/callback/page": "app/auth/callback/page.js",
   "/complete-signup/page": "app/complete-signup/page.js",
-  "/forgot-password/page": "app/forgot-password/page.js",
+  "/auth/callback/page": "app/auth/callback/page.js",
   "/login/page": "app/login/page.js",
+  "/forgot-password/page": "app/forgot-password/page.js",
+  "/my-trips/page": "app/my-trips/page.js",
   "/page": "app/page.js",
   "/reset-password/[token]/page": "app/reset-password/[token]/page.js",
   "/reset-password/page": "app/reset-password/page.js",
-  "/my-trips/page": "app/my-trips/page.js",
-  "/signup/page": "app/signup/page.js",
   "/verify-email/page": "app/verify-email/page.js",
+  "/signup/page": "app/signup/page.js",
   "/verify-otp/page": "app/verify-otp/page.js",
   "/verify-password-otp/page": "app/verify-password-otp/page.js",
-  "/dashboard/analytics/page": "app/dashboard/analytics/page.js",
   "/dashboard/active-trip/page": "app/dashboard/active-trip/page.js",
-  "/dashboard/planner/page": "app/dashboard/planner/page.js",
-  "/dashboard/discover/page": "app/dashboard/discover/page.js",
   "/dashboard/discover/[tripId]/page": "app/dashboard/discover/[tripId]/page.js",
+  "/dashboard/discover/page": "app/dashboard/discover/page.js",
   "/dashboard/page": "app/dashboard/page.js",
+  "/dashboard/analytics/page": "app/dashboard/analytics/page.js",
   "/dashboard/profile/[username]/page": "app/dashboard/profile/[username]/page.js",
-  "/dashboard/settings/page": "app/dashboard/settings/page.js",
+  "/dashboard/planner/page": "app/dashboard/planner/page.js",
   "/dashboard/subscription/page": "app/dashboard/subscription/page.js",
   "/dashboard/expenses/page": "app/dashboard/expenses/page.js",
   "/dashboard/trips/[id]/page": "app/dashboard/trips/[id]/page.js",
-  "/dashboard/trips/page": "app/dashboard/trips/page.js"
-=======
-  "/login/page": "app/login/page.js",
-  "/dashboard/expenses/page": "app/dashboard/expenses/page.js",
-  "/dashboard/page": "app/dashboard/page.js",
-  "/dashboard/subscription/page": "app/dashboard/subscription/page.js",
+  "/dashboard/trips/page": "app/dashboard/trips/page.js",
   "/dashboard/settings/page": "app/dashboard/settings/page.js"
->>>>>>> 594563407c97a6cbac9e06ca090efacc575e0132
 }

@@ -66,12 +66,16 @@ export default function Dashboard() {
     return user?.full_name?.split(" ")[0] || "Explorer";
   }, [user]);
 
+  const withinBudget = useMemo(() => {
+    return tripData?.budget?.within_budget !== false;
+  }, [tripData]);
+
   if (!isHydrated) {
     return (
       <div className="min-h-[80vh] flex items-center justify-center">
         <div className="relative">
-          <Loader2 className="w-12 h-12 text-accent-primary animate-spin" />
-          <div className="absolute inset-0 blur-xl bg-accent-soft animate-pulse rounded-full" />
+          <Loader2 className="w-12 h-12 text-[var(--accent-primary)] animate-spin" />
+          <div className="absolute inset-0 blur-xl bg-[var(--accent-soft)] animate-pulse rounded-full" />
         </div>
       </div>
     );
@@ -90,7 +94,7 @@ export default function Dashboard() {
     return (
       <div className="flex items-center justify-center min-h-[70vh] p-4">
         <div className="card-pure w-full max-w-lg p-10 rounded-[40px] shadow-2xl text-center animate-in fade-in zoom-in-95 duration-500">
-          <div className="w-24 h-24 bg-accent-primary rounded-[32px] flex items-center justify-center mx-auto mb-8 shadow-2xl rotate-3 animate-bounce">
+          <div className="w-24 h-24 bg-[var(--accent-primary)] rounded-[32px] flex items-center justify-center mx-auto mb-8 shadow-2xl rotate-3 animate-bounce">
             <Sparkles className="w-12 h-12 text-white" />
           </div>
           <h3 className="text-3xl font-black text-main-pure mb-8 tracking-tighter">Synthesizing...</h3>
@@ -100,7 +104,7 @@ export default function Dashboard() {
                 {loadingStep > index ? (
                   <div className="bg-emerald-500/20 p-1 rounded-full"><CheckCircle2 className="w-5 h-5 text-emerald-500" /></div>
                 ) : loadingStep === index ? (
-                  <div className="p-1"><Loader2 className="w-5 h-5 text-accent-primary animate-spin" /></div>
+                  <div className="p-1"><Loader2 className="w-5 h-5 text-[var(--accent-primary)] animate-spin" /></div>
                 ) : (
                   <div className="w-7 h-7 rounded-full border-2 border-pure opacity-30" />
                 )}
@@ -148,10 +152,10 @@ export default function Dashboard() {
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-10">
         <div className="space-y-6">
           <div className="flex items-center gap-3">
-            <span className="px-4 py-1.5 bg-accent-primary text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-accent-soft">
+            <span className="px-4 py-1.5 bg-[var(--accent-primary)] text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg">
                Agent Confirmed
             </span>
-            <button className="text-muted-pure hover:text-accent-primary transition-colors text-xs font-bold flex items-center gap-2 bg-pure px-4 py-1.5 rounded-xl border-pure shadow-sm">
+            <button className="text-muted-pure hover:text-[var(--accent-primary)] transition-colors text-xs font-bold flex items-center gap-2 bg-pure px-4 py-1.5 rounded-xl border border-pure shadow-sm">
               <RefreshCw className="w-3 h-3" /> Re-sync High-Speed Sync
             </button>
           </div>
@@ -159,14 +163,14 @@ export default function Dashboard() {
             <h1 className="text-8xl md:text-9xl font-black text-main-pure tracking-tighter leading-[0.75] lowercase overflow-hidden">
                 {tripData?.destination}
             </h1>
-            <span className="text-8xl md:text-9xl font-black text-accent-primary leading-[0.75] tracking-tighter">.</span>
+            <span className="text-8xl md:text-9xl font-black text-[var(--accent-primary)] leading-[0.75] tracking-tighter">.</span>
           </div>
         </div>
         <div className="flex items-center gap-4 w-full lg:w-auto">
-          <button className="flex-1 lg:flex-none flex items-center justify-center gap-3 px-10 py-5 bg-pure border-2 border-pure rounded-[24px] text-main-pure font-black hover:border-accent-primary transition-all shadow-xl group text-[10px] tracking-widest uppercase">
+          <button className="flex-1 lg:flex-none flex items-center justify-center gap-3 px-10 py-5 card-pure border-2 border-pure rounded-[24px] text-main-pure font-black hover:border-[var(--accent-primary)] transition-all shadow-xl group text-[10px] tracking-widest uppercase">
             <Download size={22} className="group-hover:translate-y-0.5 transition-transform" /> Export Data
           </button>
-          <button className="flex-1 lg:flex-none flex items-center justify-center gap-3 px-10 py-5 bg-accent-primary text-white rounded-[24px] font-black hover:bg-accent-hover transition-all shadow-2xl shadow-accent-soft text-[10px] tracking-widest uppercase">
+          <button className="flex-1 lg:flex-none flex items-center justify-center gap-3 px-10 py-5 bg-[var(--accent-primary)] text-white rounded-[24px] font-black hover:bg-[var(--accent-hover)] transition-all shadow-2xl text-[10px] tracking-widest uppercase">
             <Share2 size={22} /> Broadcast
           </button>
         </div>
@@ -174,31 +178,31 @@ export default function Dashboard() {
 
       {/* Summary Cards Row */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
-          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Climate</p>
-          <p className="text-3xl font-black text-slate-900">{tripData?.weather?.temp}</p>
+        <div className="card-pure p-6 rounded-3xl border border-pure shadow-sm">
+          <p className="text-[10px] font-black text-muted-pure uppercase tracking-widest mb-2">Climate</p>
+          <p className="text-3xl font-black text-main-pure">{tripData?.weather?.temp}</p>
           <p className="text-xs font-bold text-sky-500 mt-1 flex items-center gap-1">
             <CloudSun className="w-3 h-3" /> {tripData?.weather?.condition}
           </p>
         </div>
-        <div className={`bg-white p-6 rounded-3xl border shadow-sm ${withinBudget ? "border-slate-100" : "border-amber-200 bg-amber-50"}`}>
-          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Est. Cost</p>
-          <p className="text-3xl font-black text-slate-900">{tripData?.budget?.total}</p>
+        <div className={`card-pure p-6 rounded-3xl border shadow-sm ${withinBudget ? "border-pure" : "border-amber-200 dark:border-amber-800"}`}>
+          <p className="text-[10px] font-black text-muted-pure uppercase tracking-widest mb-2">Est. Cost</p>
+          <p className="text-3xl font-black text-main-pure">{tripData?.budget?.total}</p>
           <p className={`text-xs font-bold mt-1 flex items-center gap-1 ${withinBudget ? "text-emerald-500" : "text-amber-600"}`}>
             {withinBudget ? <CheckCircle2 className="w-3 h-3" /> : <AlertTriangle className="w-3 h-3" />}
             {withinBudget ? "Within Budget" : "Over Budget"}
           </p>
         </div>
-        <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
-          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Duration</p>
-          <p className="text-3xl font-black text-slate-900">{tripData?.route?.duration}</p>
+        <div className="card-pure p-6 rounded-3xl border border-pure shadow-sm">
+          <p className="text-[10px] font-black text-muted-pure uppercase tracking-widest mb-2">Duration</p>
+          <p className="text-3xl font-black text-main-pure">{tripData?.route?.duration}</p>
           <p className="text-xs font-bold text-indigo-500 mt-1 flex items-center gap-1 capitalize">
             <TransportIcon mode={tripData?.route?.mode} /> {tripData?.route?.mode}
           </p>
         </div>
-        <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
-          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Itinerary</p>
-          <p className="text-3xl font-black text-slate-900">{tripData?.itinerary?.length || 0}</p>
+        <div className="card-pure p-6 rounded-3xl border border-pure shadow-sm">
+          <p className="text-[10px] font-black text-muted-pure uppercase tracking-widest mb-2">Itinerary</p>
+          <p className="text-3xl font-black text-main-pure">{tripData?.itinerary?.length || 0}</p>
           <p className="text-xs font-bold text-purple-500 mt-1 flex items-center gap-1">
             <Calendar className="w-3 h-3" /> Days Planned
           </p>
@@ -211,9 +215,9 @@ export default function Dashboard() {
         <div className="lg:col-span-4 space-y-6">
 
           {/* Budget Breakdown */}
-          <div className="bg-white p-8 rounded-[40px] border border-slate-100 shadow-sm">
-            <h3 className="text-lg font-black text-slate-900 mb-6 flex items-center gap-3">
-              <div className="p-2 bg-indigo-50 rounded-xl"><Wallet className="w-5 h-5 text-indigo-600" /></div>
+          <div className="card-pure p-8 rounded-[40px] border border-pure shadow-sm">
+            <h3 className="text-lg font-black text-main-pure mb-6 flex items-center gap-3">
+              <div className="p-2 bg-[var(--accent-soft)] rounded-xl"><Wallet className="w-5 h-5 text-[var(--accent-primary)]" /></div>
               Budget Breakdown
             </h3>
             <div className="space-y-4">
@@ -226,26 +230,26 @@ export default function Dashboard() {
                 const pct = value ? Math.min(Math.round((value / total) * 100), 100) : 0;
                 return (
                   <div key={label}>
-                    <div className="flex justify-between text-xs font-bold text-slate-600 mb-1">
+                    <div className="flex justify-between text-xs font-bold text-muted-pure mb-1">
                       <span>{label}</span>
-                      <span>{value ? `₹${Math.round(value).toLocaleString()}` : "—"}</span>
+                      <span className="text-main-pure">{value ? `₹${Math.round(value).toLocaleString()}` : "—"}</span>
                     </div>
-                    <div className="h-2 bg-slate-100 rounded-full">
+                    <div className="h-2 bg-secondary-pure rounded-full">
                       <div className={`h-2 ${color} rounded-full transition-all duration-700`} style={{ width: `${pct}%` }} />
                     </div>
                   </div>
                 );
               })}
-              <div className="pt-4 border-t border-slate-100 flex justify-between items-center">
-                <span className="text-xs font-black text-slate-500 uppercase tracking-widest">Remaining</span>
+              <div className="pt-4 border-t border-pure flex justify-between items-center">
+                <span className="text-xs font-black text-muted-pure uppercase tracking-widest">Remaining</span>
                 <span className={`text-base font-black ${(tripData?.budget?.remaining || 0) >= 0 ? "text-emerald-600" : "text-red-500"}`}>
                   {tripData?.budget?.remaining != null ? `₹${Math.round(tripData.budget.remaining).toLocaleString()}` : "—"}
                 </span>
               </div>
               {tripData?.budget?.cost_per_person && (
                 <div className="flex justify-between items-center">
-                  <span className="text-xs font-black text-slate-500 uppercase tracking-widest">Per Person</span>
-                  <span className="text-base font-black text-slate-700">
+                  <span className="text-xs font-black text-muted-pure uppercase tracking-widest">Per Person</span>
+                  <span className="text-base font-black text-main-pure">
                     ₹{Math.round(tripData.budget.cost_per_person).toLocaleString()}
                   </span>
                 </div>
@@ -255,27 +259,27 @@ export default function Dashboard() {
 
           {/* Destination Context */}
           {(tripData?.weather?.areas?.length > 0 || tripData?.weather?.advisories?.length > 0) && (
-            <div className="bg-white p-8 rounded-[40px] border border-slate-100 shadow-sm">
-              <h3 className="text-lg font-black text-slate-900 mb-5 flex items-center gap-3">
-                <div className="p-2 bg-sky-50 rounded-xl"><Info className="w-5 h-5 text-sky-600" /></div>
+            <div className="card-pure p-8 rounded-[40px] border border-pure shadow-sm">
+              <h3 className="text-lg font-black text-main-pure mb-5 flex items-center gap-3">
+                <div className="p-2 bg-sky-500/10 rounded-xl"><Info className="w-5 h-5 text-sky-600" /></div>
                 Destination Insights
               </h3>
               {tripData.weather.best_areas?.length > 0 && (
                 <div className="mb-4">
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Best Areas to Stay</p>
+                  <p className="text-[10px] font-black text-muted-pure uppercase tracking-widest mb-2">Best Areas to Stay</p>
                   <div className="flex flex-wrap gap-2">
                     {tripData.weather.best_areas.map((area, i) => (
-                      <span key={i} className="px-3 py-1 bg-indigo-50 text-indigo-700 rounded-xl text-xs font-bold">{area}</span>
+                      <span key={i} className="px-3 py-1 bg-[var(--accent-soft)] text-[var(--accent-primary)] rounded-xl text-xs font-bold">{area}</span>
                     ))}
                   </div>
                 </div>
               )}
               {tripData.weather.advisories?.length > 0 && (
                 <div>
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Travel Tips</p>
+                  <p className="text-[10px] font-black text-muted-pure uppercase tracking-widest mb-2">Travel Tips</p>
                   <ul className="space-y-1">
                     {tripData.weather.advisories.map((tip, i) => (
-                      <li key={i} className="text-xs text-slate-600 flex items-start gap-2">
+                      <li key={i} className="text-xs text-muted-pure flex items-start gap-2">
                         <CheckCircle2 className="w-3 h-3 text-emerald-500 flex-shrink-0 mt-0.5" />{tip}
                       </li>
                     ))}
@@ -290,60 +294,60 @@ export default function Dashboard() {
         <div className="lg:col-span-8 space-y-6">
 
           {/* Itinerary */}
-          <div className="bg-white p-10 rounded-[48px] border border-slate-100 shadow-sm">
+          <div className="card-pure p-10 rounded-[48px] border border-pure shadow-sm">
             <div className="flex items-center justify-between mb-10">
-              <h3 className="text-3xl font-black text-slate-900 tracking-tighter flex items-center gap-4">
-                <div className="p-3 bg-slate-900 rounded-2xl text-white">
+              <h3 className="text-3xl font-black text-main-pure tracking-tighter flex items-center gap-4">
+                <div className="p-3 bg-[var(--bg-secondary)] border border-pure rounded-2xl text-main-pure">
                   <Route className="w-6 h-6" />
                 </div>
                 The Pulse
               </h3>
-              <div className="flex items-center gap-2 px-4 py-2 bg-slate-50 rounded-2xl border border-slate-100">
-                <Calendar className="w-4 h-4 text-indigo-600" />
-                <span className="text-sm font-black text-slate-700">{tripData?.itinerary?.length || 0} Days</span>
+              <div className="flex items-center gap-2 px-4 py-2 bg-secondary-pure rounded-2xl border border-pure">
+                <Calendar className="w-4 h-4 text-[var(--accent-primary)]" />
+                <span className="text-sm font-black text-main-pure">{tripData?.itinerary?.length || 0} Days</span>
               </div>
             </div>
 
             {tripData?.itinerary_summary && (
-              <p className="text-slate-500 text-sm font-medium mb-8 p-4 bg-indigo-50 rounded-2xl leading-relaxed">
+              <p className="text-muted-pure text-sm font-medium mb-8 p-4 bg-[var(--accent-soft)] rounded-2xl leading-relaxed">
                 {tripData.itinerary_summary}
               </p>
             )}
 
             <div className="space-y-4 relative">
-              <div className="absolute left-[27px] top-4 bottom-4 w-1 bg-slate-50 rounded-full" />
+              <div className="absolute left-[27px] top-4 bottom-4 w-1 bg-secondary-pure rounded-full" />
               {tripData?.itinerary?.map((item, index) => {
                 const isExpanded = expandedDay === index;
                 return (
                   <div key={index} className="flex gap-8 group relative">
                     <div className="relative z-10 flex-shrink-0">
-                      <div className="w-14 h-14 rounded-[18px] bg-white border-4 border-slate-50 flex items-center justify-center text-slate-900 font-black text-lg group-hover:bg-indigo-600 group-hover:text-white transition-all duration-300 shadow-sm">
+                      <div className="w-14 h-14 rounded-[18px] card-pure border-4 border-pure flex items-center justify-center text-main-pure font-black text-lg group-hover:bg-[var(--accent-primary)] group-hover:text-white transition-all duration-300 shadow-sm">
                         {item.day}
                       </div>
                     </div>
                     <div className="flex-1 pb-2">
                       <button
                         onClick={() => setExpandedDay(isExpanded ? null : index)}
-                        className="w-full text-left p-6 bg-slate-50/60 rounded-3xl border-2 border-transparent group-hover:border-indigo-50 group-hover:bg-white group-hover:shadow-lg transition-all duration-300"
+                        className="w-full text-left p-6 bg-secondary-pure rounded-3xl border-2 border-transparent group-hover:border-[var(--accent-soft)] group-hover:bg-[var(--bg-card)] group-hover:shadow-lg transition-all duration-300"
                       >
                         <div className="flex items-center justify-between gap-4">
                           <div>
                             {item.date && (
-                              <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-1">{item.date}</p>
+                              <p className="text-[10px] font-black text-[var(--accent-primary)] uppercase tracking-widest mb-1">{item.date}</p>
                             )}
-                            <p className="text-lg font-black text-slate-900 leading-tight">{item.title}</p>
-                            <p className="text-xs text-slate-400 font-bold mt-1">{item.activities?.length || 0} activities</p>
+                            <p className="text-lg font-black text-main-pure leading-tight">{item.title}</p>
+                            <p className="text-xs text-muted-pure font-bold mt-1">{item.activities?.length || 0} activities</p>
                           </div>
-                          <div className="flex-shrink-0 text-slate-400">
+                          <div className="flex-shrink-0 text-muted-pure">
                             {isExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
                           </div>
                         </div>
                         {isExpanded && item.activities?.length > 0 && (
-                          <ul className="mt-4 space-y-2 border-t border-slate-100 pt-4">
+                          <ul className="mt-4 space-y-2 border-t border-pure pt-4">
                             {item.activities.map((act, ai) => (
-                              <li key={ai} className="flex items-start gap-2 text-sm text-slate-700 font-medium">
-                                <span className="w-5 h-5 bg-indigo-100 rounded-full flex items-center justify-center text-[10px] font-black text-indigo-600 flex-shrink-0 mt-0.5">{ai + 1}</span>
-                                {act}
+                              <li key={ai} className="flex items-start gap-2 text-sm text-muted-pure font-medium">
+                                <span className="w-5 h-5 bg-[var(--accent-soft)] rounded-full flex items-center justify-center text-[10px] font-black text-[var(--accent-primary)] flex-shrink-0 mt-0.5">{ai + 1}</span>
+                                {typeof act === "string" ? act : act.description || act.task || act.activity || JSON.stringify(act)}
                               </li>
                             ))}
                             {item.meals && (
@@ -361,7 +365,7 @@ export default function Dashboard() {
               })}
 
               {(!tripData?.itinerary || tripData.itinerary.length === 0) && (
-                <div className="text-center py-12 text-slate-400">
+                <div className="text-center py-12 text-muted-pure">
                   <Calendar className="w-12 h-12 mx-auto mb-3 opacity-30" />
                   <p className="font-bold">No itinerary data available</p>
                 </div>
@@ -373,30 +377,30 @@ export default function Dashboard() {
 
       {/* Transport Options */}
       {tripData?.transport?.length > 0 && (
-        <div className="bg-white p-10 rounded-[48px] border border-slate-100 shadow-sm">
-          <h3 className="text-2xl font-black text-slate-900 tracking-tighter mb-8 flex items-center gap-4">
-            <div className="p-3 bg-blue-50 rounded-2xl text-blue-600"><Plane className="w-6 h-6" /></div>
+        <div className="card-pure p-10 rounded-[48px] border border-pure shadow-sm">
+          <h3 className="text-2xl font-black text-main-pure tracking-tighter mb-8 flex items-center gap-4">
+            <div className="p-3 bg-blue-500/10 rounded-2xl text-blue-600"><Plane className="w-6 h-6" /></div>
             Transport Options
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {tripData.transport.map((t, i) => (
-              <div key={i} className="p-6 bg-slate-50 rounded-3xl border-2 border-transparent hover:border-indigo-100 hover:bg-white hover:shadow-lg transition-all group">
+              <div key={i} className="p-6 bg-secondary-pure rounded-3xl border-2 border-transparent hover:border-[var(--accent-soft)] hover:bg-[var(--bg-card)] hover:shadow-lg transition-all group">
                 <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-2 text-slate-600 font-bold text-sm capitalize">
+                  <div className="flex items-center gap-2 text-muted-pure font-bold text-sm capitalize">
                     <TransportIcon mode={t.mode} />
                     {t.mode}
-                    {t.class_type && <span className="text-xs text-slate-400">· {t.class_type}</span>}
+                    {t.class_type && <span className="text-xs text-muted-pure">· {t.class_type}</span>}
                   </div>
-                  <span className="text-lg font-black text-indigo-600">
+                  <span className="text-lg font-black text-[var(--accent-primary)]">
                     ₹{Math.round(t.price).toLocaleString()}
                   </span>
                 </div>
-                <div className="flex items-center gap-2 text-slate-800 font-black text-sm">
+                <div className="flex items-center gap-2 text-main-pure font-black text-sm">
                   <span>{t.departure}</span>
-                  <ArrowRight className="w-4 h-4 text-slate-400 flex-shrink-0" />
+                  <ArrowRight className="w-4 h-4 text-muted-pure flex-shrink-0" />
                   <span>{t.arrival}</span>
                 </div>
-                <div className="flex items-center gap-3 mt-3 text-xs text-slate-400 font-bold">
+                <div className="flex items-center gap-3 mt-3 text-xs text-muted-pure font-bold">
                   {t.provider && <span>{t.provider}</span>}
                   {t.duration_minutes && (
                     <span className="flex items-center gap-1">
@@ -408,7 +412,7 @@ export default function Dashboard() {
                 </div>
                 {t.source_url && (
                   <a href={t.source_url} target="_blank" rel="noopener noreferrer"
-                    className="mt-3 text-xs text-indigo-500 font-bold hover:underline block">
+                    className="mt-3 text-xs text-[var(--accent-primary)] font-bold hover:underline block">
                     Book Now →
                   </a>
                 )}
@@ -420,23 +424,23 @@ export default function Dashboard() {
 
       {/* Stay Options */}
       {tripData?.stay?.length > 0 && (
-        <div className="bg-white p-10 rounded-[48px] border border-slate-100 shadow-sm">
-          <h3 className="text-2xl font-black text-slate-900 tracking-tighter mb-8 flex items-center gap-4">
-            <div className="p-3 bg-purple-50 rounded-2xl text-purple-600"><Hotel className="w-6 h-6" /></div>
+        <div className="card-pure p-10 rounded-[48px] border border-pure shadow-sm">
+          <h3 className="text-2xl font-black text-main-pure tracking-tighter mb-8 flex items-center gap-4">
+            <div className="p-3 bg-purple-500/10 rounded-2xl text-purple-600"><Hotel className="w-6 h-6" /></div>
             Accommodation Options
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {tripData.stay.map((s, i) => (
-              <div key={i} className="p-6 bg-slate-50 rounded-3xl border-2 border-transparent hover:border-purple-100 hover:bg-white hover:shadow-lg transition-all">
+              <div key={i} className="p-6 bg-secondary-pure rounded-3xl border-2 border-transparent hover:border-purple-500/20 hover:bg-[var(--bg-card)] hover:shadow-lg transition-all">
                 <div className="flex items-start justify-between mb-3">
                   <div>
-                    <p className="font-black text-slate-900 text-base leading-tight">{s.name}</p>
-                    {s.area && <p className="text-xs text-slate-400 font-bold mt-0.5 flex items-center gap-1"><MapPin className="w-3 h-3" />{s.area}</p>}
+                    <p className="font-black text-main-pure text-base leading-tight">{s.name}</p>
+                    {s.area && <p className="text-xs text-muted-pure font-bold mt-0.5 flex items-center gap-1"><MapPin className="w-3 h-3" />{s.area}</p>}
                   </div>
                   {s.rating && (
-                    <div className="flex items-center gap-1 px-2 py-1 bg-amber-50 rounded-xl">
+                    <div className="flex items-center gap-1 px-2 py-1 bg-amber-500/10 rounded-xl">
                       <Star className="w-3 h-3 text-amber-500 fill-amber-500" />
-                      <span className="text-xs font-black text-amber-700">{s.rating}</span>
+                      <span className="text-xs font-black text-amber-600 dark:text-amber-400">{s.rating}</span>
                     </div>
                   )}
                 </div>
@@ -444,9 +448,9 @@ export default function Dashboard() {
                   <span className="text-xl font-black text-purple-600">
                     ₹{Math.round(s.price_per_night).toLocaleString()}
                   </span>
-                  <span className="text-xs text-slate-400 font-bold"> /night</span>
+                  <span className="text-xs text-muted-pure font-bold"> /night</span>
                   {s.total_price && (
-                    <p className="text-xs text-slate-500 font-bold mt-0.5">
+                    <p className="text-xs text-muted-pure font-bold mt-0.5">
                       Total: ₹{Math.round(s.total_price).toLocaleString()}
                     </p>
                   )}
@@ -454,10 +458,10 @@ export default function Dashboard() {
                 {s.amenities?.length > 0 && (
                   <div className="flex flex-wrap gap-1 mt-3">
                     {s.amenities.slice(0, 4).map((a, ai) => (
-                      <span key={ai} className="px-2 py-0.5 bg-slate-100 text-slate-600 rounded-lg text-[10px] font-bold">{a}</span>
+                      <span key={ai} className="px-2 py-0.5 bg-[var(--bg-secondary)] text-muted-pure rounded-lg text-[10px] font-bold">{a}</span>
                     ))}
                     {s.amenities.length > 4 && (
-                      <span className="px-2 py-0.5 bg-slate-100 text-slate-400 rounded-lg text-[10px] font-bold">+{s.amenities.length - 4} more</span>
+                      <span className="px-2 py-0.5 bg-[var(--bg-secondary)] text-muted-pure rounded-lg text-[10px] font-bold">+{s.amenities.length - 4} more</span>
                     )}
                   </div>
                 )}

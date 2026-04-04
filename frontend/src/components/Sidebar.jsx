@@ -1,8 +1,9 @@
 "use client";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation"; 
+import { usePathname, useRouter } from "next/navigation";
 import { useAuthStore } from "../store/authStore";
 import { useSubscriptionStore } from "../store/subscriptionStore";
+import { useThemeStore } from "../store/themeStore";
 import { useEffect } from "react";
 import {
   PlaneTakeoff,
@@ -17,6 +18,8 @@ import {
   Bell,
   LogOut,
   Zap,
+  Sun,
+  Moon,
 } from "lucide-react";
 
 const navItems = [
@@ -67,6 +70,7 @@ export default function Sidebar() {
   const router = useRouter();
   const { user, logout } = useAuthStore();
   const { subscription, fetchStatus } = useSubscriptionStore();
+  const { darkMode, toggleDarkMode } = useThemeStore();
 
   // Fetch subscription on mount (lightweight)
   useEffect(() => {
@@ -153,6 +157,20 @@ export default function Sidebar() {
             {" searches used today"}
           </p>
         </Link>
+
+        {/* Theme Toggle */}
+        <button
+          onClick={toggleDarkMode}
+          className="sidebar-link w-full mb-1 group"
+          title={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+        >
+          {darkMode ? (
+            <Sun className="w-5 h-5 text-amber-400 group-hover:rotate-12 transition-transform" />
+          ) : (
+            <Moon className="w-5 h-5 text-indigo-400 group-hover:-rotate-12 transition-transform" />
+          )}
+          <span className="text-sm font-semibold">{darkMode ? "Light Mode" : "Dark Mode"}</span>
+        </button>
 
         <button className="sidebar-notification-btn">
           <div className="flex items-center gap-3">
