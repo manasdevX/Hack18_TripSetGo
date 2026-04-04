@@ -156,7 +156,7 @@ export const useTripStore = create((set, get) => ({
   // Fetch all saved trips for the current user
   fetchMyTrips: async () => {
     try {
-      const res = await api.get("/trips/my");
+      const res = await api.get("/my-discover-trips");
       const trips = Array.isArray(res.data) ? res.data : (res.data?.trips || []);
       set({ trips, tripsLoaded: true });
       return trips;
