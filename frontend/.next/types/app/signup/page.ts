@@ -1,4 +1,4 @@
-// File: C:\Users\Hule Ramling\Desktop\TripSetGo\frontend\src\app\signup\page.jsx
+// File: C:\Users\HP\Desktop\Hack18_TripSetGo\frontend\src\app\signup\page.jsx
 import * as entry from '../../../../src/app/signup/page.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 

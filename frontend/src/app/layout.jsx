@@ -31,6 +31,7 @@ export default function RootLayout({ children }) {
   return (
     <html 
       lang="en" 
+      suppressHydrationWarning
       className={`${inter.variable} ${montserrat.variable} scroll-smooth ${mounted && darkMode ? "dark" : ""}`}
     >
       <head>
