@@ -1,303 +1,319 @@
 "use client";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import {
-  MapPin, Calendar, Users, Wallet, Search, Plus,
-  ArrowRight, Plane, CheckCircle2, Clock, BookOpen,
-  PlayCircle, Trophy, SlidersHorizontal, Loader2, Globe
-} from "lucide-react";
 import Link from "next/link";
+import {
+  MapPin, Calendar, Users, Wallet, Search, Plus, Trash2, Copy,
+  Heart, ArrowRight, Plane, Trophy, Globe, Loader2, MoreVertical,
+  SlidersHorizontal, Filter, Star, Clock, Eye, BookOpen
+} from "lucide-react";
 import { useTripStore } from "../../../store/tripStore";
 
-const STATUS_CONFIG = {
-  planned: {
-    label: "Planned",
-    color: "text-indigo-600 dark:text-indigo-400",
-    bg: "bg-indigo-50 dark:bg-indigo-900/20",
-    border: "border-indigo-200 dark:border-indigo-800",
-  },
-  active: {
-    label: "Active",
-    color: "text-emerald-600 dark:text-emerald-400",
-    bg: "bg-emerald-50 dark:bg-emerald-900/20",
-    border: "border-emerald-200 dark:border-emerald-800",
-  },
-  completed: {
-    label: "Completed",
-    color: "text-slate-600 dark:text-slate-400",
-    bg: "bg-slate-100 dark:bg-slate-800/50",
-    border: "border-slate-200 dark:border-slate-700",
-  },
+/* ── helpers ─────────────────────────────────────────────────── */
+const fmtRs = (n) => n ? `₹${Number(n).toLocaleString("en-IN")}` : "—";
+const fmtDate = (d) => d ? new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "2-digit" }) : "—";
+const getDays = (s, e) => { if (!s || !e) return null; const d = Math.round((new Date(e) - new Date(s)) / 86400000); return d > 0 ? d : null; };
+
+const VIBES = { beach: "🏖️", mountain: "🏔️", city: "🏙️", heritage: "🏯", island: "🌴", desert: "🏜️", nature: "🌿", default: "✈️" };
+const getVibe = (dest) => {
+  const d = (dest || "").toLowerCase();
+  if (/goa|andaman|maldives|bali/.test(d)) return VIBES.beach;
+  if (/manali|ladakh|himachal|shimla/.test(d)) return VIBES.mountain;
+  if (/dubai|singapore|mumbai|delhi|bangalore/.test(d)) return VIBES.city;
+  if (/jaipur|rajasthan|agra|hampi/.test(d)) return VIBES.heritage;
+  if (/kerala|coorg|ooty/.test(d)) return VIBES.nature;
+  return VIBES.default;
 };
 
-function getDurationDays(start, end) {
-  if (!start || !end) return null;
-  const ms = new Date(end) - new Date(start);
-  const days = Math.round(ms / 86400000);
-  return days > 0 ? days : null;
-}
-
-function formatDate(dateStr) {
-  if (!dateStr) return "—";
-  return new Date(dateStr).toLocaleDateString("en-IN", {
-    day: "numeric", month: "short", year: "numeric"
-  });
-}
-
-function EmptyState({ tab }) {
-  const config = {
-    all: { icon: Globe, title: "No trips yet", desc: "Start by planning your first adventure." },
-    planned: { icon: BookOpen, title: "No planned trips", desc: "Plan a trip to see it here." },
-    active: { icon: PlayCircle, title: "No active trips", desc: "Activate a planned trip to begin your journey." },
-    completed: { icon: Trophy, title: "No completed trips", desc: "Complete an adventure to build your archive." },
-  };
-  const { icon: Icon, title, desc } = config[tab] || config.all;
+/* ── Empty State ─────────────────────────────────────────────── */
+function EmptyState() {
   return (
-    <div className="card-pure border-2 border-dashed border-pure rounded-[48px] text-center py-20 col-span-full">
-      <div className="w-20 h-20 bg-secondary-pure rounded-3xl flex items-center justify-center mx-auto mb-6">
-        <Icon className="w-10 h-10 text-muted-pure opacity-50" />
+    <div className="col-span-full flex flex-col items-center justify-center py-24 text-center">
+      <div className="w-24 h-24 rounded-3xl flex items-center justify-center mb-6 text-5xl"
+        style={{ background: "var(--accent-soft)" }}>
+        ✈️
       </div>
-      <h3 className="text-2xl font-black text-main-pure mb-2 tracking-tighter">{title}</h3>
-      <p className="text-muted-pure font-bold mb-8">{desc}</p>
+      <h3 className="text-3xl font-black tracking-tighter mb-2" style={{ color: "var(--text-primary)" }}>
+        No trips yet
+      </h3>
+      <p className="font-semibold mb-8" style={{ color: "var(--text-muted)" }}>
+        Your adventure archive is empty — start planning!
+      </p>
       <Link href="/dashboard/planner"
-        className="inline-flex items-center gap-3 px-8 py-4 bg-[var(--accent-primary)] text-white rounded-2xl font-black text-sm uppercase tracking-widest shadow-xl hover:-translate-y-1 transition-all">
-        <Plus className="w-4 h-4" /> Plan a Trip
+        className="inline-flex items-center gap-3 px-8 py-4 rounded-2xl font-bold text-sm text-white transition-all hover:-translate-y-1 hover:shadow-xl"
+        style={{ background: "linear-gradient(135deg,var(--accent-primary),var(--accent-secondary,#8b5cf6))" }}>
+        <Plus className="w-4 h-4" /> Plan Your First Trip
       </Link>
     </div>
   );
 }
 
-function TripCard({ trip, onActivate, activating }) {
-  const status = trip.status || "planned";
-  const sc = STATUS_CONFIG[status] || STATUS_CONFIG.planned;
-  const duration = getDurationDays(trip.start_date, trip.return_date || trip.end_date);
+/* ── Trip Card ───────────────────────────────────────────────── */
+function TripCard({ trip, onDelete, onDuplicate, onFavorite, loading }) {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [actioning, setActioning] = useState(null);
+  const days = getDays(trip.start_date, trip.end_date) || trip.duration_days;
+  const vibe = getVibe(trip.destination);
+  const isFav = trip.is_favorite || (trip.tags || []).includes("favorite");
+
+  const handle = async (fn, label) => {
+    setActioning(label); setMenuOpen(false);
+    try { await fn(); } catch (e) { alert(e?.response?.data?.detail || "Action failed"); }
+    setActioning(null);
+  };
+
+  const tc = trip.budget_summary?.total_cost;
+  const budget = trip.budget;
+  const pct = budget && tc ? Math.min(100, Math.round((tc / budget) * 100)) : null;
+  const sel = trip.transport?.provider || trip.transport?.mode || null;
+  const hotel = trip.stay?.name || null;
 
   return (
-    <div className="card-pure p-6 rounded-[32px] border border-pure hover:border-[var(--accent-primary)]/30 transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl group flex flex-col">
+    <div className="group rounded-3xl border overflow-hidden flex flex-col transition-all duration-500 hover:-translate-y-2"
+      style={{ background: "var(--card-bg)", borderColor: "var(--border-color)", boxShadow: "0 4px 32px rgba(0,0,0,0.06)" }}>
 
-      {/* Header Row */}
-      <div className="flex items-start justify-between mb-4">
-        <div className="flex-1 pr-3">
-          <div className="flex items-center gap-2 mb-2">
-            <span className={`text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-xl border ${sc.bg} ${sc.color} ${sc.border}`}>
-              {sc.label}
-            </span>
-            {duration && (
-              <span className="text-[10px] font-black text-muted-pure px-2 py-1 bg-secondary-pure rounded-xl">
-                {duration} day{duration !== 1 ? "s" : ""}
-              </span>
-            )}
-          </div>
-          <h3 className="text-2xl font-black text-main-pure tracking-tighter leading-tight group-hover:text-[var(--accent-primary)] transition-colors">
-            {trip.destination || "Unknown Destination"}
+      {/* Card header gradient */}
+      <div className="relative h-32 flex items-end p-5"
+        style={{ background: "linear-gradient(135deg,var(--accent-primary)18,var(--accent-secondary,#8b5cf6)10)" }}>
+        <span className="text-5xl absolute top-4 right-5 opacity-80">{vibe}</span>
+        <div className="flex-1">
+          <h3 className="text-xl font-black tracking-tight leading-tight group-hover:opacity-90 transition-opacity"
+            style={{ color: "var(--text-primary)" }}>
+            {trip.destination}
           </h3>
           {trip.source && (
-            <p className="text-xs font-bold text-muted-pure mt-1 flex items-center gap-1">
+            <p className="text-xs font-semibold flex items-center gap-1 mt-0.5" style={{ color: "var(--text-muted)" }}>
               <Plane className="w-3 h-3" /> from {trip.source}
             </p>
           )}
         </div>
-        <div className="w-14 h-14 bg-[var(--accent-soft)] rounded-2xl flex items-center justify-center flex-shrink-0 group-hover:bg-[var(--accent-primary)] transition-colors group-hover:rotate-3 duration-300">
-          <MapPin className="w-6 h-6 text-[var(--accent-primary)] group-hover:text-white transition-colors" />
+        {/* Favorite + Menu */}
+        <div className="flex items-center gap-2 absolute top-3 left-4">
+          <button onClick={() => handle(onFavorite, "fav")} disabled={actioning === "fav"}
+            className="w-8 h-8 flex items-center justify-center rounded-xl transition-all hover:scale-110"
+            style={{ background: "var(--card-bg)", color: isFav ? "#ef4444" : "var(--text-muted)" }}>
+            {actioning === "fav" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Heart className={`w-4 h-4 ${isFav ? "fill-current" : ""}`} />}
+          </button>
+        </div>
+        <div className="relative">
+          <button onClick={() => setMenuOpen((p) => !p)}
+            className="w-8 h-8 flex items-center justify-center rounded-xl transition-all hover:scale-110"
+            style={{ background: "var(--card-bg)", color: "var(--text-muted)" }}>
+            <MoreVertical className="w-4 h-4" />
+          </button>
+          {menuOpen && (
+            <div className="absolute right-0 top-10 z-20 rounded-2xl border shadow-2xl overflow-hidden min-w-[160px]"
+              style={{ background: "var(--card-bg)", borderColor: "var(--border-color)" }}>
+              {[
+                { icon: Copy, label: "Duplicate", key: "dup", fn: onDuplicate },
+                { icon: Trash2, label: "Delete", key: "del", fn: onDelete, danger: true },
+              ].map(({ icon: Icon, label, key, fn, danger }) => (
+                <button key={key} disabled={actioning === key}
+                  onClick={() => handle(fn, key)}
+                  className="w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold hover:bg-opacity-50 transition-colors"
+                  style={{ color: danger ? "#ef4444" : "var(--text-primary)" }}>
+                  {actioning === key ? <Loader2 className="w-4 h-4 animate-spin" /> : <Icon className="w-4 h-4" />}
+                  {label}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Trip Info Grid */}
-      <div className="grid grid-cols-2 gap-3 mb-5">
-        {(trip.start_date || trip.return_date) && (
-          <div className="bg-secondary-pure rounded-2xl p-3">
-            <p className="text-[9px] font-black text-muted-pure uppercase tracking-widest mb-0.5">Dates</p>
-            <p className="text-xs font-black text-main-pure">
-              {formatDate(trip.start_date)}
-              {trip.return_date && ` → ${formatDate(trip.return_date || trip.end_date)}`}
-            </p>
-          </div>
-        )}
-        {trip.budget > 0 && (
-          <div className="bg-secondary-pure rounded-2xl p-3">
-            <p className="text-[9px] font-black text-muted-pure uppercase tracking-widest mb-0.5">Budget</p>
-            <p className="text-xs font-black text-emerald-600 dark:text-emerald-400">
-              ₹{Number(trip.budget).toLocaleString("en-IN")}
-            </p>
-          </div>
-        )}
-        {trip.num_travelers > 0 && (
-          <div className="bg-secondary-pure rounded-2xl p-3">
-            <p className="text-[9px] font-black text-muted-pure uppercase tracking-widest mb-0.5">Travellers</p>
-            <p className="text-xs font-black text-main-pure flex items-center gap-1">
-              <Users className="w-3 h-3 text-muted-pure" /> {trip.num_travelers}
-            </p>
-          </div>
-        )}
-        {trip.group_type && (
-          <div className="bg-secondary-pure rounded-2xl p-3">
-            <p className="text-[9px] font-black text-muted-pure uppercase tracking-widest mb-0.5">Type</p>
-            <p className="text-xs font-black text-main-pure capitalize">{trip.group_type}</p>
-          </div>
-        )}
-      </div>
+      {/* Info chips */}
+      <div className="p-5 flex-1 flex flex-col gap-4">
+        <div className="flex flex-wrap gap-2">
+          {days && (
+            <span className="flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-xl"
+              style={{ background: "var(--accent-soft)", color: "var(--accent-primary)" }}>
+              <Clock className="w-3 h-3" /> {days}d
+            </span>
+          )}
+          {trip.num_travelers && (
+            <span className="flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-xl"
+              style={{ background: "var(--bg-secondary)", color: "var(--text-secondary)" }}>
+              <Users className="w-3 h-3" /> {trip.num_travelers}
+            </span>
+          )}
+          {trip.group_type && (
+            <span className="text-xs font-bold px-3 py-1.5 rounded-xl capitalize"
+              style={{ background: "var(--bg-secondary)", color: "var(--text-secondary)" }}>
+              {trip.group_type}
+            </span>
+          )}
+        </div>
 
-      {/* Action Buttons */}
-      <div className="mt-auto flex gap-2">
-        {status === "planned" && onActivate && (
-          <button
-            onClick={() => onActivate(trip.id)}
-            disabled={activating === trip.id}
-            className="flex-1 flex items-center justify-center gap-2 py-3 bg-[var(--accent-primary)] text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-[var(--accent-hover)] transition-all active:scale-95 disabled:opacity-60"
-          >
-            {activating === trip.id ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <PlayCircle className="w-4 h-4" />
-            )}
-            Activate
-          </button>
-        )}
-        {status === "completed" && (
-          <div className="flex-1 flex items-center justify-center gap-2 py-3 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-2xl font-black text-[10px] uppercase tracking-widest">
-            <Trophy className="w-4 h-4" /> Completed
+        {/* Dates + Budget */}
+        <div className="grid grid-cols-2 gap-3">
+          {(trip.start_date || trip.end_date) && (
+            <div className="rounded-2xl p-3" style={{ background: "var(--bg-secondary)" }}>
+              <p className="text-[9px] font-black uppercase tracking-widest mb-1" style={{ color: "var(--text-muted)" }}>Dates</p>
+              <p className="text-xs font-bold" style={{ color: "var(--text-primary)" }}>
+                {fmtDate(trip.start_date)}{trip.end_date && ` → ${fmtDate(trip.end_date)}`}
+              </p>
+            </div>
+          )}
+          {budget > 0 && (
+            <div className="rounded-2xl p-3" style={{ background: "var(--bg-secondary)" }}>
+              <p className="text-[9px] font-black uppercase tracking-widest mb-1" style={{ color: "var(--text-muted)" }}>Budget</p>
+              <p className="text-xs font-bold text-emerald-500">{fmtRs(budget)}</p>
+            </div>
+          )}
+        </div>
+
+        {/* Budget bar */}
+        {pct !== null && (
+          <div>
+            <div className="flex justify-between text-[10px] font-bold mb-1" style={{ color: "var(--text-muted)" }}>
+              <span>Spent: {fmtRs(tc)}</span><span>{pct}%</span>
+            </div>
+            <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "var(--border-color)" }}>
+              <div className="h-full rounded-full transition-all"
+                style={{ width: `${pct}%`, background: pct > 90 ? "#ef4444" : pct > 75 ? "#f59e0b" : "var(--accent-primary)" }} />
+            </div>
           </div>
         )}
-        <button className="flex-1 flex items-center justify-center gap-2 py-3 bg-secondary-pure text-main-pure rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-[var(--accent-soft)] hover:text-[var(--accent-primary)] transition-all group/btn">
-          View Details <ArrowRight className="w-3 h-3 group-hover/btn:translate-x-1 transition-transform" />
-        </button>
+
+        {/* Selected options preview */}
+        {(sel || hotel) && (
+          <div className="flex flex-col gap-1">
+            {sel && <p className="text-[10px] font-semibold" style={{ color: "var(--text-muted)" }}>✈️ {sel}</p>}
+            {hotel && <p className="text-[10px] font-semibold" style={{ color: "var(--text-muted)" }}>🏨 {hotel}</p>}
+          </div>
+        )}
+
+        {/* Action */}
+        <div className="mt-auto pt-2">
+          <Link href={`/dashboard/trips/${trip.id}`}
+            className="flex items-center justify-center gap-2 w-full py-3 rounded-2xl font-bold text-xs text-white transition-all hover:opacity-90 hover:-translate-y-0.5"
+            style={{ background: "linear-gradient(135deg,var(--accent-primary),var(--accent-secondary,#8b5cf6))" }}>
+            <Eye className="w-3.5 h-3.5" /> View Full Itinerary <ArrowRight className="w-3.5 h-3.5" />
+          </Link>
+        </div>
       </div>
     </div>
   );
 }
 
-const TABS = ["all", "planned", "active", "completed"];
+/* ── Stats Bar ───────────────────────────────────────────────── */
+function StatsBar({ trips }) {
+  const totBudget = trips.reduce((s, t) => s + (Number(t.budget) || 0), 0);
+  const favCount = trips.filter((t) => t.is_favorite || (t.tags || []).includes("favorite")).length;
+  const stats = [
+    { label: "Total Trips", value: trips.length, icon: Globe, color: "#6366f1" },
+    { label: "Favourites", value: favCount, icon: Heart, color: "#ef4444" },
+    { label: "Total Budget", value: totBudget > 0 ? fmtRs(totBudget) : "—", icon: Wallet, color: "#10b981" },
+  ];
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">
+      {stats.map(({ label, value, icon: Icon, color }) => (
+        <div key={label} className="flex items-center gap-4 rounded-3xl border p-5 transition-all hover:-translate-y-1"
+          style={{ background: "var(--card-bg)", borderColor: "var(--border-color)" }}>
+          <div className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0"
+            style={{ background: `${color}18` }}>
+            <Icon className="w-6 h-6" style={{ color }} />
+          </div>
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-widest" style={{ color: "var(--text-muted)" }}>{label}</p>
+            <p className="text-2xl font-black tracking-tight" style={{ color: "var(--text-primary)" }}>{value}</p>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ── Main page ───────────────────────────────────────────────── */
+const SORTS = ["Newest", "Oldest", "Budget ↑", "Budget ↓", "Duration"];
 
 export default function MyTripsPage() {
-  const { trips, fetchMyTrips, activateTrip, tripsLoaded } = useTripStore();
-  const [activeTab, setActiveTab] = useState("all");
+  const { trips, fetchMyTrips, deleteTrip, duplicateTrip, toggleFavTrip, tripsLoaded } = useTripStore();
   const [search, setSearch] = useState("");
-  const [activating, setActivating] = useState(null);
+  const [sortBy, setSortBy] = useState("Newest");
+  const [filterFav, setFilterFav] = useState(false);
   const router = useRouter();
 
-  useEffect(() => {
-    fetchMyTrips();
-  }, []);
+  useEffect(() => { fetchMyTrips(); }, []);
 
-  // Stats
-  const totalBudget = useMemo(() =>
-    trips.reduce((sum, t) => sum + (Number(t.budget) || 0), 0), [trips]);
-  const completedCount = useMemo(() =>
-    trips.filter(t => t.status === "completed").length, [trips]);
-  const activeCount = useMemo(() =>
-    trips.filter(t => t.status === "active").length, [trips]);
-
-  // Filter + search
   const filtered = useMemo(() => {
-    return trips
-      .filter(t => activeTab === "all" || t.status === activeTab)
-      .filter(t => !search || (t.destination || "").toLowerCase().includes(search.toLowerCase()));
-  }, [trips, activeTab, search]);
-
-  const handleActivate = async (tripId) => {
-    setActivating(tripId);
-    await activateTrip(tripId);
-    setActivating(null);
-  };
+    let list = [...trips];
+    if (search) list = list.filter((t) => (t.destination || "").toLowerCase().includes(search.toLowerCase()));
+    if (filterFav) list = list.filter((t) => t.is_favorite || (t.tags || []).includes("favorite"));
+    switch (sortBy) {
+      case "Oldest":   list.sort((a, b) => new Date(a.created_at) - new Date(b.created_at)); break;
+      case "Budget ↑": list.sort((a, b) => (a.budget || 0) - (b.budget || 0)); break;
+      case "Budget ↓": list.sort((a, b) => (b.budget || 0) - (a.budget || 0)); break;
+      case "Duration": list.sort((a, b) => (b.duration_days || 0) - (a.duration_days || 0)); break;
+      default:         list.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    }
+    return list;
+  }, [trips, search, sortBy, filterFav]);
 
   return (
-    <div className="pb-20 animate-in fade-in slide-in-from-bottom-4 duration-700">
-
-      {/* Page Header */}
-      <div className="mb-12">
-        <h1 className="text-6xl font-black text-main-pure tracking-tighter lowercase leading-none">
-          My Journeys<span className="text-[var(--accent-primary)]">.</span>
+    <div className="pb-24 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      {/* Header */}
+      <div className="mb-10">
+        <h1 className="text-5xl font-black tracking-tighter leading-none mb-2" style={{ color: "var(--text-primary)" }}>
+          My Journeys<span style={{ color: "var(--accent-primary)" }}>.</span>
         </h1>
-        <p className="text-muted-pure font-bold mt-3">Your adventure archive — planned, active & completed</p>
+        <p className="font-semibold" style={{ color: "var(--text-muted)" }}>
+          Your complete travel archive — {trips.length} trip{trips.length !== 1 ? "s" : ""} saved
+        </p>
       </div>
 
-      {/* Stats Bar */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-12">
-        {[
-          { label: "Total Trips", value: trips.length, icon: Globe, iconColor: "text-indigo-500", bgColor: "bg-indigo-500/10" },
-          { label: "Completed", value: completedCount, icon: Trophy, iconColor: "text-emerald-500", bgColor: "bg-emerald-500/10" },
-          {
-            label: "Total Budget",
-            value: totalBudget > 0 ? `₹${totalBudget.toLocaleString("en-IN")}` : "—",
-            icon: Wallet, iconColor: "text-amber-500", bgColor: "bg-amber-500/10"
-          },
-        ].map(({ label, value, icon: Icon, iconColor, bgColor }) => (
-          <div key={label} className="card-pure p-6 rounded-[32px] border border-pure hover:-translate-y-1 transition-all duration-300 shadow-sm">
-            <div className="flex items-center gap-4">
-              <div className={`w-12 h-12 ${bgColor} rounded-2xl flex items-center justify-center`}>
-                <Icon className={`w-6 h-6 ${iconColor}`} />
-              </div>
-              <div>
-                <p className="text-[10px] font-black text-muted-pure uppercase tracking-widest">{label}</p>
-                <p className="text-2xl font-black text-main-pure tracking-tighter">{value}</p>
-              </div>
-            </div>
-          </div>
-        ))}
+      {/* Stats */}
+      {trips.length > 0 && <StatsBar trips={trips} />}
+
+      {/* Toolbar */}
+      <div className="flex flex-col sm:flex-row gap-3 mb-8">
+        {/* Search */}
+        <div className="relative flex-1">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "var(--text-muted)" }} />
+          <input value={search} onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search by destination…"
+            className="w-full pl-11 pr-4 py-3.5 rounded-2xl border text-sm font-semibold outline-none transition-all focus:ring-2"
+            style={{ background: "var(--card-bg)", borderColor: "var(--border-color)", color: "var(--text-primary)", "--tw-ring-color": "var(--accent-primary)" }} />
+        </div>
+
+        {/* Fav filter */}
+        <button onClick={() => setFilterFav((p) => !p)}
+          className="flex items-center gap-2 px-4 py-3 rounded-2xl border font-bold text-sm transition-all hover:-translate-y-0.5"
+          style={{ background: filterFav ? "#ef444415" : "var(--card-bg)", borderColor: filterFav ? "#ef4444" : "var(--border-color)", color: filterFav ? "#ef4444" : "var(--text-secondary)" }}>
+          <Heart className={`w-4 h-4 ${filterFav ? "fill-current" : ""}`} /> Favs
+        </button>
+
+        {/* Sort */}
+        <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}
+          className="px-4 py-3 rounded-2xl border font-bold text-sm outline-none cursor-pointer"
+          style={{ background: "var(--card-bg)", borderColor: "var(--border-color)", color: "var(--text-primary)" }}>
+          {SORTS.map((s) => <option key={s}>{s}</option>)}
+        </select>
+
+        {/* Plan new */}
+        <Link href="/dashboard/planner"
+          className="flex items-center gap-2 px-5 py-3 rounded-2xl font-bold text-sm text-white transition-all hover:-translate-y-1 hover:shadow-lg whitespace-nowrap"
+          style={{ background: "linear-gradient(135deg,var(--accent-primary),var(--accent-secondary,#8b5cf6))" }}>
+          <Plus className="w-4 h-4" /> Plan Trip
+        </Link>
       </div>
 
-      {/* Search */}
-      <div className="relative mb-6">
-        <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-pure pointer-events-none" />
-        <input
-          type="text"
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          placeholder="Search by destination..."
-          className="input-pure w-full pl-14 pr-5 py-4 rounded-2xl text-sm font-bold"
-        />
-      </div>
-
-      {/* Status Filter Tabs */}
-      <div className="flex gap-8 border-b border-pure mb-10 overflow-x-auto scrollbar-none">
-        {TABS.map(tab => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`pb-5 text-xs font-black uppercase tracking-[0.2em] relative flex-shrink-0 transition-all ${
-              activeTab === tab ? "text-[var(--accent-primary)]" : "text-muted-pure hover:text-main-pure"
-            }`}
-          >
-            {tab}
-            <span className="ml-2 text-[9px] font-black opacity-60">
-              ({tab === "all" ? trips.length : trips.filter(t => t.status === tab).length})
-            </span>
-            {activeTab === tab && (
-              <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-[var(--accent-primary)] rounded-full" />
-            )}
-          </button>
-        ))}
-      </div>
-
-      {/* Content */}
+      {/* Grid */}
       {!tripsLoaded ? (
-        <div className="flex items-center justify-center py-20">
-          <Loader2 className="w-10 h-10 text-[var(--accent-primary)] animate-spin" />
+        <div className="flex items-center justify-center py-24">
+          <Loader2 className="w-10 h-10 animate-spin" style={{ color: "var(--accent-primary)" }} />
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-          {filtered.length === 0 ? (
-            <EmptyState tab={activeTab} />
-          ) : (
-            filtered.map(trip => (
-              <TripCard
-                key={trip.id}
-                trip={trip}
-                onActivate={handleActivate}
-                activating={activating}
-              />
-            ))
-          )}
+          {filtered.length === 0 ? <EmptyState /> : filtered.map((trip) => (
+            <TripCard key={trip.id} trip={trip}
+              onDelete={() => deleteTrip(trip.id)}
+              onDuplicate={() => duplicateTrip(trip.id)}
+              onFavorite={() => toggleFavTrip(trip.id)}
+            />
+          ))}
         </div>
       )}
-
-      {/* New Trip CTA */}
-      <div className="mt-16 flex justify-center">
-        <Link href="/dashboard/planner"
-          className="flex items-center gap-4 px-10 py-5 bg-[var(--accent-primary)] text-white rounded-[24px] font-black uppercase tracking-widest text-xs shadow-2xl hover:-translate-y-1 transition-all hover:bg-[var(--accent-hover)]">
-          <Plus className="w-4 h-4" /> Plan a New Journey
-        </Link>
-      </div>
     </div>
   );
 }
