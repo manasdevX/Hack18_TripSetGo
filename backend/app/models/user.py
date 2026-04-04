@@ -65,3 +65,10 @@ class User(Base):
     daily_limit = Column(Integer, nullable=False, default=5)
     daily_usage = Column(Integer, nullable=False, default=0)
     last_usage_reset = Column(Date, nullable=True)
+
+    # --- Social / Discover fields ---
+    username = Column(String(50), unique=True, nullable=True, index=True)
+    profile_image = Column(String(500), nullable=True)
+    bio = Column(String(500), nullable=True)
+    followers_count = Column(Integer, nullable=False, default=0)
+    following_count = Column(Integer, nullable=False, default=0)

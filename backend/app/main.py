@@ -10,6 +10,7 @@ from app.api.v1.endpoints.expenses import router as expenses_router
 from app.api.v1.endpoints.users import router as users_router
 from app.api.v1.endpoints.subscription import router as subscription_router
 from app.api.v1.trips.routes import router as trips_router
+from app.api.v1.discover.routes import router as discover_router
 from app.database.base import engine, Base
 from app.routes.payments import router as payment_router
 
@@ -24,9 +25,10 @@ from app.models.user import User  # noqa: F401
 from app.models.email_otp import EmailOTP  # noqa: F401
 from app.models.refresh_token import RefreshToken  # noqa: F401
 from app.models.password_reset import PasswordReset  # noqa: F401
+from app.models.trip import Trip, TripLike, TripSave, TripComment, UserFollow  # noqa: F401
 
 # Create tables in Neon (Note: Use Alembic for production schema changes)
-Base.metadata.create_all(bind=engine)
+# Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title=settings.API_TITLE,
@@ -68,6 +70,9 @@ app.include_router(subscription_router, prefix="/api/v1/subscription", tags=["Su
 # Trips Router: delegates trip planning to Orchestrator multi-agent pipeline
 # TODO: Implement trips router when orchestrator integration is ready
 # app.include_router(trips_router, prefix="/api/v1/trips", tags=["Trips"])
+
+# Discover Router: Social travel feed, likes, saves, comments, clone
+app.include_router(discover_router, prefix="/api/v1", tags=["Discover"])
 
 
 @app.get("/health")

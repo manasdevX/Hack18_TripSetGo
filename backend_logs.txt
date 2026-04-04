@@ -1,0 +1,177 @@
+backend-1  | /app/app/api/v1/discover/routes.py:108: FastAPIDeprecationWarning: `regex` has been deprecated, please use `pattern` instead
+backend-1  |   sort: Optional[str] = Query("trending", regex="^(trending|newest|popular|budget)$"),
+backend-1  | Traceback (most recent call last):
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 143, in __init__
+backend-1  |     self._dbapi_connection = engine.raw_connection()
+backend-1  |                              ^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 3317, in raw_connection
+backend-1  |     return self.pool.connect()
+backend-1  |            ^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/pool/base.py", line 448, in connect
+backend-1  |     return _ConnectionFairy._checkout(self)
+backend-1  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/pool/base.py", line 1272, in _checkout
+backend-1  |     fairy = _ConnectionRecord.checkout(pool)
+backend-1  |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/pool/base.py", line 712, in checkout
+backend-1  |     rec = pool._do_get()
+backend-1  |           ^^^^^^^^^^^^^^
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/pool/impl.py", line 177, in _do_get
+backend-1  |     with util.safe_reraise():
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/util/langhelpers.py", line 121, in __exit__
+backend-1  |     raise exc_value.with_traceback(exc_tb)
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/pool/impl.py", line 175, in _do_get
+backend-1  |     return self._create_connection()
+backend-1  |            ^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/pool/base.py", line 389, in _create_connection
+backend-1  |     return _ConnectionRecord(self)
+backend-1  |            ^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/pool/base.py", line 674, in __init__
+backend-1  |     self.__connect()
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/pool/base.py", line 914, in __connect
+backend-1  |     )._exec_w_sync_on_first_run(self.dbapi_connection, self)
+backend-1  |       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/event/attr.py", line 501, in _exec_w_sync_on_first_run
+backend-1  |     self(*args, **kw)
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/event/attr.py", line 515, in __call__
+backend-1  |     fn(*args, **kw)
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/create.py", line 745, in on_connect
+backend-1  |     do_on_connect(dbapi_connection)
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/dialects/postgresql/psycopg2.py", line 784, in on_connect
+backend-1  |     fn(dbapi_conn)
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/dialects/postgresql/psycopg2.py", line 759, in on_connect
+backend-1  |     hstore_oids = self._hstore_oids(dbapi_conn)
+backend-1  |                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/util/langhelpers.py", line 1172, in oneshot
+backend-1  |     result = fn(self, *args, **kw)
+backend-1  |              ^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/dialects/postgresql/psycopg2.py", line 835, in _hstore_oids
+backend-1  |     oids = extras.HstoreAdapter.get_oids(dbapi_connection)
+backend-1  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/psycopg2/extras.py", line 907, in get_oids
+backend-1  |     curs.execute(f"""SELECT t.oid, {typarray}
+backend-1  | psycopg2.OperationalError: SSL SYSCALL error: EOF detected
+backend-1  | 
+backend-1  | 
+backend-1  | The above exception was the direct cause of the following exception:
+backend-1  | 
+backend-1  | Traceback (most recent call last):
+backend-1  |   File "/usr/local/bin/uvicorn", line 8, in <module>
+backend-1  |     sys.exit(main())
+backend-1  |              ^^^^^^
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1485, in __call__
+backend-1  |     return self.main(*args, **kwargs)
+backend-1  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1406, in main
+backend-1  |     rv = self.invoke(ctx)
+backend-1  |          ^^^^^^^^^^^^^^^^
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/click/core.py", line 1269, in invoke
+backend-1  |     return ctx.invoke(self.callback, **ctx.params)
+backend-1  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/click/core.py", line 824, in invoke
+backend-1  |     return callback(*args, **kwargs)
+backend-1  |            ^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/uvicorn/main.py", line 433, in main
+backend-1  |     run(
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/uvicorn/main.py", line 606, in run
+backend-1  |     server.run()
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/uvicorn/server.py", line 75, in run
+backend-1  |     return asyncio_run(self.serve(sockets=sockets), loop_factory=self.config.get_loop_factory())
+backend-1  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/uvicorn/_compat.py", line 30, in asyncio_run
+backend-1  |     return runner.run(main)
+backend-1  |            ^^^^^^^^^^^^^^^^
+backend-1  |   File "/usr/local/lib/python3.11/asyncio/runners.py", line 118, in run
+backend-1  |     return self._loop.run_until_complete(task)
+backend-1  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "uvloop/loop.pyx", line 1518, in uvloop.loop.Loop.run_until_complete
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/uvicorn/server.py", line 79, in serve
+backend-1  |     await self._serve(sockets)
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/uvicorn/server.py", line 86, in _serve
+backend-1  |     config.load()
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/uvicorn/config.py", line 441, in load
+backend-1  |     self.loaded_app = import_from_string(self.app)
+backend-1  |                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/uvicorn/importer.py", line 19, in import_from_string
+backend-1  |     module = importlib.import_module(module_str)
+backend-1  |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/usr/local/lib/python3.11/importlib/__init__.py", line 126, in import_module
+backend-1  |     return _bootstrap._gcd_import(name[level:], package, level)
+backend-1  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "<frozen importlib._bootstrap>", line 1204, in _gcd_import
+backend-1  |   File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
+backend-1  |   File "<frozen importlib._bootstrap>", line 1147, in _find_and_load_unlocked
+backend-1  |   File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+backend-1  |   File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+backend-1  |   File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+backend-1  |   File "/app/app/main.py", line 31, in <module>
+backend-1  |     Base.metadata.create_all(bind=engine)
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/sql/schema.py", line 5931, in create_all
+backend-1  |     bind._run_ddl_visitor(
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 3267, in _run_ddl_visitor
+backend-1  |     with self.begin() as conn:
+backend-1  |   File "/usr/local/lib/python3.11/contextlib.py", line 137, in __enter__
+backend-1  |     return next(self.gen)
+backend-1  |            ^^^^^^^^^^^^^^
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 3257, in begin
+backend-1  |     with self.connect() as conn:
+backend-1  |          ^^^^^^^^^^^^^^
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 3293, in connect
+backend-1  |     return self._connection_cls(self)
+backend-1  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 145, in __init__
+backend-1  |     Connection._handle_dbapi_exception_noconnection(
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 2448, in _handle_dbapi_exception_noconnection
+backend-1  |     raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 143, in __init__
+backend-1  |     self._dbapi_connection = engine.raw_connection()
+backend-1  |                              ^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 3317, in raw_connection
+backend-1  |     return self.pool.connect()
+backend-1  |            ^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/pool/base.py", line 448, in connect
+backend-1  |     return _ConnectionFairy._checkout(self)
+backend-1  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/pool/base.py", line 1272, in _checkout
+backend-1  |     fairy = _ConnectionRecord.checkout(pool)
+backend-1  |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/pool/base.py", line 712, in checkout
+backend-1  |     rec = pool._do_get()
+backend-1  |           ^^^^^^^^^^^^^^
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/pool/impl.py", line 177, in _do_get
+backend-1  |     with util.safe_reraise():
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/util/langhelpers.py", line 121, in __exit__
+backend-1  |     raise exc_value.with_traceback(exc_tb)
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/pool/impl.py", line 175, in _do_get
+backend-1  |     return self._create_connection()
+backend-1  |            ^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/pool/base.py", line 389, in _create_connection
+backend-1  |     return _ConnectionRecord(self)
+backend-1  |            ^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/pool/base.py", line 674, in __init__
+backend-1  |     self.__connect()
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/pool/base.py", line 914, in __connect
+backend-1  |     )._exec_w_sync_on_first_run(self.dbapi_connection, self)
+backend-1  |       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/event/attr.py", line 501, in _exec_w_sync_on_first_run
+backend-1  |     self(*args, **kw)
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/event/attr.py", line 515, in __call__
+backend-1  |     fn(*args, **kw)
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/create.py", line 745, in on_connect
+backend-1  |     do_on_connect(dbapi_connection)
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/dialects/postgresql/psycopg2.py", line 784, in on_connect
+backend-1  |     fn(dbapi_conn)
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/dialects/postgresql/psycopg2.py", line 759, in on_connect
+backend-1  |     hstore_oids = self._hstore_oids(dbapi_conn)
+backend-1  |                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/util/langhelpers.py", line 1172, in oneshot
+backend-1  |     result = fn(self, *args, **kw)
+backend-1  |              ^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/dialects/postgresql/psycopg2.py", line 835, in _hstore_oids
+backend-1  |     oids = extras.HstoreAdapter.get_oids(dbapi_connection)
+backend-1  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/psycopg2/extras.py", line 907, in get_oids
+backend-1  |     curs.execute(f"""SELECT t.oid, {typarray}
+backend-1  | sqlalchemy.exc.OperationalError: (psycopg2.OperationalError) SSL SYSCALL error: EOF detected
+backend-1  | 
+backend-1  | (Background on this error at: https://sqlalche.me/e/20/e3q8)

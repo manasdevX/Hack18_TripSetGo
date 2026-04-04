@@ -1,0 +1,291 @@
+﻿backend-1  | /app/app/api/v1/discover/routes.py:108: FastAPIDeprecationWarning: `regex` has been deprecated, please use `pattern` instead
+backend-1  |   sort: Optional[str] = Query("trending", regex="^(trending|newest|popular|budget)$"),
+backend-1  | INFO:     Started server process [1]
+backend-1  | INFO:     Waiting for application startup.
+backend-1  | INFO:     Application startup complete.
+backend-1  | INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+backend-1  | INFO:     172.18.0.1:47260 - "OPTIONS /api/v1/auth/google/start HTTP/1.1" 200 OK
+backend-1  | INFO:sqlalchemy.engine.Engine:select pg_catalog.version()
+backend-1  | INFO:sqlalchemy.engine.Engine:[raw sql] {}
+backend-1  | 2026-04-04 15:38:03,334 INFO sqlalchemy.engine.Engine select pg_catalog.version()
+backend-1  | 2026-04-04 15:38:03,334 INFO sqlalchemy.engine.Engine [raw sql] {}
+backend-1  | INFO:sqlalchemy.engine.Engine:select current_schema()
+backend-1  | INFO:sqlalchemy.engine.Engine:[raw sql] {}
+backend-1  | 2026-04-04 15:38:04,071 INFO sqlalchemy.engine.Engine select current_schema()
+backend-1  | 2026-04-04 15:38:04,071 INFO sqlalchemy.engine.Engine [raw sql] {}
+backend-1  | 2026-04-04 15:38:04,429 INFO sqlalchemy.engine.Engine show standard_conforming_strings
+backend-1  | INFO:sqlalchemy.engine.Engine:show standard_conforming_strings
+backend-1  | INFO:sqlalchemy.engine.Engine:[raw sql] {}
+backend-1  | 2026-04-04 15:38:04,429 INFO sqlalchemy.engine.Engine [raw sql] {}
+backend-1  | INFO:sqlalchemy.engine.Engine:BEGIN (implicit)
+backend-1  | 2026-04-04 15:38:05,603 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+backend-1  | INFO:sqlalchemy.engine.Engine:SELECT users.id AS users_id, users.email AS users_email, users.password_hash AS users_password_hash, users.full_name AS users_full_name, users.google_sub AS users_google_sub, users.signup_source AS users_signup_source, users.email_verified AS users_email_verified, users.is_active AS users_is_active, users.created_at AS users_created_at, users.updated_at AS users_updated_at, users.subscription_type AS users_subscription_type, users.subscription_status AS users_subscription_status, users.subscription_expiry AS users_subscription_expiry, users.daily_limit AS users_daily_limit, users.daily_usage AS users_daily_usage, users.last_usage_reset AS users_last_usage_reset, users.username AS users_username, users.profile_image AS users_profile_image, users.bio AS users_bio, users.followers_count AS users_followers_count, users.following_count AS users_following_count 
+backend-1  | FROM users 
+backend-1  | WHERE users.email ILIKE %(email_1)s 
+backend-1  | 2026-04-04 15:38:05,608 INFO sqlalchemy.engine.Engine SELECT users.id AS users_id, users.email AS users_email, users.password_hash AS users_password_hash, users.full_name AS users_full_name, users.google_sub AS users_google_sub, users.signup_source AS users_signup_source, users.email_verified AS users_email_verified, users.is_active AS users_is_active, users.created_at AS users_created_at, users.updated_at AS users_updated_at, users.subscription_type AS users_subscription_type, users.subscription_status AS users_subscription_status, users.subscription_expiry AS users_subscription_expiry, users.daily_limit AS users_daily_limit, users.daily_usage AS users_daily_usage, users.last_usage_reset AS users_last_usage_reset, users.username AS users_username, users.profile_image AS users_profile_image, users.bio AS users_bio, users.followers_count AS users_followers_count, users.following_count AS users_following_count 
+backend-1  | FROM users 
+backend-1  | WHERE users.email ILIKE %(email_1)s 
+backend-1  |  LIMIT %(param_1)s
+backend-1  | 2026-04-04 15:38:05,608 INFO sqlalchemy.engine.Engine [generated in 0.00027s] {'email_1': 'agnihotrimanas99@gmail.com', 'param_1': 1}
+backend-1  |  LIMIT %(param_1)s
+backend-1  | INFO:sqlalchemy.engine.Engine:[generated in 0.00027s] {'email_1': 'agnihotrimanas99@gmail.com', 'param_1': 1}
+backend-1  | 2026-04-04 15:38:06,123 INFO sqlalchemy.engine.Engine ROLLBACK
+backend-1  | INFO:sqlalchemy.engine.Engine:ROLLBACK
+backend-1  | INFO:     172.18.0.1:47260 - "POST /api/v1/auth/google/start HTTP/1.1" 500 Internal Server Error
+backend-1  | ERROR:    Exception in ASGI application
+backend-1  | Traceback (most recent call last):
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
+backend-1  |     self.dialect.do_execute(
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/default.py", line 952, in do_execute
+backend-1  |     cursor.execute(statement, parameters)
+backend-1  | psycopg2.errors.UndefinedColumn: column users.username does not exist
+backend-1  | LINE 1: ...users.last_usage_reset AS users_last_usage_reset, users.user...
+backend-1  |                                                              ^
+backend-1  | 
+backend-1  | 
+backend-1  | The above exception was the direct cause of the following exception:
+backend-1  | 
+backend-1  | Traceback (most recent call last):
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/uvicorn/protocols/http/httptools_impl.py", line 420, in run_asgi
+backend-1  |     result = await app(  # type: ignore[func-returns-value]
+backend-1  |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/uvicorn/middleware/proxy_headers.py", line 60, in __call__
+backend-1  |     return await self.app(scope, receive, send)
+backend-1  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/fastapi/applications.py", line 1163, in __call__
+backend-1  |     await super().__call__(scope, receive, send)
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/starlette/applications.py", line 90, in __call__
+backend-1  |     await self.middleware_stack(scope, receive, send)
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/starlette/middleware/errors.py", line 186, in __call__
+backend-1  |     raise exc
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/starlette/middleware/errors.py", line 164, in __call__
+backend-1  |     await self.app(scope, receive, _send)
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/starlette/middleware/cors.py", line 96, in __call__
+backend-1  |     await self.simple_response(scope, receive, send, request_headers=headers)
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/starlette/middleware/cors.py", line 154, in simple_response
+backend-1  |     await self.app(scope, receive, send)
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
+backend-1  |     await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+backend-1  |     raise exc
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+backend-1  |     await app(scope, receive, sender)
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/fastapi/middleware/asyncexitstack.py", line 18, in __call__
+backend-1  |     await self.app(scope, receive, send)
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/starlette/routing.py", line 660, in __call__
+backend-1  |     await self.middleware_stack(scope, receive, send)
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/starlette/routing.py", line 680, in app
+backend-1  |     await route.handle(scope, receive, send)
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/starlette/routing.py", line 276, in handle
+backend-1  |     await self.app(scope, receive, send)
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 134, in app
+backend-1  |     await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+backend-1  |     raise exc
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+backend-1  |     await app(scope, receive, sender)
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 120, in app
+backend-1  |     response = await f(request)
+backend-1  |                ^^^^^^^^^^^^^^^^
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 674, in app
+backend-1  |     raw_response = await run_endpoint_function(
+backend-1  |                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 330, in run_endpoint_function
+backend-1  |     return await run_in_threadpool(dependant.call, **values)
+backend-1  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/starlette/concurrency.py", line 32, in run_in_threadpool
+backend-1  |     return await anyio.to_thread.run_sync(func)
+backend-1  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/anyio/to_thread.py", line 63, in run_sync
+backend-1  |     return await get_async_backend().run_sync_in_worker_thread(
+backend-1  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/anyio/_backends/_asyncio.py", line 2518, in run_sync_in_worker_thread
+backend-1  |     return await future
+backend-1  |            ^^^^^^^^^^^^
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/anyio/_backends/_asyncio.py", line 1002, in run
+backend-1  |     result = context.run(func, *args)
+backend-1  |              ^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/app/app/api/v1/auth/auth.py", line 169, in google_start
+backend-1  |     user = db.query(User).filter(User.email.ilike(email)).first()
+backend-1  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/query.py", line 2766, in first
+backend-1  |     return self.limit(1)._iter().first()  # type: ignore
+backend-1  |            ^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/query.py", line 2864, in _iter
+backend-1  |     result: Union[ScalarResult[_T], Result[_T]] = self.session.execute(
+backend-1  |                                                   ^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/session.py", line 2351, in execute
+backend-1  |     return self._execute_internal(
+backend-1  |            ^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/session.py", line 2249, in _execute_internal
+backend-1  |     result: Result[Any] = compile_state_cls.orm_execute_statement(
+backend-1  |                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/context.py", line 306, in orm_execute_statement
+backend-1  |     result = conn.execute(
+backend-1  |              ^^^^^^^^^^^^^
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1419, in execute
+backend-1  |     return meth(
+backend-1  |            ^^^^^
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/sql/elements.py", line 527, in _execute_on_connection
+backend-1  |     return connection._execute_clauseelement(
+backend-1  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1641, in _execute_clauseelement
+backend-1  |     ret = self._execute_context(
+backend-1  |           ^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1846, in _execute_context
+backend-1  |     return self._exec_single_context(
+backend-1  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1986, in _exec_single_context
+backend-1  |     self._handle_dbapi_exception(
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 2363, in _handle_dbapi_exception
+backend-1  |     raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
+backend-1  |     self.dialect.do_execute(
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/default.py", line 952, in do_execute
+backend-1  |     cursor.execute(statement, parameters)
+backend-1  | sqlalchemy.exc.ProgrammingError: (psycopg2.errors.UndefinedColumn) column users.username does not exist
+backend-1  | LINE 1: ...users.last_usage_reset AS users_last_usage_reset, users.user...
+backend-1  |                                                              ^
+backend-1  | 
+backend-1  | [SQL: SELECT users.id AS users_id, users.email AS users_email, users.password_hash AS users_password_hash, users.full_name AS users_full_name, users.google_sub AS users_google_sub, users.signup_source AS users_signup_source, users.email_verified AS users_email_verified, users.is_active AS users_is_active, users.created_at AS users_created_at, users.updated_at AS users_updated_at, users.subscription_type AS users_subscription_type, users.subscription_status AS users_subscription_status, users.subscription_expiry AS users_subscription_expiry, users.daily_limit AS users_daily_limit, users.daily_usage AS users_daily_usage, users.last_usage_reset AS users_last_usage_reset, users.username AS users_username, users.profile_image AS users_profile_image, users.bio AS users_bio, users.followers_count AS users_followers_count, users.following_count AS users_following_count 
+backend-1  | FROM users 
+backend-1  | WHERE users.email ILIKE %(email_1)s 
+backend-1  |  LIMIT %(param_1)s]
+backend-1  | [parameters: {'email_1': 'agnihotrimanas99@gmail.com', 'param_1': 1}]
+backend-1  | (Background on this error at: https://sqlalche.me/e/20/f405)
+backend-1  | 2026-04-04 15:38:37,309 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+backend-1  | INFO:sqlalchemy.engine.Engine:BEGIN (implicit)
+backend-1  | INFO:sqlalchemy.engine.Engine:SELECT users.id AS users_id, users.email AS users_email, users.password_hash AS users_password_hash, users.full_name AS users_full_name, users.google_sub AS users_google_sub, users.signup_source AS users_signup_source, users.email_verified AS users_email_verified, users.is_active AS users_is_active, users.created_at AS users_created_at, users.updated_at AS users_updated_at, users.subscription_type AS users_subscription_type, users.subscription_status AS users_subscription_status, users.subscription_expiry AS users_subscription_expiry, users.daily_limit AS users_daily_limit, users.daily_usage AS users_daily_usage, users.last_usage_reset AS users_last_usage_reset, users.username AS users_username, users.profile_image AS users_profile_image, users.bio AS users_bio, users.followers_count AS users_followers_count, users.following_count AS users_following_count 
+backend-1  | FROM users 
+backend-1  | WHERE users.email ILIKE %(email_1)s 
+backend-1  |  LIMIT %(param_1)s
+backend-1  | INFO:sqlalchemy.engine.Engine:[cached since 31.7s ago] {'email_1': 'agnihotrimanas99@gmail.com', 'param_1': 1}
+backend-1  | 2026-04-04 15:38:37,310 INFO sqlalchemy.engine.Engine SELECT users.id AS users_id, users.email AS users_email, users.password_hash AS users_password_hash, users.full_name AS users_full_name, users.google_sub AS users_google_sub, users.signup_source AS users_signup_source, users.email_verified AS users_email_verified, users.is_active AS users_is_active, users.created_at AS users_created_at, users.updated_at AS users_updated_at, users.subscription_type AS users_subscription_type, users.subscription_status AS users_subscription_status, users.subscription_expiry AS users_subscription_expiry, users.daily_limit AS users_daily_limit, users.daily_usage AS users_daily_usage, users.last_usage_reset AS users_last_usage_reset, users.username AS users_username, users.profile_image AS users_profile_image, users.bio AS users_bio, users.followers_count AS users_followers_count, users.following_count AS users_following_count 
+backend-1  | FROM users 
+backend-1  | WHERE users.email ILIKE %(email_1)s 
+backend-1  |  LIMIT %(param_1)s
+backend-1  | 2026-04-04 15:38:37,310 INFO sqlalchemy.engine.Engine [cached since 31.7s ago] {'email_1': 'agnihotrimanas99@gmail.com', 'param_1': 1}
+backend-1  | 2026-04-04 15:38:37,629 INFO sqlalchemy.engine.Engine ROLLBACK
+backend-1  | INFO:sqlalchemy.engine.Engine:ROLLBACK
+backend-1  | INFO:     172.18.0.1:47270 - "POST /api/v1/auth/google/start HTTP/1.1" 500 Internal Server Error
+backend-1  | ERROR:    Exception in ASGI application
+backend-1  | Traceback (most recent call last):
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
+backend-1  |     self.dialect.do_execute(
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/default.py", line 952, in do_execute
+backend-1  |     cursor.execute(statement, parameters)
+backend-1  | psycopg2.errors.UndefinedColumn: column users.username does not exist
+backend-1  | LINE 1: ...users.last_usage_reset AS users_last_usage_reset, users.user...
+backend-1  |                                                              ^
+backend-1  | 
+backend-1  | 
+backend-1  | The above exception was the direct cause of the following exception:
+backend-1  | 
+backend-1  | Traceback (most recent call last):
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/uvicorn/protocols/http/httptools_impl.py", line 420, in run_asgi
+backend-1  |     result = await app(  # type: ignore[func-returns-value]
+backend-1  |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/uvicorn/middleware/proxy_headers.py", line 60, in __call__
+backend-1  |     return await self.app(scope, receive, send)
+backend-1  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/fastapi/applications.py", line 1163, in __call__
+backend-1  |     await super().__call__(scope, receive, send)
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/starlette/applications.py", line 90, in __call__
+backend-1  |     await self.middleware_stack(scope, receive, send)
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/starlette/middleware/errors.py", line 186, in __call__
+backend-1  |     raise exc
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/starlette/middleware/errors.py", line 164, in __call__
+backend-1  |     await self.app(scope, receive, _send)
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/starlette/middleware/cors.py", line 96, in __call__
+backend-1  |     await self.simple_response(scope, receive, send, request_headers=headers)
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/starlette/middleware/cors.py", line 154, in simple_response
+backend-1  |     await self.app(scope, receive, send)
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
+backend-1  |     await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+backend-1  |     raise exc
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+backend-1  |     await app(scope, receive, sender)
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/fastapi/middleware/asyncexitstack.py", line 18, in __call__
+backend-1  |     await self.app(scope, receive, send)
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/starlette/routing.py", line 660, in __call__
+backend-1  |     await self.middleware_stack(scope, receive, send)
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/starlette/routing.py", line 680, in app
+backend-1  |     await route.handle(scope, receive, send)
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/starlette/routing.py", line 276, in handle
+backend-1  |     await self.app(scope, receive, send)
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 134, in app
+backend-1  |     await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+backend-1  |     raise exc
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+backend-1  |     await app(scope, receive, sender)
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 120, in app
+backend-1  |     response = await f(request)
+backend-1  |                ^^^^^^^^^^^^^^^^
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 674, in app
+backend-1  |     raw_response = await run_endpoint_function(
+backend-1  |                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 330, in run_endpoint_function
+backend-1  |     return await run_in_threadpool(dependant.call, **values)
+backend-1  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/starlette/concurrency.py", line 32, in run_in_threadpool
+backend-1  |     return await anyio.to_thread.run_sync(func)
+backend-1  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/anyio/to_thread.py", line 63, in run_sync
+backend-1  |     return await get_async_backend().run_sync_in_worker_thread(
+backend-1  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/anyio/_backends/_asyncio.py", line 2518, in run_sync_in_worker_thread
+backend-1  |     return await future
+backend-1  |            ^^^^^^^^^^^^
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/anyio/_backends/_asyncio.py", line 1002, in run
+backend-1  |     result = context.run(func, *args)
+backend-1  |              ^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/app/app/api/v1/auth/auth.py", line 169, in google_start
+backend-1  |     user = db.query(User).filter(User.email.ilike(email)).first()
+backend-1  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/query.py", line 2766, in first
+backend-1  |     return self.limit(1)._iter().first()  # type: ignore
+backend-1  |            ^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/query.py", line 2864, in _iter
+backend-1  |     result: Union[ScalarResult[_T], Result[_T]] = self.session.execute(
+backend-1  |                                                   ^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/session.py", line 2351, in execute
+backend-1  |     return self._execute_internal(
+backend-1  |            ^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/session.py", line 2249, in _execute_internal
+backend-1  |     result: Result[Any] = compile_state_cls.orm_execute_statement(
+backend-1  |                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/orm/context.py", line 306, in orm_execute_statement
+backend-1  |     result = conn.execute(
+backend-1  |              ^^^^^^^^^^^^^
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1419, in execute
+backend-1  |     return meth(
+backend-1  |            ^^^^^
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/sql/elements.py", line 527, in _execute_on_connection
+backend-1  |     return connection._execute_clauseelement(
+backend-1  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1641, in _execute_clauseelement
+backend-1  |     ret = self._execute_context(
+backend-1  |           ^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1846, in _execute_context
+backend-1  |     return self._exec_single_context(
+backend-1  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1986, in _exec_single_context
+backend-1  |     self._handle_dbapi_exception(
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 2363, in _handle_dbapi_exception
+backend-1  |     raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
+backend-1  |     self.dialect.do_execute(
+backend-1  |   File "/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/default.py", line 952, in do_execute
+backend-1  |     cursor.execute(statement, parameters)
+backend-1  | sqlalchemy.exc.ProgrammingError: (psycopg2.errors.UndefinedColumn) column users.username does not exist
+backend-1  | LINE 1: ...users.last_usage_reset AS users_last_usage_reset, users.user...
+backend-1  |                                                              ^
+backend-1  | 
+backend-1  | [SQL: SELECT users.id AS users_id, users.email AS users_email, users.password_hash AS users_password_hash, users.full_name AS users_full_name, users.google_sub AS users_google_sub, users.signup_source AS users_signup_source, users.email_verified AS users_email_verified, users.is_active AS users_is_active, users.created_at AS users_created_at, users.updated_at AS users_updated_at, users.subscription_type AS users_subscription_type, users.subscription_status AS users_subscription_status, users.subscription_expiry AS users_subscription_expiry, users.daily_limit AS users_daily_limit, users.daily_usage AS users_daily_usage, users.last_usage_reset AS users_last_usage_reset, users.username AS users_username, users.profile_image AS users_profile_image, users.bio AS users_bio, users.followers_count AS users_followers_count, users.following_count AS users_following_count 
+backend-1  | FROM users 
+backend-1  | WHERE users.email ILIKE %(email_1)s 
+backend-1  |  LIMIT %(param_1)s]
+backend-1  | [parameters: {'email_1': 'agnihotrimanas99@gmail.com', 'param_1': 1}]
+backend-1  | (Background on this error at: https://sqlalche.me/e/20/f405)

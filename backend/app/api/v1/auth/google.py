@@ -78,7 +78,7 @@ def google_callback(code: str, db: Session = Depends(get_db)):
 
     google_user = userinfo_response.json()
 
-    email = google_user.get("email")
+    email = google_user.get("email", "").lower()
     full_name = google_user.get("name")
     google_id = google_user.get("id")
 
@@ -86,7 +86,7 @@ def google_callback(code: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail="Google account email not available")
 
     # Step 3: Find or create user
-    user = db.query(User).filter(User.email == email).first()
+    user = db.query(User).filter(User.email.ilike(email)).first()
 
     if user:
         # Link Google account if user already exists

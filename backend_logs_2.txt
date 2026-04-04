@@ -1,0 +1,686 @@
+backend-1  | /app/app/api/v1/discover/routes.py:108: FastAPIDeprecationWarning: `regex` has been deprecated, please use `pattern` instead
+backend-1  |   sort: Optional[str] = Query("trending", regex="^(trending|newest|popular|budget)$"),
+backend-1  | 2026-04-04 15:12:17,735 INFO sqlalchemy.engine.Engine select pg_catalog.version()
+backend-1  | INFO:sqlalchemy.engine.Engine:select pg_catalog.version()
+backend-1  | INFO:sqlalchemy.engine.Engine:[raw sql] {}
+backend-1  | 2026-04-04 15:12:17,736 INFO sqlalchemy.engine.Engine [raw sql] {}
+backend-1  | INFO:sqlalchemy.engine.Engine:select current_schema()
+backend-1  | INFO:sqlalchemy.engine.Engine:[raw sql] {}
+backend-1  | 2026-04-04 15:12:17,738 INFO sqlalchemy.engine.Engine select current_schema()
+backend-1  | 2026-04-04 15:12:17,738 INFO sqlalchemy.engine.Engine [raw sql] {}
+backend-1  | 2026-04-04 15:12:17,739 INFO sqlalchemy.engine.Engine show standard_conforming_strings
+backend-1  | 2026-04-04 15:12:17,739 INFO sqlalchemy.engine.Engine [raw sql] {}
+backend-1  | INFO:sqlalchemy.engine.Engine:show standard_conforming_strings
+backend-1  | INFO:sqlalchemy.engine.Engine:[raw sql] {}
+backend-1  | INFO:sqlalchemy.engine.Engine:BEGIN (implicit)
+backend-1  | 2026-04-04 15:12:17,740 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+backend-1  | 2026-04-04 15:12:17,742 INFO sqlalchemy.engine.Engine SELECT pg_catalog.pg_class.relname 
+backend-1  | FROM pg_catalog.pg_class JOIN pg_catalog.pg_namespace ON pg_catalog.pg_namespace.oid = pg_catalog.pg_class.relnamespace 
+backend-1  | INFO:sqlalchemy.engine.Engine:SELECT pg_catalog.pg_class.relname 
+backend-1  | FROM pg_catalog.pg_class JOIN pg_catalog.pg_namespace ON pg_catalog.pg_namespace.oid = pg_catalog.pg_class.relnamespace 
+backend-1  | WHERE pg_catalog.pg_class.relname = %(table_name)s AND pg_catalog.pg_class.relkind = ANY (ARRAY[%(param_1)s, %(param_2)s, %(param_3)s, %(param_4)s, %(param_5)s]) AND pg_catalog.pg_table_is_visible(pg_catalog.pg_class.oid) AND pg_catalog.pg_namespace.nspname != %(nspname_1)s
+backend-1  | INFO:sqlalchemy.engine.Engine:[generated in 0.00016s] {'table_name': 'users', 'param_1': 'r', 'param_2': 'p', 'param_3': 'f', 'param_4': 'v', 'param_5': 'm', 'nspname_1': 'pg_catalog'}
+backend-1  | WHERE pg_catalog.pg_class.relname = %(table_name)s AND pg_catalog.pg_class.relkind = ANY (ARRAY[%(param_1)s, %(param_2)s, %(param_3)s, %(param_4)s, %(param_5)s]) AND pg_catalog.pg_table_is_visible(pg_catalog.pg_class.oid) AND pg_catalog.pg_namespace.nspname != %(nspname_1)s
+backend-1  | 2026-04-04 15:12:17,742 INFO sqlalchemy.engine.Engine [generated in 0.00016s] {'table_name': 'users', 'param_1': 'r', 'param_2': 'p', 'param_3': 'f', 'param_4': 'v', 'param_5': 'm', 'nspname_1': 'pg_catalog'}
+backend-1  | INFO:sqlalchemy.engine.Engine:SELECT pg_catalog.pg_class.relname 
+backend-1  | FROM pg_catalog.pg_class JOIN pg_catalog.pg_namespace ON pg_catalog.pg_namespace.oid = pg_catalog.pg_class.relnamespace 
+backend-1  | WHERE pg_catalog.pg_class.relname = %(table_name)s AND pg_catalog.pg_class.relkind = ANY (ARRAY[%(param_1)s, %(param_2)s, %(param_3)s, %(param_4)s, %(param_5)s]) AND pg_catalog.pg_table_is_visible(pg_catalog.pg_class.oid) AND pg_catalog.pg_namespace.nspname != %(nspname_1)s
+backend-1  | INFO:sqlalchemy.engine.Engine:[cached since 0.007876s ago] {'table_name': 'email_otps', 'param_1': 'r', 'param_2': 'p', 'param_3': 'f', 'param_4': 'v', 'param_5': 'm', 'nspname_1': 'pg_catalog'}
+backend-1  | 2026-04-04 15:12:17,748 INFO sqlalchemy.engine.Engine SELECT pg_catalog.pg_class.relname 
+backend-1  | FROM pg_catalog.pg_class JOIN pg_catalog.pg_namespace ON pg_catalog.pg_namespace.oid = pg_catalog.pg_class.relnamespace 
+backend-1  | WHERE pg_catalog.pg_class.relname = %(table_name)s AND pg_catalog.pg_class.relkind = ANY (ARRAY[%(param_1)s, %(param_2)s, %(param_3)s, %(param_4)s, %(param_5)s]) AND pg_catalog.pg_table_is_visible(pg_catalog.pg_class.oid) AND pg_catalog.pg_namespace.nspname != %(nspname_1)s
+backend-1  | 2026-04-04 15:12:17,748 INFO sqlalchemy.engine.Engine [cached since 0.007876s ago] {'table_name': 'email_otps', 'param_1': 'r', 'param_2': 'p', 'param_3': 'f', 'param_4': 'v', 'param_5': 'm', 'nspname_1': 'pg_catalog'}
+backend-1  | INFO:sqlalchemy.engine.Engine:SELECT pg_catalog.pg_class.relname 
+backend-1  | FROM pg_catalog.pg_class JOIN pg_catalog.pg_namespace ON pg_catalog.pg_namespace.oid = pg_catalog.pg_class.relnamespace 
+backend-1  | WHERE pg_catalog.pg_class.relname = %(table_name)s AND pg_catalog.pg_class.relkind = ANY (ARRAY[%(param_1)s, %(param_2)s, %(param_3)s, %(param_4)s, %(param_5)s]) AND pg_catalog.pg_table_is_visible(pg_catalog.pg_class.oid) AND pg_catalog.pg_namespace.nspname != %(nspname_1)s
+backend-1  | INFO:sqlalchemy.engine.Engine:[cached since 0.008815s ago] {'table_name': 'password_resets', 'param_1': 'r', 'param_2': 'p', 'param_3': 'f', 'param_4': 'v', 'param_5': 'm', 'nspname_1': 'pg_catalog'}
+backend-1  | 2026-04-04 15:12:17,749 INFO sqlalchemy.engine.Engine SELECT pg_catalog.pg_class.relname 
+backend-1  | FROM pg_catalog.pg_class JOIN pg_catalog.pg_namespace ON pg_catalog.pg_namespace.oid = pg_catalog.pg_class.relnamespace 
+backend-1  | WHERE pg_catalog.pg_class.relname = %(table_name)s AND pg_catalog.pg_class.relkind = ANY (ARRAY[%(param_1)s, %(param_2)s, %(param_3)s, %(param_4)s, %(param_5)s]) AND pg_catalog.pg_table_is_visible(pg_catalog.pg_class.oid) AND pg_catalog.pg_namespace.nspname != %(nspname_1)s
+backend-1  | 2026-04-04 15:12:17,749 INFO sqlalchemy.engine.Engine [cached since 0.008815s ago] {'table_name': 'password_resets', 'param_1': 'r', 'param_2': 'p', 'param_3': 'f', 'param_4': 'v', 'param_5': 'm', 'nspname_1': 'pg_catalog'}
+backend-1  | INFO:sqlalchemy.engine.Engine:SELECT pg_catalog.pg_class.relname 
+backend-1  | FROM pg_catalog.pg_class JOIN pg_catalog.pg_namespace ON pg_catalog.pg_namespace.oid = pg_catalog.pg_class.relnamespace 
+backend-1  | WHERE pg_catalog.pg_class.relname = %(table_name)s AND pg_catalog.pg_class.relkind = ANY (ARRAY[%(param_1)s, %(param_2)s, %(param_3)s, %(param_4)s, %(param_5)s]) AND pg_catalog.pg_table_is_visible(pg_catalog.pg_class.oid) AND pg_catalog.pg_namespace.nspname != %(nspname_1)s
+backend-1  | INFO:sqlalchemy.engine.Engine:[cached since 0.009535s ago] {'table_name': 'groups', 'param_1': 'r', 'param_2': 'p', 'param_3': 'f', 'param_4': 'v', 'param_5': 'm', 'nspname_1': 'pg_catalog'}
+backend-1  | 2026-04-04 15:12:17,750 INFO sqlalchemy.engine.Engine SELECT pg_catalog.pg_class.relname 
+backend-1  | FROM pg_catalog.pg_class JOIN pg_catalog.pg_namespace ON pg_catalog.pg_namespace.oid = pg_catalog.pg_class.relnamespace 
+backend-1  | WHERE pg_catalog.pg_class.relname = %(table_name)s AND pg_catalog.pg_class.relkind = ANY (ARRAY[%(param_1)s, %(param_2)s, %(param_3)s, %(param_4)s, %(param_5)s]) AND pg_catalog.pg_table_is_visible(pg_catalog.pg_class.oid) AND pg_catalog.pg_namespace.nspname != %(nspname_1)s
+backend-1  | 2026-04-04 15:12:17,750 INFO sqlalchemy.engine.Engine [cached since 0.009535s ago] {'table_name': 'groups', 'param_1': 'r', 'param_2': 'p', 'param_3': 'f', 'param_4': 'v', 'param_5': 'm', 'nspname_1': 'pg_catalog'}
+backend-1  | 2026-04-04 15:12:17,751 INFO sqlalchemy.engine.Engine SELECT pg_catalog.pg_class.relname 
+backend-1  | FROM pg_catalog.pg_class JOIN pg_catalog.pg_namespace ON pg_catalog.pg_namespace.oid = pg_catalog.pg_class.relnamespace 
+backend-1  | WHERE pg_catalog.pg_class.relname = %(table_name)s AND pg_catalog.pg_class.relkind = ANY (ARRAY[%(param_1)s, %(param_2)s, %(param_3)s, %(param_4)s, %(param_5)s]) AND pg_catalog.pg_table_is_visible(pg_catalog.pg_class.oid) AND pg_catalog.pg_namespace.nspname != %(nspname_1)s
+backend-1  | INFO:sqlalchemy.engine.Engine:SELECT pg_catalog.pg_class.relname 
+backend-1  | FROM pg_catalog.pg_class JOIN pg_catalog.pg_namespace ON pg_catalog.pg_namespace.oid = pg_catalog.pg_class.relnamespace 
+backend-1  | WHERE pg_catalog.pg_class.relname = %(table_name)s AND pg_catalog.pg_class.relkind = ANY (ARRAY[%(param_1)s, %(param_2)s, %(param_3)s, %(param_4)s, %(param_5)s]) AND pg_catalog.pg_table_is_visible(pg_catalog.pg_class.oid) AND pg_catalog.pg_namespace.nspname != %(nspname_1)s
+backend-1  | INFO:sqlalchemy.engine.Engine:[cached since 0.01023s ago] {'table_name': 'group_members', 'param_1': 'r', 'param_2': 'p', 'param_3': 'f', 'param_4': 'v', 'param_5': 'm', 'nspname_1': 'pg_catalog'}
+backend-1  | 2026-04-04 15:12:17,751 INFO sqlalchemy.engine.Engine [cached since 0.01023s ago] {'table_name': 'group_members', 'param_1': 'r', 'param_2': 'p', 'param_3': 'f', 'param_4': 'v', 'param_5': 'm', 'nspname_1': 'pg_catalog'}
+backend-1  | INFO:sqlalchemy.engine.Engine:SELECT pg_catalog.pg_class.relname 
+backend-1  | 2026-04-04 15:12:17,751 INFO sqlalchemy.engine.Engine SELECT pg_catalog.pg_class.relname 
+backend-1  | FROM pg_catalog.pg_class JOIN pg_catalog.pg_namespace ON pg_catalog.pg_namespace.oid = pg_catalog.pg_class.relnamespace 
+backend-1  | WHERE pg_catalog.pg_class.relname = %(table_name)s AND pg_catalog.pg_class.relkind = ANY (ARRAY[%(param_1)s, %(param_2)s, %(param_3)s, %(param_4)s, %(param_5)s]) AND pg_catalog.pg_table_is_visible(pg_catalog.pg_class.oid) AND pg_catalog.pg_namespace.nspname != %(nspname_1)s
+backend-1  | 2026-04-04 15:12:17,752 INFO sqlalchemy.engine.Engine [cached since 0.01096s ago] {'table_name': 'expenses', 'param_1': 'r', 'param_2': 'p', 'param_3': 'f', 'param_4': 'v', 'param_5': 'm', 'nspname_1': 'pg_catalog'}
+backend-1  | FROM pg_catalog.pg_class JOIN pg_catalog.pg_namespace ON pg_catalog.pg_namespace.oid = pg_catalog.pg_class.relnamespace 
+backend-1  | WHERE pg_catalog.pg_class.relname = %(table_name)s AND pg_catalog.pg_class.relkind = ANY (ARRAY[%(param_1)s, %(param_2)s, %(param_3)s, %(param_4)s, %(param_5)s]) AND pg_catalog.pg_table_is_visible(pg_catalog.pg_class.oid) AND pg_catalog.pg_namespace.nspname != %(nspname_1)s
+backend-1  | INFO:sqlalchemy.engine.Engine:[cached since 0.01096s ago] {'table_name': 'expenses', 'param_1': 'r', 'param_2': 'p', 'param_3': 'f', 'param_4': 'v', 'param_5': 'm', 'nspname_1': 'pg_catalog'}
+backend-1  | 2026-04-04 15:12:17,752 INFO sqlalchemy.engine.Engine SELECT pg_catalog.pg_class.relname 
+backend-1  | FROM pg_catalog.pg_class JOIN pg_catalog.pg_namespace ON pg_catalog.pg_namespace.oid = pg_catalog.pg_class.relnamespace 
+backend-1  | WHERE pg_catalog.pg_class.relname = %(table_name)s AND pg_catalog.pg_class.relkind = ANY (ARRAY[%(param_1)s, %(param_2)s, %(param_3)s, %(param_4)s, %(param_5)s]) AND pg_catalog.pg_table_is_visible(pg_catalog.pg_class.oid) AND pg_catalog.pg_namespace.nspname != %(nspname_1)s
+backend-1  | 2026-04-04 15:12:17,752 INFO sqlalchemy.engine.Engine [cached since 0.01153s ago] {'table_name': 'settlements', 'param_1': 'r', 'param_2': 'p', 'param_3': 'f', 'param_4': 'v', 'param_5': 'm', 'nspname_1': 'pg_catalog'}
+backend-1  | INFO:sqlalchemy.engine.Engine:SELECT pg_catalog.pg_class.relname 
+backend-1  | FROM pg_catalog.pg_class JOIN pg_catalog.pg_namespace ON pg_catalog.pg_namespace.oid = pg_catalog.pg_class.relnamespace 
+backend-1  | WHERE pg_catalog.pg_class.relname = %(table_name)s AND pg_catalog.pg_class.relkind = ANY (ARRAY[%(param_1)s, %(param_2)s, %(param_3)s, %(param_4)s, %(param_5)s]) AND pg_catalog.pg_table_is_visible(pg_catalog.pg_class.oid) AND pg_catalog.pg_namespace.nspname != %(nspname_1)s
+backend-1  | INFO:sqlalchemy.engine.Engine:[cached since 0.01153s ago] {'table_name': 'settlements', 'param_1': 'r', 'param_2': 'p', 'param_3': 'f', 'param_4': 'v', 'param_5': 'm', 'nspname_1': 'pg_catalog'}
+backend-1  | INFO:sqlalchemy.engine.Engine:SELECT pg_catalog.pg_class.relname 
+backend-1  | FROM pg_catalog.pg_class JOIN pg_catalog.pg_namespace ON pg_catalog.pg_namespace.oid = pg_catalog.pg_class.relnamespace 
+backend-1  | 2026-04-04 15:12:17,753 INFO sqlalchemy.engine.Engine SELECT pg_catalog.pg_class.relname 
+backend-1  | FROM pg_catalog.pg_class JOIN pg_catalog.pg_namespace ON pg_catalog.pg_namespace.oid = pg_catalog.pg_class.relnamespace 
+backend-1  | WHERE pg_catalog.pg_class.relname = %(table_name)s AND pg_catalog.pg_class.relkind = ANY (ARRAY[%(param_1)s, %(param_2)s, %(param_3)s, %(param_4)s, %(param_5)s]) AND pg_catalog.pg_table_is_visible(pg_catalog.pg_class.oid) AND pg_catalog.pg_namespace.nspname != %(nspname_1)s
+backend-1  | 2026-04-04 15:12:17,753 INFO sqlalchemy.engine.Engine [cached since 0.01209s ago] {'table_name': 'subscriptions', 'param_1': 'r', 'param_2': 'p', 'param_3': 'f', 'param_4': 'v', 'param_5': 'm', 'nspname_1': 'pg_catalog'}
+backend-1  | WHERE pg_catalog.pg_class.relname = %(table_name)s AND pg_catalog.pg_class.relkind = ANY (ARRAY[%(param_1)s, %(param_2)s, %(param_3)s, %(param_4)s, %(param_5)s]) AND pg_catalog.pg_table_is_visible(pg_catalog.pg_class.oid) AND pg_catalog.pg_namespace.nspname != %(nspname_1)s
+backend-1  | INFO:sqlalchemy.engine.Engine:[cached since 0.01209s ago] {'table_name': 'subscriptions', 'param_1': 'r', 'param_2': 'p', 'param_3': 'f', 'param_4': 'v', 'param_5': 'm', 'nspname_1': 'pg_catalog'}
+backend-1  | INFO:sqlalchemy.engine.Engine:SELECT pg_catalog.pg_class.relname 
+backend-1  | FROM pg_catalog.pg_class JOIN pg_catalog.pg_namespace ON pg_catalog.pg_namespace.oid = pg_catalog.pg_class.relnamespace 
+backend-1  | WHERE pg_catalog.pg_class.relname = %(table_name)s AND pg_catalog.pg_class.relkind = ANY (ARRAY[%(param_1)s, %(param_2)s, %(param_3)s, %(param_4)s, %(param_5)s]) AND pg_catalog.pg_table_is_visible(pg_catalog.pg_class.oid) AND pg_catalog.pg_namespace.nspname != %(nspname_1)s
+backend-1  | INFO:sqlalchemy.engine.Engine:[cached since 0.01269s ago] {'table_name': 'trips', 'param_1': 'r', 'param_2': 'p', 'param_3': 'f', 'param_4': 'v', 'param_5': 'm', 'nspname_1': 'pg_catalog'}
+backend-1  | 2026-04-04 15:12:17,753 INFO sqlalchemy.engine.Engine SELECT pg_catalog.pg_class.relname 
+backend-1  | FROM pg_catalog.pg_class JOIN pg_catalog.pg_namespace ON pg_catalog.pg_namespace.oid = pg_catalog.pg_class.relnamespace 
+backend-1  | WHERE pg_catalog.pg_class.relname = %(table_name)s AND pg_catalog.pg_class.relkind = ANY (ARRAY[%(param_1)s, %(param_2)s, %(param_3)s, %(param_4)s, %(param_5)s]) AND pg_catalog.pg_table_is_visible(pg_catalog.pg_class.oid) AND pg_catalog.pg_namespace.nspname != %(nspname_1)s
+backend-1  | 2026-04-04 15:12:17,753 INFO sqlalchemy.engine.Engine [cached since 0.01269s ago] {'table_name': 'trips', 'param_1': 'r', 'param_2': 'p', 'param_3': 'f', 'param_4': 'v', 'param_5': 'm', 'nspname_1': 'pg_catalog'}
+backend-1  | INFO:sqlalchemy.engine.Engine:SELECT pg_catalog.pg_class.relname 
+backend-1  | FROM pg_catalog.pg_class JOIN pg_catalog.pg_namespace ON pg_catalog.pg_namespace.oid = pg_catalog.pg_class.relnamespace 
+backend-1  | WHERE pg_catalog.pg_class.relname = %(table_name)s AND pg_catalog.pg_class.relkind = ANY (ARRAY[%(param_1)s, %(param_2)s, %(param_3)s, %(param_4)s, %(param_5)s]) AND pg_catalog.pg_table_is_visible(pg_catalog.pg_class.oid) AND pg_catalog.pg_namespace.nspname != %(nspname_1)s
+backend-1  | INFO:sqlalchemy.engine.Engine:[cached since 0.01328s ago] {'table_name': 'trip_likes', 'param_1': 'r', 'param_2': 'p', 'param_3': 'f', 'param_4': 'v', 'param_5': 'm', 'nspname_1': 'pg_catalog'}
+backend-1  | 2026-04-04 15:12:17,754 INFO sqlalchemy.engine.Engine SELECT pg_catalog.pg_class.relname 
+backend-1  | FROM pg_catalog.pg_class JOIN pg_catalog.pg_namespace ON pg_catalog.pg_namespace.oid = pg_catalog.pg_class.relnamespace 
+backend-1  | WHERE pg_catalog.pg_class.relname = %(table_name)s AND pg_catalog.pg_class.relkind = ANY (ARRAY[%(param_1)s, %(param_2)s, %(param_3)s, %(param_4)s, %(param_5)s]) AND pg_catalog.pg_table_is_visible(pg_catalog.pg_class.oid) AND pg_catalog.pg_namespace.nspname != %(nspname_1)s
+backend-1  | 2026-04-04 15:12:17,754 INFO sqlalchemy.engine.Engine [cached since 0.01328s ago] {'table_name': 'trip_likes', 'param_1': 'r', 'param_2': 'p', 'param_3': 'f', 'param_4': 'v', 'param_5': 'm', 'nspname_1': 'pg_catalog'}
+backend-1  | 2026-04-04 15:12:17,754 INFO sqlalchemy.engine.Engine SELECT pg_catalog.pg_class.relname 
+backend-1  | FROM pg_catalog.pg_class JOIN pg_catalog.pg_namespace ON pg_catalog.pg_namespace.oid = pg_catalog.pg_class.relnamespace 
+backend-1  | WHERE pg_catalog.pg_class.relname = %(table_name)s AND pg_catalog.pg_class.relkind = ANY (ARRAY[%(param_1)s, %(param_2)s, %(param_3)s, %(param_4)s, %(param_5)s]) AND pg_catalog.pg_table_is_visible(pg_catalog.pg_class.oid) AND pg_catalog.pg_namespace.nspname != %(nspname_1)s
+backend-1  | 2026-04-04 15:12:17,755 INFO sqlalchemy.engine.Engine [cached since 0.01391s ago] {'table_name': 'trip_saves', 'param_1': 'r', 'param_2': 'p', 'param_3': 'f', 'param_4': 'v', 'param_5': 'm', 'nspname_1': 'pg_catalog'}
+backend-1  | INFO:sqlalchemy.engine.Engine:SELECT pg_catalog.pg_class.relname 
+backend-1  | FROM pg_catalog.pg_class JOIN pg_catalog.pg_namespace ON pg_catalog.pg_namespace.oid = pg_catalog.pg_class.relnamespace 
+backend-1  | WHERE pg_catalog.pg_class.relname = %(table_name)s AND pg_catalog.pg_class.relkind = ANY (ARRAY[%(param_1)s, %(param_2)s, %(param_3)s, %(param_4)s, %(param_5)s]) AND pg_catalog.pg_table_is_visible(pg_catalog.pg_class.oid) AND pg_catalog.pg_namespace.nspname != %(nspname_1)s
+backend-1  | INFO:sqlalchemy.engine.Engine:[cached since 0.01391s ago] {'table_name': 'trip_saves', 'param_1': 'r', 'param_2': 'p', 'param_3': 'f', 'param_4': 'v', 'param_5': 'm', 'nspname_1': 'pg_catalog'}
+backend-1  | 2026-04-04 15:12:17,755 INFO sqlalchemy.engine.Engine SELECT pg_catalog.pg_class.relname 
+backend-1  | FROM pg_catalog.pg_class JOIN pg_catalog.pg_namespace ON pg_catalog.pg_namespace.oid = pg_catalog.pg_class.relnamespace 
+backend-1  | WHERE pg_catalog.pg_class.relname = %(table_name)s AND pg_catalog.pg_class.relkind = ANY (ARRAY[%(param_1)s, %(param_2)s, %(param_3)s, %(param_4)s, %(param_5)s]) AND pg_catalog.pg_table_is_visible(pg_catalog.pg_class.oid) AND pg_catalog.pg_namespace.nspname != %(nspname_1)s
+backend-1  | 2026-04-04 15:12:17,755 INFO sqlalchemy.engine.Engine [cached since 0.01454s ago] {'table_name': 'trip_comments', 'param_1': 'r', 'param_2': 'p', 'param_3': 'f', 'param_4': 'v', 'param_5': 'm', 'nspname_1': 'pg_catalog'}
+backend-1  | INFO:sqlalchemy.engine.Engine:SELECT pg_catalog.pg_class.relname 
+backend-1  | FROM pg_catalog.pg_class JOIN pg_catalog.pg_namespace ON pg_catalog.pg_namespace.oid = pg_catalog.pg_class.relnamespace 
+backend-1  | WHERE pg_catalog.pg_class.relname = %(table_name)s AND pg_catalog.pg_class.relkind = ANY (ARRAY[%(param_1)s, %(param_2)s, %(param_3)s, %(param_4)s, %(param_5)s]) AND pg_catalog.pg_table_is_visible(pg_catalog.pg_class.oid) AND pg_catalog.pg_namespace.nspname != %(nspname_1)s
+backend-1  | INFO:sqlalchemy.engine.Engine:[cached since 0.01454s ago] {'table_name': 'trip_comments', 'param_1': 'r', 'param_2': 'p', 'param_3': 'f', 'param_4': 'v', 'param_5': 'm', 'nspname_1': 'pg_catalog'}
+backend-1  | INFO:sqlalchemy.engine.Engine:SELECT pg_catalog.pg_class.relname 
+backend-1  | FROM pg_catalog.pg_class JOIN pg_catalog.pg_namespace ON pg_catalog.pg_namespace.oid = pg_catalog.pg_class.relnamespace 
+backend-1  | WHERE pg_catalog.pg_class.relname = %(table_name)s AND pg_catalog.pg_class.relkind = ANY (ARRAY[%(param_1)s, %(param_2)s, %(param_3)s, %(param_4)s, %(param_5)s]) AND pg_catalog.pg_table_is_visible(pg_catalog.pg_class.oid) AND pg_catalog.pg_namespace.nspname != %(nspname_1)s
+backend-1  | INFO:sqlalchemy.engine.Engine:[cached since 0.01521s ago] {'table_name': 'user_follows', 'param_1': 'r', 'param_2': 'p', 'param_3': 'f', 'param_4': 'v', 'param_5': 'm', 'nspname_1': 'pg_catalog'}
+backend-1  | 2026-04-04 15:12:17,756 INFO sqlalchemy.engine.Engine SELECT pg_catalog.pg_class.relname 
+backend-1  | FROM pg_catalog.pg_class JOIN pg_catalog.pg_namespace ON pg_catalog.pg_namespace.oid = pg_catalog.pg_class.relnamespace 
+backend-1  | WHERE pg_catalog.pg_class.relname = %(table_name)s AND pg_catalog.pg_class.relkind = ANY (ARRAY[%(param_1)s, %(param_2)s, %(param_3)s, %(param_4)s, %(param_5)s]) AND pg_catalog.pg_table_is_visible(pg_catalog.pg_class.oid) AND pg_catalog.pg_namespace.nspname != %(nspname_1)s
+backend-1  | 2026-04-04 15:12:17,756 INFO sqlalchemy.engine.Engine [cached since 0.01521s ago] {'table_name': 'user_follows', 'param_1': 'r', 'param_2': 'p', 'param_3': 'f', 'param_4': 'v', 'param_5': 'm', 'nspname_1': 'pg_catalog'}
+backend-1  | INFO:sqlalchemy.engine.Engine:SELECT pg_catalog.pg_class.relname 
+backend-1  | FROM pg_catalog.pg_class JOIN pg_catalog.pg_namespace ON pg_catalog.pg_namespace.oid = pg_catalog.pg_class.relnamespace 
+backend-1  | WHERE pg_catalog.pg_class.relname = %(table_name)s AND pg_catalog.pg_class.relkind = ANY (ARRAY[%(param_1)s, %(param_2)s, %(param_3)s, %(param_4)s, %(param_5)s]) AND pg_catalog.pg_table_is_visible(pg_catalog.pg_class.oid) AND pg_catalog.pg_namespace.nspname != %(nspname_1)s
+backend-1  | 2026-04-04 15:12:17,756 INFO sqlalchemy.engine.Engine SELECT pg_catalog.pg_class.relname 
+backend-1  | FROM pg_catalog.pg_class JOIN pg_catalog.pg_namespace ON pg_catalog.pg_namespace.oid = pg_catalog.pg_class.relnamespace 
+backend-1  | WHERE pg_catalog.pg_class.relname = %(table_name)s AND pg_catalog.pg_class.relkind = ANY (ARRAY[%(param_1)s, %(param_2)s, %(param_3)s, %(param_4)s, %(param_5)s]) AND pg_catalog.pg_table_is_visible(pg_catalog.pg_class.oid) AND pg_catalog.pg_namespace.nspname != %(nspname_1)s
+backend-1  | 2026-04-04 15:12:17,756 INFO sqlalchemy.engine.Engine [cached since 0.01585s ago] {'table_name': 'refresh_tokens', 'param_1': 'r', 'param_2': 'p', 'param_3': 'f', 'param_4': 'v', 'param_5': 'm', 'nspname_1': 'pg_catalog'}
+backend-1  | INFO:sqlalchemy.engine.Engine:[cached since 0.01585s ago] {'table_name': 'refresh_tokens', 'param_1': 'r', 'param_2': 'p', 'param_3': 'f', 'param_4': 'v', 'param_5': 'm', 'nspname_1': 'pg_catalog'}
+backend-1  | INFO:sqlalchemy.engine.Engine:
+backend-1  | CREATE TABLE users (
+backend-1  | 	id UUID NOT NULL, 
+backend-1  | 	email VARCHAR(255) NOT NULL, 
+backend-1  | 	password_hash VARCHAR(255), 
+backend-1  | 	full_name VARCHAR(255), 
+backend-1  | 	google_sub VARCHAR(255), 
+backend-1  | 	signup_source VARCHAR(50) NOT NULL, 
+backend-1  | 	email_verified BOOLEAN NOT NULL, 
+backend-1  | 	is_active BOOLEAN NOT NULL, 
+backend-1  | 	created_at TIMESTAMP WITH TIME ZONE DEFAULT now(), 
+backend-1  | 	updated_at TIMESTAMP WITH TIME ZONE DEFAULT now(), 
+backend-1  | 	subscription_type VARCHAR(50) NOT NULL, 
+backend-1  | 	subscription_status VARCHAR(50) NOT NULL, 
+backend-1  | 	subscription_expiry TIMESTAMP WITH TIME ZONE, 
+backend-1  | 	daily_limit INTEGER NOT NULL, 
+backend-1  | 	daily_usage INTEGER NOT NULL, 
+backend-1  | 	last_usage_reset DATE, 
+backend-1  | 	username VARCHAR(50), 
+backend-1  | 	profile_image VARCHAR(500), 
+backend-1  | 	bio VARCHAR(500), 
+backend-1  | 	followers_count INTEGER NOT NULL, 
+backend-1  | 	following_count INTEGER NOT NULL, 
+backend-1  | 	PRIMARY KEY (id)
+backend-1  | )
+backend-1  | 
+backend-1  | 
+backend-1  | INFO:sqlalchemy.engine.Engine:[no key 0.00009s] {}
+backend-1  | 2026-04-04 15:12:17,758 INFO sqlalchemy.engine.Engine 
+backend-1  | CREATE TABLE users (
+backend-1  | 	id UUID NOT NULL, 
+backend-1  | 	email VARCHAR(255) NOT NULL, 
+backend-1  | 	password_hash VARCHAR(255), 
+backend-1  | 	full_name VARCHAR(255), 
+backend-1  | 	google_sub VARCHAR(255), 
+backend-1  | 	signup_source VARCHAR(50) NOT NULL, 
+backend-1  | 	email_verified BOOLEAN NOT NULL, 
+backend-1  | 	is_active BOOLEAN NOT NULL, 
+backend-1  | 	created_at TIMESTAMP WITH TIME ZONE DEFAULT now(), 
+backend-1  | 	updated_at TIMESTAMP WITH TIME ZONE DEFAULT now(), 
+backend-1  | 	subscription_type VARCHAR(50) NOT NULL, 
+backend-1  | 	subscription_status VARCHAR(50) NOT NULL, 
+backend-1  | 	subscription_expiry TIMESTAMP WITH TIME ZONE, 
+backend-1  | 	daily_limit INTEGER NOT NULL, 
+backend-1  | 	daily_usage INTEGER NOT NULL, 
+backend-1  | 	last_usage_reset DATE, 
+backend-1  | 	username VARCHAR(50), 
+backend-1  | 	profile_image VARCHAR(500), 
+backend-1  | 	bio VARCHAR(500), 
+backend-1  | 	followers_count INTEGER NOT NULL, 
+backend-1  | 	following_count INTEGER NOT NULL, 
+backend-1  | 	PRIMARY KEY (id)
+backend-1  | )
+backend-1  | 
+backend-1  | 
+backend-1  | 2026-04-04 15:12:17,758 INFO sqlalchemy.engine.Engine [no key 0.00009s] {}
+backend-1  | INFO:sqlalchemy.engine.Engine:CREATE UNIQUE INDEX ix_users_google_sub ON users (google_sub)
+backend-1  | INFO:sqlalchemy.engine.Engine:[no key 0.00014s] {}
+backend-1  | 2026-04-04 15:12:17,788 INFO sqlalchemy.engine.Engine CREATE UNIQUE INDEX ix_users_google_sub ON users (google_sub)
+backend-1  | 2026-04-04 15:12:17,789 INFO sqlalchemy.engine.Engine [no key 0.00014s] {}
+backend-1  | INFO:sqlalchemy.engine.Engine:CREATE UNIQUE INDEX ix_users_email ON users (email)
+backend-1  | INFO:sqlalchemy.engine.Engine:[no key 0.00015s] {}
+backend-1  | 2026-04-04 15:12:17,795 INFO sqlalchemy.engine.Engine CREATE UNIQUE INDEX ix_users_email ON users (email)
+backend-1  | 2026-04-04 15:12:17,795 INFO sqlalchemy.engine.Engine [no key 0.00015s] {}
+backend-1  | 2026-04-04 15:12:17,800 INFO sqlalchemy.engine.Engine CREATE UNIQUE INDEX ix_users_username ON users (username)
+backend-1  | 2026-04-04 15:12:17,800 INFO sqlalchemy.engine.Engine [no key 0.00016s] {}
+backend-1  | INFO:sqlalchemy.engine.Engine:CREATE UNIQUE INDEX ix_users_username ON users (username)
+backend-1  | INFO:sqlalchemy.engine.Engine:[no key 0.00016s] {}
+backend-1  | INFO:sqlalchemy.engine.Engine:
+backend-1  | CREATE TABLE password_resets (
+backend-1  | 	id UUID NOT NULL, 
+backend-1  | 	user_id UUID NOT NULL, 
+backend-1  | 	email VARCHAR(255) NOT NULL, 
+backend-1  | 	reset_token VARCHAR(255) NOT NULL, 
+backend-1  | 	is_used BOOLEAN NOT NULL, 
+backend-1  | 	used_at TIMESTAMP WITH TIME ZONE, 
+backend-1  | 	expires_at TIMESTAMP WITH TIME ZONE NOT NULL, 
+backend-1  | 	created_at TIMESTAMP WITH TIME ZONE DEFAULT now(), 
+backend-1  | 	PRIMARY KEY (id)
+backend-1  | )
+backend-1  | 
+backend-1  | 
+backend-1  | INFO:sqlalchemy.engine.Engine:[no key 0.00018s] {}
+backend-1  | 2026-04-04 15:12:17,804 INFO sqlalchemy.engine.Engine 
+backend-1  | CREATE TABLE password_resets (
+backend-1  | 	id UUID NOT NULL, 
+backend-1  | 	user_id UUID NOT NULL, 
+backend-1  | 	email VARCHAR(255) NOT NULL, 
+backend-1  | 	reset_token VARCHAR(255) NOT NULL, 
+backend-1  | 	is_used BOOLEAN NOT NULL, 
+backend-1  | 	used_at TIMESTAMP WITH TIME ZONE, 
+backend-1  | 	expires_at TIMESTAMP WITH TIME ZONE NOT NULL, 
+backend-1  | 	created_at TIMESTAMP WITH TIME ZONE DEFAULT now(), 
+backend-1  | 	PRIMARY KEY (id)
+backend-1  | )
+backend-1  | 
+backend-1  | 
+backend-1  | 2026-04-04 15:12:17,804 INFO sqlalchemy.engine.Engine [no key 0.00018s] {}
+backend-1  | 2026-04-04 15:12:17,813 INFO sqlalchemy.engine.Engine CREATE INDEX ix_password_resets_user_id ON password_resets (user_id)
+backend-1  | 2026-04-04 15:12:17,813 INFO sqlalchemy.engine.Engine [no key 0.00015s] {}
+backend-1  | INFO:sqlalchemy.engine.Engine:CREATE INDEX ix_password_resets_user_id ON password_resets (user_id)
+backend-1  | INFO:sqlalchemy.engine.Engine:[no key 0.00015s] {}
+backend-1  | INFO:sqlalchemy.engine.Engine:CREATE INDEX ix_password_resets_email ON password_resets (email)
+backend-1  | INFO:sqlalchemy.engine.Engine:[no key 0.00011s] {}
+backend-1  | 2026-04-04 15:12:17,816 INFO sqlalchemy.engine.Engine CREATE INDEX ix_password_resets_email ON password_resets (email)
+backend-1  | 2026-04-04 15:12:17,817 INFO sqlalchemy.engine.Engine [no key 0.00011s] {}
+backend-1  | 2026-04-04 15:12:17,820 INFO sqlalchemy.engine.Engine CREATE UNIQUE INDEX ix_password_resets_reset_token ON password_resets (reset_token)
+backend-1  | 2026-04-04 15:12:17,820 INFO sqlalchemy.engine.Engine [no key 0.00015s] {}
+backend-1  | INFO:sqlalchemy.engine.Engine:CREATE UNIQUE INDEX ix_password_resets_reset_token ON password_resets (reset_token)
+backend-1  | INFO:sqlalchemy.engine.Engine:[no key 0.00015s] {}
+backend-1  | INFO:sqlalchemy.engine.Engine:
+backend-1  | CREATE TABLE email_otps (
+backend-1  | 	id UUID DEFAULT gen_random_uuid() NOT NULL, 
+backend-1  | 	user_id UUID, 
+backend-1  | 	email VARCHAR(255), 
+backend-1  | 	otp_code VARCHAR(6) NOT NULL, 
+backend-1  | 2026-04-04 15:12:17,824 INFO sqlalchemy.engine.Engine 
+backend-1  | CREATE TABLE email_otps (
+backend-1  | 	id UUID DEFAULT gen_random_uuid() NOT NULL, 
+backend-1  | 	user_id UUID, 
+backend-1  | 	email VARCHAR(255), 
+backend-1  | 	otp_code VARCHAR(6) NOT NULL, 
+backend-1  | 	purpose VARCHAR(50), 
+backend-1  | 	expires_at TIMESTAMP WITH TIME ZONE NOT NULL, 
+backend-1  | 	is_used BOOLEAN, 
+backend-1  | 	created_at TIMESTAMP WITH TIME ZONE DEFAULT now(), 
+backend-1  | 	PRIMARY KEY (id), 
+backend-1  | 	FOREIGN KEY(user_id) REFERENCES users (id) ON DELETE CASCADE
+backend-1  | )
+backend-1  | 
+backend-1  | 
+backend-1  | 2026-04-04 15:12:17,824 INFO sqlalchemy.engine.Engine [no key 0.00017s] {}
+backend-1  | 	purpose VARCHAR(50), 
+backend-1  | 	expires_at TIMESTAMP WITH TIME ZONE NOT NULL, 
+backend-1  | 	is_used BOOLEAN, 
+backend-1  | 	created_at TIMESTAMP WITH TIME ZONE DEFAULT now(), 
+backend-1  | 	PRIMARY KEY (id), 
+backend-1  | 	FOREIGN KEY(user_id) REFERENCES users (id) ON DELETE CASCADE
+backend-1  | )
+backend-1  | 
+backend-1  | 
+backend-1  | INFO:sqlalchemy.engine.Engine:[no key 0.00017s] {}
+backend-1  | 2026-04-04 15:12:17,834 INFO sqlalchemy.engine.Engine CREATE INDEX ix_email_otps_email ON email_otps (email)
+backend-1  | 2026-04-04 15:12:17,834 INFO sqlalchemy.engine.Engine [no key 0.00014s] {}
+backend-1  | INFO:sqlalchemy.engine.Engine:CREATE INDEX ix_email_otps_email ON email_otps (email)
+backend-1  | INFO:sqlalchemy.engine.Engine:[no key 0.00014s] {}
+backend-1  | 2026-04-04 15:12:17,838 INFO sqlalchemy.engine.Engine 
+backend-1  | CREATE TABLE groups (
+backend-1  | 	id UUID NOT NULL, 
+backend-1  | 	name VARCHAR(255) NOT NULL, 
+backend-1  | 	description TEXT, 
+backend-1  | 	creator_id UUID NOT NULL, 
+backend-1  | 	currency VARCHAR(3) NOT NULL, 
+backend-1  | 	created_at TIMESTAMP WITH TIME ZONE DEFAULT now(), 
+backend-1  | 	updated_at TIMESTAMP WITH TIME ZONE DEFAULT now(), 
+backend-1  | 	PRIMARY KEY (id), 
+backend-1  | 	FOREIGN KEY(creator_id) REFERENCES users (id) ON DELETE CASCADE
+backend-1  | )
+backend-1  | 
+backend-1  | 
+backend-1  | INFO:sqlalchemy.engine.Engine:
+backend-1  | CREATE TABLE groups (
+backend-1  | 	id UUID NOT NULL, 
+backend-1  | 	name VARCHAR(255) NOT NULL, 
+backend-1  | 	description TEXT, 
+backend-1  | 	creator_id UUID NOT NULL, 
+backend-1  | 	currency VARCHAR(3) NOT NULL, 
+backend-1  | 	created_at TIMESTAMP WITH TIME ZONE DEFAULT now(), 
+backend-1  | 	updated_at TIMESTAMP WITH TIME ZONE DEFAULT now(), 
+backend-1  | 	PRIMARY KEY (id), 
+backend-1  | 	FOREIGN KEY(creator_id) REFERENCES users (id) ON DELETE CASCADE
+backend-1  | )
+backend-1  | 
+backend-1  | 
+backend-1  | INFO:sqlalchemy.engine.Engine:[no key 0.00015s] {}
+backend-1  | 2026-04-04 15:12:17,838 INFO sqlalchemy.engine.Engine [no key 0.00015s] {}
+backend-1  | 2026-04-04 15:12:17,847 INFO sqlalchemy.engine.Engine 
+backend-1  | CREATE TABLE subscriptions (
+backend-1  | 	id UUID NOT NULL, 
+backend-1  | 	user_id UUID NOT NULL, 
+backend-1  | 	plan_type VARCHAR(50) NOT NULL, 
+backend-1  | 	status VARCHAR(50) NOT NULL, 
+backend-1  | 	razorpay_payment_id VARCHAR(255), 
+backend-1  | 	razorpay_order_id VARCHAR(255), 
+backend-1  | 	start_date TIMESTAMP WITH TIME ZONE DEFAULT now(), 
+backend-1  | 	end_date TIMESTAMP WITH TIME ZONE, 
+backend-1  | 	created_at TIMESTAMP WITH TIME ZONE DEFAULT now(), 
+backend-1  | 	PRIMARY KEY (id), 
+backend-1  | 	FOREIGN KEY(user_id) REFERENCES users (id) ON DELETE CASCADE, 
+backend-1  | 	UNIQUE (razorpay_payment_id)
+backend-1  | )
+backend-1  | 
+backend-1  | 
+backend-1  | 2026-04-04 15:12:17,848 INFO sqlalchemy.engine.Engine [no key 0.00017s] {}
+backend-1  | INFO:sqlalchemy.engine.Engine:
+backend-1  | CREATE TABLE subscriptions (
+backend-1  | 	id UUID NOT NULL, 
+backend-1  | 	user_id UUID NOT NULL, 
+backend-1  | 	plan_type VARCHAR(50) NOT NULL, 
+backend-1  | 	status VARCHAR(50) NOT NULL, 
+backend-1  | 	razorpay_payment_id VARCHAR(255), 
+backend-1  | 	razorpay_order_id VARCHAR(255), 
+backend-1  | 	start_date TIMESTAMP WITH TIME ZONE DEFAULT now(), 
+backend-1  | 	end_date TIMESTAMP WITH TIME ZONE, 
+backend-1  | 	created_at TIMESTAMP WITH TIME ZONE DEFAULT now(), 
+backend-1  | 	PRIMARY KEY (id), 
+backend-1  | 	FOREIGN KEY(user_id) REFERENCES users (id) ON DELETE CASCADE, 
+backend-1  | 	UNIQUE (razorpay_payment_id)
+backend-1  | )
+backend-1  | 
+backend-1  | 
+backend-1  | INFO:sqlalchemy.engine.Engine:[no key 0.00017s] {}
+backend-1  | INFO:sqlalchemy.engine.Engine:CREATE INDEX ix_subscriptions_user_id ON subscriptions (user_id)
+backend-1  | INFO:sqlalchemy.engine.Engine:[no key 0.00017s] {}
+backend-1  | 2026-04-04 15:12:17,860 INFO sqlalchemy.engine.Engine CREATE INDEX ix_subscriptions_user_id ON subscriptions (user_id)
+backend-1  | 2026-04-04 15:12:17,860 INFO sqlalchemy.engine.Engine [no key 0.00017s] {}
+backend-1  | INFO:sqlalchemy.engine.Engine:
+backend-1  | CREATE TABLE trips (
+backend-1  | 	id UUID NOT NULL, 
+backend-1  | 	user_id UUID NOT NULL, 
+backend-1  | 	title VARCHAR(255) NOT NULL, 
+backend-1  | 	destination VARCHAR(255) NOT NULL, 
+backend-1  | 	source VARCHAR(255), 
+backend-1  | 	description TEXT, 
+backend-1  | 	start_date VARCHAR(50), 
+backend-1  | 	end_date VARCHAR(50), 
+backend-1  | 	duration_days INTEGER, 
+backend-1  | 	budget FLOAT, 
+backend-1  | 	cost_per_person FLOAT, 
+backend-1  | 	num_travelers INTEGER, 
+backend-1  | 	group_type VARCHAR(50), 
+backend-1  | 	itinerary JSON, 
+backend-1  | 	transport JSON, 
+backend-1  | 	stay JSON, 
+backend-1  | 	budget_summary JSON, 
+backend-1  | 	cover_image TEXT, 
+backend-1  | 	images JSON, 
+backend-1  | 	is_public BOOLEAN NOT NULL, 
+backend-1  | 	likes_count INTEGER NOT NULL, 
+backend-1  | 	saves_count INTEGER NOT NULL, 
+backend-1  | 	views_count INTEGER NOT NULL, 
+backend-1  | 	comments_count INTEGER NOT NULL, 
+backend-1  | 	tags JSON, 
+backend-1  | 	created_at TIMESTAMP WITH TIME ZONE DEFAULT now(), 
+backend-1  | 	updated_at TIMESTAMP WITH TIME ZONE DEFAULT now(), 
+backend-1  | 	PRIMARY KEY (id), 
+backend-1  | 	FOREIGN KEY(user_id) REFERENCES users (id) ON DELETE CASCADE
+backend-1  | )
+backend-1  | 
+backend-1  | 
+backend-1  | 2026-04-04 15:12:17,864 INFO sqlalchemy.engine.Engine 
+backend-1  | CREATE TABLE trips (
+backend-1  | 	id UUID NOT NULL, 
+backend-1  | 	user_id UUID NOT NULL, 
+backend-1  | 	title VARCHAR(255) NOT NULL, 
+backend-1  | 	destination VARCHAR(255) NOT NULL, 
+backend-1  | 	source VARCHAR(255), 
+backend-1  | 	description TEXT, 
+backend-1  | 	start_date VARCHAR(50), 
+backend-1  | 	end_date VARCHAR(50), 
+backend-1  | 	duration_days INTEGER, 
+backend-1  | 	budget FLOAT, 
+backend-1  | 	cost_per_person FLOAT, 
+backend-1  | 	num_travelers INTEGER, 
+backend-1  | 	group_type VARCHAR(50), 
+backend-1  | 	itinerary JSON, 
+backend-1  | 	transport JSON, 
+backend-1  | 	stay JSON, 
+backend-1  | 	budget_summary JSON, 
+backend-1  | INFO:sqlalchemy.engine.Engine:[no key 0.00014s] {}
+backend-1  | 	cover_image TEXT, 
+backend-1  | 	images JSON, 
+backend-1  | 	is_public BOOLEAN NOT NULL, 
+backend-1  | 	likes_count INTEGER NOT NULL, 
+backend-1  | 	saves_count INTEGER NOT NULL, 
+backend-1  | 	views_count INTEGER NOT NULL, 
+backend-1  | 	comments_count INTEGER NOT NULL, 
+backend-1  | 	tags JSON, 
+backend-1  | 	created_at TIMESTAMP WITH TIME ZONE DEFAULT now(), 
+backend-1  | 	updated_at TIMESTAMP WITH TIME ZONE DEFAULT now(), 
+backend-1  | 	PRIMARY KEY (id), 
+backend-1  | 	FOREIGN KEY(user_id) REFERENCES users (id) ON DELETE CASCADE
+backend-1  | )
+backend-1  | 
+backend-1  | 
+backend-1  | 2026-04-04 15:12:17,864 INFO sqlalchemy.engine.Engine [no key 0.00014s] {}
+backend-1  | INFO:sqlalchemy.engine.Engine:CREATE INDEX ix_trips_destination ON trips (destination)
+backend-1  | INFO:sqlalchemy.engine.Engine:[no key 0.00015s] {}
+backend-1  | 2026-04-04 15:12:17,874 INFO sqlalchemy.engine.Engine CREATE INDEX ix_trips_destination ON trips (destination)
+backend-1  | 2026-04-04 15:12:17,874 INFO sqlalchemy.engine.Engine [no key 0.00015s] {}
+backend-1  | INFO:sqlalchemy.engine.Engine:CREATE INDEX ix_trips_user_id ON trips (user_id)
+backend-1  | INFO:sqlalchemy.engine.Engine:[no key 0.00017s] {}
+backend-1  | 2026-04-04 15:12:17,878 INFO sqlalchemy.engine.Engine CREATE INDEX ix_trips_user_id ON trips (user_id)
+backend-1  | 2026-04-04 15:12:17,878 INFO sqlalchemy.engine.Engine [no key 0.00017s] {}
+backend-1  | INFO:sqlalchemy.engine.Engine:
+backend-1  | CREATE TABLE user_follows (
+backend-1  | 	id UUID NOT NULL, 
+backend-1  | 	follower_id UUID NOT NULL, 
+backend-1  | 	following_id UUID NOT NULL, 
+backend-1  | 	created_at TIMESTAMP WITH TIME ZONE DEFAULT now(), 
+backend-1  | 	PRIMARY KEY (id), 
+backend-1  | 	FOREIGN KEY(follower_id) REFERENCES users (id) ON DELETE CASCADE, 
+backend-1  | 2026-04-04 15:12:17,882 INFO sqlalchemy.engine.Engine 
+backend-1  | CREATE TABLE user_follows (
+backend-1  | 	id UUID NOT NULL, 
+backend-1  | 	follower_id UUID NOT NULL, 
+backend-1  | 	following_id UUID NOT NULL, 
+backend-1  | 	created_at TIMESTAMP WITH TIME ZONE DEFAULT now(), 
+backend-1  | 	PRIMARY KEY (id), 
+backend-1  | 	FOREIGN KEY(follower_id) REFERENCES users (id) ON DELETE CASCADE, 
+backend-1  | 	FOREIGN KEY(following_id) REFERENCES users (id) ON DELETE CASCADE
+backend-1  | )
+backend-1  | 
+backend-1  | 
+backend-1  | 2026-04-04 15:12:17,882 INFO sqlalchemy.engine.Engine [no key 0.00014s] {}
+backend-1  | 	FOREIGN KEY(following_id) REFERENCES users (id) ON DELETE CASCADE
+backend-1  | )
+backend-1  | 
+backend-1  | 
+backend-1  | INFO:sqlalchemy.engine.Engine:[no key 0.00014s] {}
+backend-1  | 2026-04-04 15:12:17,888 INFO sqlalchemy.engine.Engine 
+backend-1  | CREATE TABLE refresh_tokens (
+backend-1  | 	id VARCHAR DEFAULT gen_random_uuid() NOT NULL, 
+backend-1  | INFO:sqlalchemy.engine.Engine:
+backend-1  | CREATE TABLE refresh_tokens (
+backend-1  | 	id VARCHAR DEFAULT gen_random_uuid() NOT NULL, 
+backend-1  | 	user_id UUID NOT NULL, 
+backend-1  | 	token VARCHAR NOT NULL, 
+backend-1  | 	expires_at TIMESTAMP WITH TIME ZONE NOT NULL, 
+backend-1  | 	revoked BOOLEAN, 
+backend-1  | 	created_at TIMESTAMP WITH TIME ZONE DEFAULT now(), 
+backend-1  | 	PRIMARY KEY (id), 
+backend-1  | 	FOREIGN KEY(user_id) REFERENCES users (id) ON DELETE CASCADE
+backend-1  | )
+backend-1  | 
+backend-1  | 
+backend-1  | INFO:sqlalchemy.engine.Engine:[no key 0.00018s] {}
+backend-1  | 	user_id UUID NOT NULL, 
+backend-1  | 	token VARCHAR NOT NULL, 
+backend-1  | 	expires_at TIMESTAMP WITH TIME ZONE NOT NULL, 
+backend-1  | 	revoked BOOLEAN, 
+backend-1  | 	created_at TIMESTAMP WITH TIME ZONE DEFAULT now(), 
+backend-1  | 	PRIMARY KEY (id), 
+backend-1  | 	FOREIGN KEY(user_id) REFERENCES users (id) ON DELETE CASCADE
+backend-1  | )
+backend-1  | 
+backend-1  | 
+backend-1  | 2026-04-04 15:12:17,889 INFO sqlalchemy.engine.Engine [no key 0.00018s] {}
+backend-1  | INFO:sqlalchemy.engine.Engine:CREATE INDEX ix_refresh_tokens_id ON refresh_tokens (id)
+backend-1  | INFO:sqlalchemy.engine.Engine:[no key 0.00018s] {}
+backend-1  | 2026-04-04 15:12:17,897 INFO sqlalchemy.engine.Engine CREATE INDEX ix_refresh_tokens_id ON refresh_tokens (id)
+backend-1  | 2026-04-04 15:12:17,897 INFO sqlalchemy.engine.Engine [no key 0.00018s] {}
+backend-1  | 2026-04-04 15:12:17,902 INFO sqlalchemy.engine.Engine CREATE UNIQUE INDEX ix_refresh_tokens_token ON refresh_tokens (token)
+backend-1  | 2026-04-04 15:12:17,902 INFO sqlalchemy.engine.Engine [no key 0.00018s] {}
+backend-1  | INFO:sqlalchemy.engine.Engine:CREATE UNIQUE INDEX ix_refresh_tokens_token ON refresh_tokens (token)
+backend-1  | INFO:sqlalchemy.engine.Engine:[no key 0.00018s] {}
+backend-1  | 2026-04-04 15:12:17,907 INFO sqlalchemy.engine.Engine 
+backend-1  | CREATE TABLE group_members (
+backend-1  | 	id UUID NOT NULL, 
+backend-1  | 	group_id UUID NOT NULL, 
+backend-1  | 	user_id UUID, 
+backend-1  | 	name VARCHAR(255) NOT NULL, 
+backend-1  | 	email VARCHAR(255), 
+backend-1  | 	joined_at TIMESTAMP WITH TIME ZONE DEFAULT now(), 
+backend-1  | INFO:sqlalchemy.engine.Engine:
+backend-1  | CREATE TABLE group_members (
+backend-1  | 	id UUID NOT NULL, 
+backend-1  | 	group_id UUID NOT NULL, 
+backend-1  | 	user_id UUID, 
+backend-1  | 	name VARCHAR(255) NOT NULL, 
+backend-1  | 	email VARCHAR(255), 
+backend-1  | 	joined_at TIMESTAMP WITH TIME ZONE DEFAULT now(), 
+backend-1  | 	PRIMARY KEY (id), 
+backend-1  | 	FOREIGN KEY(group_id) REFERENCES groups (id) ON DELETE CASCADE, 
+backend-1  | 	FOREIGN KEY(user_id) REFERENCES users (id) ON DELETE CASCADE
+backend-1  | )
+backend-1  | 
+backend-1  | 
+backend-1  | 	PRIMARY KEY (id), 
+backend-1  | 	FOREIGN KEY(group_id) REFERENCES groups (id) ON DELETE CASCADE, 
+backend-1  | INFO:sqlalchemy.engine.Engine:[no key 0.00016s] {}
+backend-1  | 	FOREIGN KEY(user_id) REFERENCES users (id) ON DELETE CASCADE
+backend-1  | )
+backend-1  | 
+backend-1  | 
+backend-1  | 2026-04-04 15:12:17,907 INFO sqlalchemy.engine.Engine [no key 0.00016s] {}
+backend-1  | 2026-04-04 15:12:17,920 INFO sqlalchemy.engine.Engine 
+backend-1  | CREATE TABLE trip_likes (
+backend-1  | 	id UUID NOT NULL, 
+backend-1  | 	user_id UUID NOT NULL, 
+backend-1  | 	trip_id UUID NOT NULL, 
+backend-1  | 	created_at TIMESTAMP WITH TIME ZONE DEFAULT now(), 
+backend-1  | 	PRIMARY KEY (id), 
+backend-1  | 	FOREIGN KEY(user_id) REFERENCES users (id) ON DELETE CASCADE, 
+backend-1  | INFO:sqlalchemy.engine.Engine:
+backend-1  | CREATE TABLE trip_likes (
+backend-1  | 	id UUID NOT NULL, 
+backend-1  | 	user_id UUID NOT NULL, 
+backend-1  | 	trip_id UUID NOT NULL, 
+backend-1  | 	created_at TIMESTAMP WITH TIME ZONE DEFAULT now(), 
+backend-1  | 	PRIMARY KEY (id), 
+backend-1  | 	FOREIGN KEY(user_id) REFERENCES users (id) ON DELETE CASCADE, 
+backend-1  | 	FOREIGN KEY(trip_id) REFERENCES trips (id) ON DELETE CASCADE
+backend-1  | )
+backend-1  | 
+backend-1  | 
+backend-1  | INFO:sqlalchemy.engine.Engine:[no key 0.00017s] {}
+backend-1  | 	FOREIGN KEY(trip_id) REFERENCES trips (id) ON DELETE CASCADE
+backend-1  | )
+backend-1  | 
+backend-1  | 
+backend-1  | 2026-04-04 15:12:17,920 INFO sqlalchemy.engine.Engine [no key 0.00017s] {}
+backend-1  | 2026-04-04 15:12:17,928 INFO sqlalchemy.engine.Engine 
+backend-1  | CREATE TABLE trip_saves (
+backend-1  | 	id UUID NOT NULL, 
+backend-1  | 	user_id UUID NOT NULL, 
+backend-1  | 	trip_id UUID NOT NULL, 
+backend-1  | 	created_at TIMESTAMP WITH TIME ZONE DEFAULT now(), 
+backend-1  | 	PRIMARY KEY (id), 
+backend-1  | 	FOREIGN KEY(user_id) REFERENCES users (id) ON DELETE CASCADE, 
+backend-1  | 	FOREIGN KEY(trip_id) REFERENCES trips (id) ON DELETE CASCADE
+backend-1  | INFO:sqlalchemy.engine.Engine:
+backend-1  | CREATE TABLE trip_saves (
+backend-1  | )
+backend-1  | 
+backend-1  | 
+backend-1  | 2026-04-04 15:12:17,929 INFO sqlalchemy.engine.Engine [no key 0.00016s] {}
+backend-1  | 	id UUID NOT NULL, 
+backend-1  | 	user_id UUID NOT NULL, 
+backend-1  | 	trip_id UUID NOT NULL, 
+backend-1  | 	created_at TIMESTAMP WITH TIME ZONE DEFAULT now(), 
+backend-1  | 	PRIMARY KEY (id), 
+backend-1  | 	FOREIGN KEY(user_id) REFERENCES users (id) ON DELETE CASCADE, 
+backend-1  | 	FOREIGN KEY(trip_id) REFERENCES trips (id) ON DELETE CASCADE
+backend-1  | )
+backend-1  | 
+backend-1  | 
+backend-1  | INFO:sqlalchemy.engine.Engine:[no key 0.00016s] {}
+backend-1  | 2026-04-04 15:12:17,935 INFO sqlalchemy.engine.Engine 
+backend-1  | CREATE TABLE trip_comments (
+backend-1  | 	id UUID NOT NULL, 
+backend-1  | 	user_id UUID NOT NULL, 
+backend-1  | 	trip_id UUID NOT NULL, 
+backend-1  | 	comment TEXT NOT NULL, 
+backend-1  | 	created_at TIMESTAMP WITH TIME ZONE DEFAULT now(), 
+backend-1  | 	PRIMARY KEY (id), 
+backend-1  | 	FOREIGN KEY(user_id) REFERENCES users (id) ON DELETE CASCADE, 
+backend-1  | INFO:sqlalchemy.engine.Engine:
+backend-1  | CREATE TABLE trip_comments (
+backend-1  | 	id UUID NOT NULL, 
+backend-1  | 	user_id UUID NOT NULL, 
+backend-1  | 	trip_id UUID NOT NULL, 
+backend-1  | 	comment TEXT NOT NULL, 
+backend-1  | 	FOREIGN KEY(trip_id) REFERENCES trips (id) ON DELETE CASCADE
+backend-1  | )
+backend-1  | 
+backend-1  | 
+backend-1  | 2026-04-04 15:12:17,935 INFO sqlalchemy.engine.Engine [no key 0.00011s] {}
+backend-1  | 	created_at TIMESTAMP WITH TIME ZONE DEFAULT now(), 
+backend-1  | 	PRIMARY KEY (id), 
+backend-1  | 	FOREIGN KEY(user_id) REFERENCES users (id) ON DELETE CASCADE, 
+backend-1  | 	FOREIGN KEY(trip_id) REFERENCES trips (id) ON DELETE CASCADE
+backend-1  | )
+backend-1  | 
+backend-1  | 
+backend-1  | INFO:sqlalchemy.engine.Engine:[no key 0.00011s] {}
+backend-1  | 2026-04-04 15:12:17,946 INFO sqlalchemy.engine.Engine 
+backend-1  | CREATE TABLE expenses (
+backend-1  | 	id UUID NOT NULL, 
+backend-1  | 	group_id UUID NOT NULL, 
+backend-1  | 	title VARCHAR(255) NOT NULL, 
+backend-1  | 	description TEXT, 
+backend-1  | 	amount NUMERIC(10, 2) NOT NULL, 
+backend-1  | 	category VARCHAR(50) NOT NULL, 
+backend-1  | 	paid_by UUID NOT NULL, 
+backend-1  | 	split_type VARCHAR(50) NOT NULL, 
+backend-1  | 	splits JSON NOT NULL, 
+backend-1  | 	expense_type VARCHAR(50) NOT NULL, 
+backend-1  | 	expense_date TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+backend-1  | 	created_at TIMESTAMP WITH TIME ZONE DEFAULT now(), 
+backend-1  | 	updated_at TIMESTAMP WITH TIME ZONE DEFAULT now(), 
+backend-1  | 	PRIMARY KEY (id), 
+backend-1  | 	FOREIGN KEY(group_id) REFERENCES groups (id) ON DELETE CASCADE, 
+backend-1  | 	FOREIGN KEY(paid_by) REFERENCES group_members (id) ON DELETE CASCADE
+backend-1  | )
+backend-1  | 
+backend-1  | 
+backend-1  | 2026-04-04 15:12:17,946 INFO sqlalchemy.engine.Engine [no key 0.00015s] {}
+backend-1  | INFO:sqlalchemy.engine.Engine:
+backend-1  | CREATE TABLE expenses (
+backend-1  | 	id UUID NOT NULL, 
+backend-1  | 	group_id UUID NOT NULL, 
+backend-1  | 	title VARCHAR(255) NOT NULL, 
+backend-1  | 	description TEXT, 
+backend-1  | 	amount NUMERIC(10, 2) NOT NULL, 
+backend-1  | 	category VARCHAR(50) NOT NULL, 
+backend-1  | 	paid_by UUID NOT NULL, 
+backend-1  | 	split_type VARCHAR(50) NOT NULL, 
+backend-1  | 	splits JSON NOT NULL, 
+backend-1  | 	expense_type VARCHAR(50) NOT NULL, 
+backend-1  | 	expense_date TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL, 
+backend-1  | 	created_at TIMESTAMP WITH TIME ZONE DEFAULT now(), 
+backend-1  | 	updated_at TIMESTAMP WITH TIME ZONE DEFAULT now(), 
+backend-1  | 	PRIMARY KEY (id), 
+backend-1  | 	FOREIGN KEY(group_id) REFERENCES groups (id) ON DELETE CASCADE, 
+backend-1  | 	FOREIGN KEY(paid_by) REFERENCES group_members (id) ON DELETE CASCADE
+backend-1  | )
+backend-1  | 
+backend-1  | 
+backend-1  | INFO:sqlalchemy.engine.Engine:[no key 0.00015s] {}
+backend-1  | 2026-04-04 15:12:17,956 INFO sqlalchemy.engine.Engine 
+backend-1  | CREATE TABLE settlements (
+backend-1  | 	id UUID NOT NULL, 
+backend-1  | 	expense_id UUID, 
+backend-1  | INFO:sqlalchemy.engine.Engine:
+backend-1  | 	group_id UUID NOT NULL, 
+backend-1  | 	from_member UUID NOT NULL, 
+backend-1  | 	to_member UUID NOT NULL, 
+backend-1  | 	amount NUMERIC(10, 2) NOT NULL, 
+backend-1  | 	method VARCHAR(50), 
+backend-1  | 	status VARCHAR(50), 
+backend-1  | 	settled_at TIMESTAMP WITH TIME ZONE, 
+backend-1  | 	created_at TIMESTAMP WITH TIME ZONE DEFAULT now(), 
+backend-1  | 	PRIMARY KEY (id), 
+backend-1  | CREATE TABLE settlements (
+backend-1  | 	FOREIGN KEY(expense_id) REFERENCES expenses (id), 
+backend-1  | 	id UUID NOT NULL, 
+backend-1  | 	expense_id UUID, 
+backend-1  | 	group_id UUID NOT NULL, 
+backend-1  | 	from_member UUID NOT NULL, 
+backend-1  | 	to_member UUID NOT NULL, 
+backend-1  | 	amount NUMERIC(10, 2) NOT NULL, 
+backend-1  | 	method VARCHAR(50), 
+backend-1  | 	status VARCHAR(50), 
+backend-1  | 	settled_at TIMESTAMP WITH TIME ZONE, 
+backend-1  | 	created_at TIMESTAMP WITH TIME ZONE DEFAULT now(), 
+backend-1  | 	PRIMARY KEY (id), 
+backend-1  | 	FOREIGN KEY(expense_id) REFERENCES expenses (id), 
+backend-1  | 	FOREIGN KEY(group_id) REFERENCES groups (id) ON DELETE CASCADE, 
+backend-1  | 	FOREIGN KEY(from_member) REFERENCES group_members (id), 
+backend-1  | 	FOREIGN KEY(to_member) REFERENCES group_members (id)
+backend-1  | )
+backend-1  | 
+backend-1  | 
+backend-1  | INFO:sqlalchemy.engine.Engine:[no key 0.00013s] {}
+backend-1  | 	FOREIGN KEY(group_id) REFERENCES groups (id) ON DELETE CASCADE, 
+backend-1  | 	FOREIGN KEY(from_member) REFERENCES group_members (id), 
+backend-1  | 	FOREIGN KEY(to_member) REFERENCES group_members (id)
+backend-1  | )
+backend-1  | 
+backend-1  | 
+backend-1  | 2026-04-04 15:12:17,956 INFO sqlalchemy.engine.Engine [no key 0.00013s] {}
+backend-1  | 2026-04-04 15:12:17,965 INFO sqlalchemy.engine.Engine COMMIT
+backend-1  | INFO:sqlalchemy.engine.Engine:COMMIT
+backend-1  | INFO:     Started server process [1]
+backend-1  | INFO:     Waiting for application startup.
+backend-1  | INFO:     Application startup complete.
+backend-1  | INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)

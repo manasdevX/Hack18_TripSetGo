@@ -1,176 +1,196 @@
 "use client";
-import { useState } from "react";
-import {
-  Search,
-  Filter,
-  Heart,
-  Globe,
-  MapPin,
-  Star,
-  Copy,
-  Zap,
-  TrendingUp,
-  Sparkles
-} from "lucide-react";
+
+import { useEffect, useRef, useCallback } from "react";
+import { useDiscoverStore } from "../../../store/discoverStore";
+import TripCard from "../../../components/TripCard";
+import { Search, SlidersHorizontal, Map, Flame, MapPin, Compass } from "lucide-react";
+import Link from "next/link";
+import { useAuthStore } from "../../../store/authStore";
 
 export default function DiscoverPage() {
-  const [searchQuery, setSearchQuery] = useState("");
+  const { 
+    trips, fetchFeed, isLoading, hasMore, error,
+    searchQuery, searchTrips, searchResults, isSearching,
+    trendingTrips, fetchTrending, isTrendingLoading,
+    filters, setFilters
+  } = useDiscoverStore();
 
-  const communityTrips = [
-    {
-      id: 1,
-      title: "7 Days in Tokyo & Kyoto",
-      author: "Alex Rivers",
-      likes: "1.2k",
-      rating: 4.9,
-      tags: ["Culture", "Food", "City"],
-      image: "from-rose-400 to-orange-400",
-      description: "A deep dive into the neon streets of Shinjuku and the serene temples of Kyoto.",
-    },
-    {
-      id: 2,
-      title: "Amalfi Coast Road Trip",
-      author: "Sarah J.",
-      likes: "850",
-      rating: 4.8,
-      tags: ["Luxury", "Coastal", "Summer"],
-      image: "from-cyan-400 to-blue-500",
-      description: "Driving the winding cliffs of Italy with stops in Positano and Amalfi.",
-    },
-    {
-      id: 3,
-      title: "Iceland Northern Lights",
-      author: "Marco K.",
-      likes: "2.4k",
-      rating: 5.0,
-      tags: ["Adventure", "Winter", "Nature"],
-      image: "from-indigo-600 to-purple-700",
-      description: "The ultimate winter itinerary for hunting the Aurora Borealis and Blue Lagoon.",
-    },
-    {
-      id: 4,
-      title: "Goa Beach Hopping",
-      author: "Manas A.",
-      likes: "560",
-      rating: 4.7,
-      tags: ["Beach", "Party", "Budget"],
-      image: "from-emerald-400 to-teal-500",
-      description: "The best hidden shacks in North Goa and the quiet sunsets of South Goa.",
-    },
-  ];
+  const { user } = useAuthStore();
+  const observerTarget = useRef(null);
+
+  // Initial fetch
+  useEffect(() => {
+    fetchTrending();
+    fetchFeed(true); // reset and fetch
+  }, []);
+
+  // Infinite scroll — stop if loading, no more pages, error, or searching
+  const handleObserver = useCallback((entries) => {
+    const target = entries[0];
+    if (target.isIntersecting && hasMore && !isLoading && !searchQuery && !error) {
+      fetchFeed();
+    }
+  }, [hasMore, isLoading, searchQuery, fetchFeed, error]);
+
+  useEffect(() => {
+    const option = { root: null, rootMargin: "20px", threshold: 0 };
+    const observer = new IntersectionObserver(handleObserver, option);
+    if (observerTarget.current) observer.observe(observerTarget.current);
+    return () => observer.disconnect();
+  }, [handleObserver]);
+
+  // Handle Search
+  const handleSearch = (e) => {
+    const q = e.target.value;
+    if (q) {
+      searchTrips(q);
+    } else {
+      searchTrips("");
+    }
+  };
+
+  const handleFilterChange = (e) => {
+    setFilters({ sort: e.target.value });
+  };
+
+  const displayTrips = searchQuery ? searchResults : trips;
+  const showLoading = (isLoading && !error) || (isSearching);
+  const isDone = !showLoading; // API has responded (success or error)
 
   return (
-    <div className="max-w-7xl mx-auto animate-fade-in pb-20 px-4 sm:px-0">
-      {/* Restored Hero - NO ITALIC - Original Text Capitalization */}
-      <div className="relative rounded-[40px] overflow-hidden bg-indigo-600 dark:bg-slate-900 p-12 md:p-20 mb-16 text-center shadow-lg border border-pure group transition-colors">
-        <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-20" />
-        <div className="absolute -top-32 -left-32 w-80 h-80 bg-white/10 rounded-full blur-[100px]" />
-        <div className="absolute -bottom-32 -right-32 w-80 h-80 bg-white/10 rounded-full blur-[100px]" />
-
-        <div className="relative z-10 max-w-3xl mx-auto">
-          <h1 className="text-5xl md:text-7xl font-black text-white mb-8 leading-none tracking-tighter uppercase">
-            EXPLORE DESTINATIONS<span className="text-indigo-400">.</span>
+    <div className="max-w-7xl mx-auto pb-20">
+      
+      {/* 🌟 Header Section */}
+      <div className="relative overflow-hidden rounded-[2.5rem] bg-indigo-600 dark:bg-indigo-900 mb-12 p-10 md:p-16">
+        <div className="absolute top-0 right-0 -mr-20 -mt-20 w-[400px] h-[400px] bg-white/10 rounded-full blur-[80px] pointer-events-none" />
+        <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-[300px] h-[300px] bg-purple-500/20 rounded-full blur-[60px] pointer-events-none" />
+        
+        <div className="relative z-10 max-w-2xl">
+          <h1 className="text-4xl md:text-5xl font-black text-white mb-4 tracking-tight leading-tight">
+            Discover the World's Best Itineraries
           </h1>
-          <div className="relative group max-w-2xl mx-auto">
-            <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-white/50 group-focus-within:text-white transition-colors" />
-            <input
-              type="text"
-              placeholder="SEARCH DESTINATIONS, THEMES, OR CREATORS..."
-              className="w-full bg-white/10 backdrop-blur-md border border-white/20 py-6 pl-16 pr-8 rounded-[24px] text-white outline-none focus:bg-white/20 shadow-sm transition-all placeholder:text-white/40 font-black text-xs tracking-widest uppercase"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+          <p className="text-indigo-100 text-lg md:text-xl font-medium mb-8">
+            Explore curated trips created by the community. Clone them instantly or get inspired for your next adventure.
+          </p>
+
+          {/* Search Bar */}
+          <div className="flex items-center bg-white/10 backdrop-blur-md border border-white/20 p-2 rounded-2xl shadow-2xl focus-within:bg-white/20 transition-all">
+            <div className="p-3">
+              <Search className="w-6 h-6 text-indigo-100" />
+            </div>
+            <input 
+              type="text" 
+              placeholder="Search by destination, vibes, or keywords..." 
+              className="flex-1 bg-transparent text-white placeholder:text-indigo-200 outline-none font-medium text-lg"
+              onChange={(e) => {
+                // simple debounce
+                clearTimeout(window.searchTimeout);
+                window.searchTimeout = setTimeout(() => handleSearch(e), 500);
+              }}
             />
-          </div>
-          <div className="flex flex-wrap justify-center gap-3 mt-8">
-            {["SOLO", "ADVENTURE", "BACKPACKER", "LUXURY", "FOODIE"].map((tag) => (
-              <span
-                key={tag}
-                className="text-[10px] font-black text-white/60 hover:text-white cursor-pointer transition-all px-4 py-1.5 bg-white/10 rounded-xl border border-white/10 tracking-[0.2em] uppercase"
-              >
-                #{tag}
-              </span>
-            ))}
+            <button className="bg-white text-indigo-600 px-6 py-3 rounded-xl font-bold hover:bg-indigo-50 transition-colors shadow-sm">
+              Search
+            </button>
           </div>
         </div>
       </div>
 
-      <div className="flex items-center justify-between mb-10">
-        <h2 className="text-3xl font-black text-main-pure flex items-center gap-4 tracking-tighter uppercase leading-none">
-          <TrendingUp className="w-8 h-8 text-indigo-600" /> COMMUNITY BLUEPRINTS
-        </h2>
-        <button className="flex items-center gap-3 px-6 py-3 bg-secondary-pure border border-pure rounded-2xl text-[10px] font-black text-muted-pure hover:text-main-pure transition-all active:scale-95 shadow-sm">
-          <Filter className="w-4 h-4" /> FILTERS
-        </button>
+      {/* 🔥 Trending Section (Only show if not searching) */}
+      {!searchQuery && trendingTrips.length > 0 && (
+        <div className="mb-16">
+          <div className="flex items-center gap-3 mb-8">
+            <div className="p-2.5 bg-orange-100 dark:bg-orange-500/20 rounded-xl">
+              <Flame className="w-6 h-6 text-orange-500" />
+            </div>
+            <h2 className="text-2xl font-bold text-main-pure">Trending This Week</h2>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {trendingTrips.slice(0,3).map(trip => (
+              <TripCard key={`trending-${trip.trip_id}`} trip={trip} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* 🧭 Main Feed */}
+      <div className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 bg-indigo-100 dark:bg-indigo-500/20 rounded-xl">
+            <Compass className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
+          </div>
+          <h2 className="text-2xl font-bold text-main-pure">
+            {searchQuery ? `Search Results for "${searchQuery}"` : "Community Feed"}
+          </h2>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <select 
+            className="input-pure px-4 py-2.5 rounded-xl font-medium text-sm appearance-none pr-10 relative cursor-pointer"
+            value={filters.sort}
+            onChange={handleFilterChange}
+          >
+            <option value="trending">🔥 Trending</option>
+            <option value="newest">✨ Newest First</option>
+            <option value="popular">❤️ Most Liked</option>
+            <option value="budget">💰 Lowest Budget</option>
+          </select>
+          <button className="p-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors text-slate-600 dark:text-slate-300">
+            <SlidersHorizontal className="w-5 h-5" />
+          </button>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-        {communityTrips.map((trip) => (
-          <div key={trip.id} className="group card-pure rounded-[40px] border border-pure hover:border-indigo-500/20 overflow-hidden hover:shadow-2xl transition-all duration-500 flex flex-col h-full hover:-translate-y-3">
-            <div className={`h-56 bg-gradient-to-br ${trip.image} p-8 relative flex flex-col justify-between`}>
-              <div className="flex justify-between items-start">
-                <div className="flex gap-2">
-                  {trip.tags.map((tag) => (
-                    <span key={tag} className="bg-white/20 backdrop-blur-md text-white text-[10px] font-black px-3 py-1 rounded-lg uppercase tracking-widest border border-white/20">
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-                <button className="bg-white/20 backdrop-blur-md p-3 rounded-2xl text-white hover:bg-rose-500 transition-colors shadow-lg border border-white/20">
-                  <Heart className="w-5 h-5 fill-current" />
-                </button>
-              </div>
-              <div className="flex items-center gap-2 text-white bg-black/20 backdrop-blur-md w-fit px-3 py-1 rounded-lg border border-white/10">
-                <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
-                <span className="font-black text-xs">{trip.rating}</span>
-                <span className="text-white/60 text-[10px] font-bold uppercase">({trip.likes} LIKES)</span>
-              </div>
-            </div>
-
-            <div className="p-8 flex flex-col flex-grow bg-white dark:bg-transparent transition-colors">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-8 h-8 bg-secondary-pure text-main-pure rounded-full flex items-center justify-center text-[10px] font-black border border-pure">
-                  {trip.author.charAt(0)}
-                </div>
-                <span className="text-xs font-black text-muted-pure uppercase tracking-widest">
-                  BY {trip.author}
-                </span>
-              </div>
-              <h3 className="text-2xl font-black text-main-pure mb-4 group-hover:text-indigo-600 transition-colors tracking-tight uppercase leading-none">
-                {trip.title}
-              </h3>
-              <p className="text-muted-pure text-sm leading-relaxed mb-8 flex-grow font-extrabold opacity-70 group-hover:opacity-100 transition-opacity">
-                {trip.description}
-              </p>
-              <div className="flex gap-3">
-                <button className="flex-grow bg-indigo-600 text-white py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:scale-105 transition-all shadow-xl active:scale-95 shadow-indigo-500/20">
-                  VIEW MATRIX
-                </button>
-                <button className="px-6 py-4 bg-secondary-pure text-indigo-600 rounded-2xl font-black text-[10px] border border-pure hover:bg-pure transition-all uppercase tracking-widest">
-                  CLONE
-                </button>
-              </div>
+      {/* Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {displayTrips.map((trip) => (
+          <TripCard key={trip.trip_id} trip={trip} />
+        ))}
+        
+        {/* Loading Skeletons */}
+        {showLoading && Array.from({ length: 4 }).map((_, i) => (
+          <div key={`skel-${i}`} className="card-pure h-[400px] rounded-3xl animate-pulse flex flex-col">
+            <div className="h-64 bg-slate-200 dark:bg-slate-800 rounded-t-3xl" />
+            <div className="p-5 flex flex-col gap-4">
+              <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-3/4" />
+              <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-1/2" />
+              <div className="mt-auto h-8 bg-slate-200 dark:bg-slate-800 rounded" />
             </div>
           </div>
         ))}
       </div>
 
-      <div className="mt-20 bg-indigo-600 dark:bg-card-pure rounded-[40px] p-12 text-white flex flex-col lg:flex-row items-center justify-between gap-10 shadow-lg relative overflow-hidden transition-colors border border-pure">
-        <div className="absolute top-0 right-0 w-80 h-80 bg-white/10 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/2" />
-        <div className="flex items-center gap-8 relative z-10 text-center lg:text-left flex-col lg:flex-row">
-          <div className="w-20 h-20 bg-white rounded-3xl flex items-center justify-center border border-white/20 shadow-2xl">
-            <Zap className="w-10 h-10 text-indigo-600 stroke-[3px]" />
-          </div>
-          <div>
-            <h3 className="text-3xl font-black tracking-tighter mb-2 uppercase leading-none">CAN'T FIND THE PERFECT TRIP?</h3>
-            <p className="text-white/80 text-lg font-bold">
-              Initiate your personalized AI Fleet to build a custom itinerary from scratch.
-            </p>
-          </div>
+      {/* Error State */}
+      {!showLoading && error && displayTrips.length === 0 && (
+        <div className="text-center py-20 bg-white dark:bg-slate-800 rounded-[2.5rem] border border-red-200 dark:border-red-900/40 mt-8">
+          <MapPin className="w-16 h-16 text-red-300 dark:text-red-700 mx-auto mb-4" />
+          <h3 className="text-xl font-bold text-slate-700 dark:text-slate-300 mb-2">Couldn't load trips</h3>
+          <p className="text-slate-500 dark:text-slate-400 mb-6">{error}</p>
+          <button
+            onClick={() => { fetchTrending(); fetchFeed(true); }}
+            className="px-6 py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition-colors"
+          >
+            Try Again
+          </button>
         </div>
-        <button className="bg-white text-indigo-600 px-12 py-6 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] hover:scale-110 active:scale-95 transition-all shadow-2xl shadow-indigo-800/10 shrink-0 group">
-          START AI PLANNER <Sparkles className="w-5 h-5 inline-block ml-2 mb-1 group-hover:rotate-12 transition-transform" />
-        </button>
-      </div>
+      )}
+
+      {/* Empty State */}
+      {isDone && !error && displayTrips.length === 0 && (
+        <div className="text-center py-20 bg-white dark:bg-slate-800 rounded-[2.5rem] border border-slate-200 dark:border-slate-700 mt-8">
+          <MapPin className="w-16 h-16 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
+          <h3 className="text-xl font-bold text-slate-700 dark:text-slate-300 mb-2">
+            {searchQuery ? `No trips found for "${searchQuery}"` : "No trips yet"}
+          </h3>
+          <p className="text-slate-500 dark:text-slate-400">
+            {searchQuery ? "Try a different destination or keyword." : "Be the first to share a trip with the community!"}
+          </p>
+        </div>
+      )}
+
+      {/* Intersection Observer Target */}
+      <div ref={observerTarget} className="h-10 mt-10" />
+
     </div>
   );
 }

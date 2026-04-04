@@ -1,0 +1,66 @@
+
+> tripsetgo-frontend@0.1.0 build
+> next build
+
+  ▲ Next.js 14.2.0
+  - Environments: .env
+
+   Creating an optimized production build ...
+request to https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa2ZL7W0Q5n-wU.woff2 failed, reason: Client network socket disconnected before secure TLS connection was established
+
+Retrying 1/3...
+request to https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa2pL7W0Q5n-wU.woff2 failed, reason: Client network socket disconnected before secure TLS connection was established
+
+Retrying 1/3...
+request to https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1pL7W0Q5n-wU.woff2 failed, reason: Client network socket disconnected before secure TLS connection was established
+
+Retrying 1/3...
+request to https://fonts.gstatic.com/s/montserrat/v31/JTUSjIg1_i6t8kCHKm459WdhyyTh89ZNpQ.woff2 failed, reason: Client network socket disconnected before secure TLS connection was established
+
+Retrying 1/3...
+ ✓ Compiled successfully
+   Linting and checking validity of types ...
+   Collecting page data ...
+   Generating static pages (0/23) ...
+   Generating static pages (5/23) 
+   Generating static pages (11/23) 
+   Generating static pages (17/23) 
+ ✓ Generating static pages (23/23)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                              Size     First Load JS
+┌ ○ /                                    188 B          94.6 kB
+├ ○ /_not-found                          876 B          87.8 kB
+├ ○ /auth/callback                       2.86 kB         111 kB
+├ ○ /complete-signup                     2.91 kB         111 kB
+├ ○ /dashboard                           4.49 kB         120 kB
+├ ○ /dashboard/active-trip               6.97 kB         118 kB
+├ ○ /dashboard/analytics                 3.92 kB        90.9 kB
+├ ○ /dashboard/discover                  4.75 kB         129 kB
+├ ƒ /dashboard/discover/[tripId]         6.72 kB         127 kB
+├ ○ /dashboard/expenses                  12 kB           122 kB
+├ ○ /dashboard/planner                   9.37 kB         122 kB
+├ ƒ /dashboard/profile/[username]        2.43 kB         126 kB
+├ ○ /dashboard/settings                  5.63 kB         116 kB
+├ ○ /dashboard/subscription              9.36 kB         118 kB
+├ ○ /dashboard/trips                     2.5 kB         96.9 kB
+├ ƒ /dashboard/trips/[id]                3 kB           97.4 kB
+├ ○ /forgot-password                     5.11 kB         121 kB
+├ ○ /login                               6.91 kB         123 kB
+├ ○ /my-trips                            7.17 kB         116 kB
+├ ○ /reset-password                      3.39 kB        97.8 kB
+├ ƒ /reset-password/[token]              4.01 kB         122 kB
+├ ○ /signup                              5.41 kB         123 kB
+├ ○ /verify-email                        860 B           109 kB
+├ ○ /verify-otp                          3.06 kB         112 kB
+└ ○ /verify-password-otp                 5.4 kB          121 kB
++ First Load JS shared by all            87 kB
+  ├ chunks/7023-b5bca727944e0c27.js      31.3 kB
+  ├ chunks/fd9d1056-5cf7f3c8311b07c9.js  53.6 kB
+  └ other shared chunks (total)          1.97 kB
+
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+

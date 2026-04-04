@@ -74,11 +74,12 @@ async def generate_and_persist_otp(db: Session, email: str, user_id=None):
 @auth_router.post("/send-signup-otp")
 async def send_signup_otp(payload: schemas.EmailRequest, db: Session = Depends(get_db)):
     """Step 1: Check if email exists, then send OTP."""
-    user = db.query(User).filter(User.email == payload.email).first()
+    email_input = payload.email.lower()
+    user = db.query(User).filter(User.email.ilike(email_input)).first()
     if user:
         raise HTTPException(status_code=409, detail="Email already registered")
     
-    await generate_and_persist_otp(db, payload.email)
+    await generate_and_persist_otp(db, email_input)
     return {"status": "OTP_SENT", "message": "Verification code sent to email."}
 
 @auth_router.post("/verify-signup-otp")
@@ -103,11 +104,12 @@ async def verify_signup_otp(payload: schemas.VerifyOTPRequest, db: Session = Dep
 @auth_router.post("/signup")
 async def signup(user_in: schemas.UserRegister, db: Session = Depends(get_db)):
     """Step 3: Finalize account creation (only possible after verification)."""
-    if db.query(User).filter(User.email == user_in.email).first():
+    email_input = user_in.email.lower()
+    if db.query(User).filter(User.email.ilike(email_input)).first():
         raise HTTPException(status_code=409, detail="Email already registered")
 
     user = User(
-        email=user_in.email,
+        email=email_input,
         full_name=user_in.full_name,
         password_hash=get_password_hash(user_in.password),
         signup_source="local",
@@ -129,7 +131,8 @@ async def signup(user_in: schemas.UserRegister, db: Session = Depends(get_db)):
 @auth_router.post("/login")
 def login(data: schemas.UserLogin, db: Session = Depends(get_db)):
     """Standard Login with 404 handling for smart frontend redirects."""
-    user = db.query(User).filter(User.email == data.email).first()
+    email_input = data.email.lower()
+    user = db.query(User).filter(User.email.ilike(email_input)).first()
     
     if not user:
         raise HTTPException(
@@ -159,11 +162,11 @@ def google_start(payload: dict, db: Session = Depends(get_db)):
         idinfo = id_token.verify_oauth2_token(
             payload["id_token"], google_requests.Request(), settings.GOOGLE_CLIENT_ID
         )
-        email, name = idinfo["email"], idinfo.get("name", "")
+        email, name = idinfo["email"].lower(), idinfo.get("name", "")
     except Exception:
         raise HTTPException(status_code=401, detail="Invalid Google Identity Token")
 
-    user = db.query(User).filter(User.email == email).first()
+    user = db.query(User).filter(User.email.ilike(email)).first()
 
     if user:
         # Existing user: Link Google account if needed
@@ -196,10 +199,11 @@ def google_start(payload: dict, db: Session = Depends(get_db)):
 @auth_router.post("/resend-otp")
 async def resend_otp(payload: schemas.EmailRequest, db: Session = Depends(get_db)):
     """Resend logic compatible with both new signups and existing users."""
-    user = db.query(User).filter(User.email == payload.email).first()
+    email_input = payload.email.lower()
+    user = db.query(User).filter(User.email.ilike(email_input)).first()
     user_id = user.id if user else None
     
-    await generate_and_persist_otp(db, payload.email, user_id=user_id)
+    await generate_and_persist_otp(db, email_input, user_id=user_id)
     return {"message": "New OTP sent to email"}
 
 # --- Logout Endpoint ---
@@ -223,7 +227,8 @@ async def forgot_password(payload: schemas.EmailRequest, db: Session = Depends(g
     Generates a 6-digit numeric OTP if user exists.
     Returns the same message for security (prevents account enumeration).
     """
-    user = db.query(User).filter(User.email == payload.email).first()
+    email_input = payload.email.lower()
+    user = db.query(User).filter(User.email.ilike(email_input)).first()
     
     if user:
         # Generate 6-digit numeric OTP (no letters, just numbers)
@@ -278,7 +283,8 @@ def verify_password_otp(payload: schemas.VerifyPasswordOTPRequest, db: Session =
     Returns a temporary reset_token if OTP is valid.
     """
     # Find user
-    user = db.query(User).filter(User.email == payload.email).first()
+    email_input = payload.email.lower()
+    user = db.query(User).filter(User.email.ilike(email_input)).first()
     if not user:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
