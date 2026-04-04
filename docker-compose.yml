@@ -1,0 +1,124 @@
+
+services:
+  # -- Infrastructure ----------------------------------
+  postgres:
+    image: postgres:16-alpine
+    env_file: ./backend/.env
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  # -- Application Services ----------------------------
+  backend:
+    build:
+      context: ./backend
+    ports:
+      - "8000:8000"
+    env_file: ./backend/.env
+    
+    environment:
+      - ORCHESTRATOR_URL=http://orchestrator:8004
+    depends_on:
+      - postgres
+      - redis
+      - orchestrator
+
+  intent-agent:
+    build:
+      context: ./agents/intent_agent
+    ports:
+      - "8010:8010"
+    env_file: ./agents/intent_agent/.env
+
+  destination-agent:
+    build:
+      context: ./agents/destination_agent
+    ports:
+      - "8011:8011"
+    env_file: ./agents/destination_agent/.env
+
+  transport-agent:
+    build:
+      context: ./agents/transport_agent
+    ports:
+      - "8012:8012"
+    env_file: ./agents/transport_agent/.env
+
+  stay-agent:
+    build:
+      context: ./agents/stay_agent
+    ports:
+      - "8013:8013"
+    env_file: ./agents/stay_agent/.env
+
+  itinerary-agent:
+    build:
+      context: ./agents/itinerary_agent
+    ports:
+      - "8014:8014"
+    env_file: ./agents/itinerary_agent/.env
+
+  budget-agent:
+    build:
+      context: ./agents/budget_agent
+    ports:
+      - "8015:8015"
+    env_file: ./agents/budget_agent/.env
+
+  navigation-agent:
+    build:
+      context: ./agents/navigation_agent
+    ports:
+      - "8016:8016"
+    env_file: ./agents/navigation_agent/.env
+  orchestrator:
+    build:
+      context: ./orchestrator
+    ports:
+      - "8004:8004"
+    env_file: ./orchestrator/.env
+    environment:
+      - INTENT_AGENT_URL=http://intent-agent:8010
+      - DESTINATION_AGENT_URL=http://destination-agent:8011
+      - TRANSPORT_AGENT_URL=http://transport-agent:8012
+      - STAY_AGENT_URL=http://stay-agent:8013
+      - ITINERARY_AGENT_URL=http://itinerary-agent:8014
+      - BUDGET_AGENT_URL=http://budget-agent:8015
+      - NAVIGATION_AGENT_URL=http://navigation-agent:8016
+    depends_on:
+      - intent-agent
+      - destination-agent
+      - transport-agent
+      - stay-agent
+      - itinerary-agent
+      - budget-agent
+      - navigation-agent
+
+  frontend:
+    build:
+      context: ./frontend
+    ports:
+      - "3000:3000"
+    env_file: ./frontend/.env
+    depends_on:
+      - backend
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./infrastructure/nginx:/etc/nginx/conf.d
+    depends_on:
+      - backend
+      - frontend
+
+volumes:
+  postgres_data:
