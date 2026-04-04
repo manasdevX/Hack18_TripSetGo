@@ -6,6 +6,7 @@ import { useAuthStore } from "../../store/authStore";
 import { useThemeStore } from "../../store/themeStore";
 import { GoogleLogin, GoogleOAuthProvider } from "@react-oauth/google";
 import Link from "next/link";
+import AuthNavbar from "../../components/AuthNavbar";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -93,8 +94,10 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-[#0B1120] flex items-center justify-center p-4 transition-colors duration-300">
-      <div className="w-full max-w-[480px] bg-white dark:bg-[#151d2e] rounded-[32px] shadow-2xl dark:shadow-emerald-500/10 p-8 md:p-10 border border-slate-100 dark:border-slate-800 relative overflow-hidden transition-all">
+    <div className="min-h-screen bg-slate-950 flex flex-col transition-colors duration-300">
+      <AuthNavbar />
+      <div className="flex-1 flex items-center justify-center p-4 pt-32 pb-10">
+        <div className="w-full max-w-[480px] bg-white dark:bg-[#151d2e] rounded-[32px] shadow-2xl dark:shadow-emerald-500/10 p-8 md:p-10 border border-slate-100 dark:border-slate-800 relative overflow-hidden transition-all">
         
         {/* Subtle top loading bar if you prefer it over a full overlay */}
         {isLoading && (
@@ -223,6 +226,7 @@ export default function SignupPage() {
             Member? <Link href="/login" className="text-emerald-600 dark:text-emerald-400 font-bold hover:underline">Sign In</Link>
           </p>
         </div>
+      </div>
       </div>
     </div>
   );

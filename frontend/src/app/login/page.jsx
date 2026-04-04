@@ -6,6 +6,7 @@ import { useAuthStore } from "../../store/authStore";
 import { useThemeStore } from "../../store/themeStore";
 import { GoogleLogin, GoogleOAuthProvider } from "@react-oauth/google";
 import Link from "next/link";
+import AuthNavbar from "../../components/AuthNavbar";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -65,8 +66,10 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-[#0B1120] flex items-center justify-center p-4 transition-colors duration-300">
-      <div className="w-full max-w-[440px] bg-white dark:bg-[#151d2e] rounded-[32px] shadow-2xl dark:shadow-indigo-500/10 p-10 border border-slate-100 dark:border-slate-800 relative overflow-hidden transition-all">
+    <div className="min-h-screen bg-slate-950 flex flex-col transition-colors duration-300">
+      <AuthNavbar />
+      <div className="flex-1 flex items-center justify-center p-4 pt-32 pb-10">
+        <div className="w-full max-w-[440px] bg-white dark:bg-[#151d2e] rounded-[32px] shadow-2xl dark:shadow-indigo-500/10 p-10 border border-slate-100 dark:border-slate-800 relative overflow-hidden transition-all">
         {isLoading && (
           <div className="absolute inset-0 bg-white/60 dark:bg-slate-900/60 backdrop-blur-[2px] z-50 flex items-center justify-center">
             <Loader2 className="w-10 h-10 text-indigo-600 animate-spin" />
@@ -160,6 +163,7 @@ export default function LoginPage() {
             New traveler? <Link href="/signup" className="text-indigo-600 dark:text-indigo-400 font-bold hover:underline">Create Account</Link>
           </p>
         </div>
+      </div>
       </div>
     </div>
   );
