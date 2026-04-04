@@ -113,9 +113,10 @@ def update_expense(
     if not expense:
         raise HTTPException(status_code=404, detail="Expense not found")
     
-    # Verify user is group creator (can edit any expense)
-    if expense.group.creator_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Only group creator can edit expenses")
+    # Authorization: any group member can edit expenses (collaborative model)
+    is_member = any(m.user_id == current_user.id for m in expense.group.members)
+    if not is_member:
+        raise HTTPException(status_code=403, detail="Only group members can edit expenses")
     
     if expense_in.title is not None:
         expense.title = expense_in.title
@@ -150,8 +151,10 @@ def delete_expense(
     if not expense:
         raise HTTPException(status_code=404, detail="Expense not found")
     
-    if expense.group.creator_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Only group creator can delete expenses")
+    # Authorization: any group member can delete expenses (collaborative model)
+    is_member = any(m.user_id == current_user.id for m in expense.group.members)
+    if not is_member:
+        raise HTTPException(status_code=403, detail="Only group members can delete expenses")
     
     db.delete(expense)
     db.commit()

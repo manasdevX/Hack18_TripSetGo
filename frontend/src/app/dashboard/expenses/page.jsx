@@ -13,9 +13,10 @@ import {
 export default function ExpensesPage() {
   // ===== 1. AUTH & USER CONTEXT =====
   const { user: authUser } = useAuthStore();
-  const currentUserId = authUser?.id || "user-1";
+  // currentUserId is the User.id UUID from the JWT — used to match GroupMember.user_id
+  const currentUserId = authUser?.id || null;
   const currentUserName = authUser?.full_name || "User";
-  const currentUserEmail = authUser?.email || "user@example.com";
+  const currentUserEmail = authUser?.email || "";
 
   const [activeTab, setActiveTab] = useState("overview");
 
@@ -52,21 +53,30 @@ export default function ExpensesPage() {
       try {
         setIsLoading(true);
         const res = await api.get('/groups');
+        // Backend returns all groups where current user is a GroupMember (shared visibility)
         const fetchedGroups = res.data?.groups || res.data || [];
         setGroups(fetchedGroups);
-        
+
+        // Flatten all expenses and settlements from every group the user belongs to
         let allExpenses = [];
         let allSettlements = [];
         fetchedGroups.forEach(g => {
-          if (g.expenses) allExpenses = [...allExpenses, ...g.expenses];
-          if (g.settlements) allSettlements = [...allSettlements, ...g.settlements];
+          if (Array.isArray(g.expenses)) {
+            allExpenses = [...allExpenses, ...g.expenses];
+          }
+          if (Array.isArray(g.settlements)) {
+            allSettlements = [...allSettlements, ...g.settlements];
+          }
         });
         setExpenses(allExpenses);
         setSettlements(allSettlements);
-        
-        if (fetchedGroups.length > 0 && !selectedGroup) {
-           setSelectedGroup(fetchedGroups[0].id);
-        }
+
+        // Auto-select the first group only if nothing is selected yet
+        // (preserves selection across re-fetches so the view doesn't jump)
+        setSelectedGroup(prev => {
+          if (prev && fetchedGroups.some(g => g.id === prev)) return prev;
+          return fetchedGroups[0]?.id || null;
+        });
       } catch (err) {
         console.error("Failed to fetch groups:", err);
         alert(err?.response?.data?.detail || "Failed to load groups. Please try again.");
@@ -415,17 +425,18 @@ export default function ExpensesPage() {
     }
   };
 
-  const removeMember = async (id) => {
-    if (isSubmitting || id === currentUserId) return;
-    if (Math.abs(balances[id]) > 0.01) {
+  const removeMember = async (memberId) => {
+    // Guard: prevent removing yourself — compare GroupMember.id against the member we found for current user
+    if (isSubmitting || memberId === currentUserMemberId) return;
+    if (Math.abs(balances[memberId] || 0) > 0.01) {
       alert("Member balance must be zero to remove them.");
       return;
     }
     try {
       setIsSubmitting(true);
       
-      await api.delete(`/groups/${selectedGroup}/members/${id}`);
-      setGroups(groups.map(g => g.id === selectedGroup ? { ...g, members: g.members.filter(m => m.id !== id) } : g));
+      await api.delete(`/groups/${selectedGroup}/members/${memberId}`);
+      setGroups(groups.map(g => g.id === selectedGroup ? { ...g, members: g.members.filter(m => m.id !== memberId) } : g));
     } catch (err) {
       console.error("Failed to remove member:", err);
       alert(err?.response?.data?.detail || "Failed to remove member. Please try again.");
@@ -454,8 +465,12 @@ export default function ExpensesPage() {
     }
   };
 
-  // Find current user's member ID in the group (by email), then look up balance
-  const currentUserMemberId = currentGroup?.members?.find(m => m.email === currentUserEmail)?.id;
+  // Find the GroupMember row that belongs to the currently logged-in user.
+  // We match by user_id (the User.id UUID stored on GroupMember) — NOT by email.
+  // This is robust: works for User A, User B, or any shared group member.
+  const currentUserMemberId = currentGroup?.members?.find(
+    m => m.user_id === currentUserId
+  )?.id;
   const userBalance = currentUserMemberId ? (balances[currentUserMemberId] || 0) : 0;
 
   // ===== 6. RENDER =====
@@ -716,11 +731,11 @@ export default function ExpensesPage() {
                     <div className="flex items-center gap-4">
                       <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center font-black text-indigo-600 shadow-sm">{m.name.charAt(0)}</div>
                       <div>
-                        <p className="font-black text-slate-900">{m.name} {m.id === currentUserId && "(You)"}</p>
+                        <p className="font-black text-slate-900">{m.name} {m.user_id === currentUserId && <span className="text-indigo-400 text-xs">· You</span>}</p>
                         <p className="text-xs font-bold text-slate-400">{m.email}</p>
                       </div>
                     </div>
-                    {m.id !== currentUserId && (
+                    {m.user_id !== currentUserId && (
                       <button onClick={() => removeMember(m.id)} disabled={isSubmitting} className="p-3 text-slate-200 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all disabled:cursor-not-allowed">
                         {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Trash2 size={18} />}
                       </button>

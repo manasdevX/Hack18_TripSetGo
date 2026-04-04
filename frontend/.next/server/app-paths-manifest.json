@@ -1,4 +1,5 @@
 {
+<<<<<<< HEAD
   "/_not-found/page": "app/_not-found/page.js",
   "/auth/callback/page": "app/auth/callback/page.js",
   "/complete-signup/page": "app/complete-signup/page.js",
@@ -24,4 +25,11 @@
   "/dashboard/expenses/page": "app/dashboard/expenses/page.js",
   "/dashboard/trips/[id]/page": "app/dashboard/trips/[id]/page.js",
   "/dashboard/trips/page": "app/dashboard/trips/page.js"
+=======
+  "/login/page": "app/login/page.js",
+  "/dashboard/expenses/page": "app/dashboard/expenses/page.js",
+  "/dashboard/page": "app/dashboard/page.js",
+  "/dashboard/subscription/page": "app/dashboard/subscription/page.js",
+  "/dashboard/settings/page": "app/dashboard/settings/page.js"
+>>>>>>> 594563407c97a6cbac9e06ca090efacc575e0132
 }
