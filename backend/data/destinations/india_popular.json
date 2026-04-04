@@ -1,0 +1,447 @@
+{
+  "goa": {
+    "overview": "India's beach paradise on the western coast. Famous for beaches, Portuguese heritage, fresh seafood, vibrant nightlife, and a laid-back lifestyle unlike anywhere else in India.",
+    "best_months": ["November", "December", "January", "February", "March"],
+    "avoid_months": ["June", "July", "August"],
+    "peak_season": ["December", "January"],
+    "regions": {
+      "north_goa": {
+        "vibe": "Party, backpacker, busy beaches, young crowd",
+        "areas": ["Calangute", "Baga", "Anjuna", "Vagator", "Morjim", "Mandrem", "Arambol"],
+        "best_for": "nightlife, parties, water sports, backpackers"
+      },
+      "south_goa": {
+        "vibe": "Quiet, luxury, clean beaches, families and couples",
+        "areas": ["Palolem", "Agonda", "Colva", "Benaulim", "Cavelossim", "Mobor"],
+        "best_for": "couples, families, relaxation, clean beaches"
+      },
+      "panjim": {
+        "vibe": "Heritage, culture, food, cafes, Portuguese architecture",
+        "areas": ["Fontainhas", "Church Square", "Miramar", "Dona Paula"],
+        "best_for": "culture, history, food tours, photography"
+      }
+    },
+    "price_benchmarks": {
+      "budget_hotel_per_night": 1200,
+      "mid_hotel_per_night": 3000,
+      "luxury_hotel_per_night": 8000,
+      "beach_shack_meal": 400,
+      "mid_restaurant_meal": 700,
+      "fine_dining_meal": 1500,
+      "auto_per_km": 20,
+      "bike_rental_per_day": 350,
+      "scooter_rental_per_day": 400,
+      "taxi_airport_to_calangute": 800,
+      "beer_price": 150,
+      "water_sports_package": 1500,
+      "dudhsagar_tour": 2500
+    },
+    "must_eat": [
+      "Fish Curry Rice (any local shack)",
+      "Goan Prawn Curry",
+      "Bebinca (traditional Goan dessert)",
+      "Xacuti (spiced meat curry)",
+      "Choriz Pao (Goan sausage bread)",
+      "Rava Fried Fish at Martin's Corner, Betalbatim",
+      "Crab Xec Xec"
+    ],
+    "famous_spots": [
+      "Baga Beach",
+      "Anjuna Flea Market (Wednesdays)",
+      "Dudhsagar Falls",
+      "Old Goa Churches (UNESCO)",
+      "Palolem Beach",
+      "Fort Aguada",
+      "Spice Plantations (Ponda)"
+    ],
+    "hidden_gems": [
+      "Butterfly Beach (only accessible by boat from Palolem)",
+      "Cola Beach (secluded lagoon beach)",
+      "Divar Island (Portuguese village, no crowds)",
+      "Cabo de Rama Fort (panoramic coastal views)",
+      "Fontainhas Latin Quarter at dawn"
+    ],
+    "practical": {
+      "airport": "Goa International Airport, Dabolim (GOI) - 29km from Calangute",
+      "railway": "Madgaon/Margao Station (South Goa), Thivim (North Goa), Karmali (Panjim)",
+      "best_local_transport": "Bike/scooter rental ₹350-400/day — absolute best way to explore",
+      "sim_card": "Jio best coverage, Airtel good too",
+      "cash_note": "Many beach shacks and taxi drivers prefer cash"
+    },
+    "seasonal_tips": {
+      "November": "Season just starting. Less crowded, great weather, good deals on hotels.",
+      "December": "Peak season. Book hotels 2 months in advance. Christmas/NYE prices 2-3x normal.",
+      "January": "Best weather. International Film Festival of India in Panjim.",
+      "February": "Goa Carnival (Feb). Excellent weather, moderate crowds.",
+      "March": "End of season, slightly hot afternoons but still great beaches.",
+      "April": "Getting hot and humid. Some shacks closing.",
+      "May": "Very hot, pre-monsoon, avoid beach activities in afternoon.",
+      "June": "Monsoon arrives. Most shacks/water sports closed. Green and beautiful.",
+      "July": "Heavy monsoon. Stunning waterfalls (Dudhsagar best now). Beaches closed.",
+      "August": "Monsoon peaks. Great for Dudhsagar. Food cheap, very few tourists.",
+      "September": "Monsoon easing. Some waterfalls still flowing.",
+      "October": "Post-monsoon. Greenery, fewer crowds, some hotels re-opening."
+    }
+  },
+  "manali": {
+    "overview": "Himalayan hill station in Himachal Pradesh at 2050m altitude. Gateway to Rohtang Pass, Spiti Valley, and Leh-Ladakh. Famous for snow, adventure sports, Beas River, and stunning mountain scenery.",
+    "best_months": ["March", "April", "May", "October", "November"],
+    "snow_months": ["December", "January", "February"],
+    "avoid_months": ["July", "August"],
+    "price_benchmarks": {
+      "budget_hotel_per_night": 800,
+      "mid_hotel_per_night": 2000,
+      "luxury_hotel_per_night": 5000,
+      "dhaba_meal": 200,
+      "mid_restaurant_meal": 450,
+      "taxi_per_km": 25,
+      "rohtang_permit": 500,
+      "paragliding": 2500,
+      "river_rafting": 700,
+      "snowmobile": 500,
+      "yak_ride": 300
+    },
+    "must_eat": [
+      "Sidu (local bread with ghee and honey at any dhaba)",
+      "Trout fish at Drifters Cafe",
+      "Thukpa at Johnson's Cafe",
+      "Momos (try Momo Magic near Mall Road)",
+      "Himachali Dham (traditional thali)",
+      "Apple products — fresh or as juice/cider"
+    ],
+    "famous_spots": [
+      "Rohtang Pass (permit required — apply online 1 day before)",
+      "Solang Valley (skiing, paragliding)",
+      "Hadimba Devi Temple",
+      "Old Manali (hippie cafes, backpacker vibe)",
+      "Beas River Rafting",
+      "Vashisht Hot Springs",
+      "Mall Road"
+    ],
+    "hidden_gems": [
+      "Sethan Village (above Manali, snow guaranteed in winter, fewer crowds)",
+      "Naggar Castle (15km from Manali, Nicholas Roerich Museum)",
+      "Jana Waterfall (7km from Manali, 1hr hike)",
+      "Chandrakhani Pass Trek"
+    ],
+    "practical": {
+      "airport": "Bhuntar Airport (KUU) - 50km from Manali",
+      "bus": "HRTC Volvo from Delhi (₹800-1200, 14 hours)",
+      "best_local_transport": "Local taxis or rent a bike for day trips",
+      "altitude_note": "Altitude 2050m — some people get mild headaches. Rest for first day.",
+      "sim_card": "BSNL works best in remote areas. Jio works in Manali town."
+    },
+    "seasonal_tips": {
+      "January": "Heavy snow. Roads to Rohtang closed. Perfect for snowfall experience.",
+      "February": "Peak winter sports. Cold (-5°C nights). Solang Valley best for snow activities.",
+      "March": "Snow melts slowly. Good for skiing. Roads opening up.",
+      "April": "Excellent for road trips. Snow on peaks, green valleys. Less crowded.",
+      "May": "Peak season. Very crowded (long weekends). Book early. Rohtang opens.",
+      "June": "Great weather, busy. Leh-Manali Highway opens.",
+      "July": "Monsoon — landslide risk on roads. Avoid Rohtang. Manali town OK.",
+      "August": "Landslide risk continues. Stay in Manali town.",
+      "September": "Excellent. Crowds gone, clear skies, beautiful colors.",
+      "October": "Best photography. Clear skies, golden trees. Nights getting cold.",
+      "November": "Snow arriving. Great photography. Some roads may close."
+    }
+  },
+  "jaipur": {
+    "overview": "The Pink City — capital of Rajasthan. Home to magnificent Mughal and Rajput architecture: Amber Fort, Hawa Mahal, City Palace. Vibrant bazaars, rich culture, and world-class food.",
+    "best_months": ["October", "November", "December", "January", "February", "March"],
+    "avoid_months": ["May", "June", "July"],
+    "price_benchmarks": {
+      "budget_hotel_per_night": 1000,
+      "mid_hotel_per_night": 2500,
+      "luxury_heritage_hotel_per_night": 8000,
+      "street_food_meal": 150,
+      "mid_restaurant_meal": 500,
+      "fine_dining_meal": 1200,
+      "auto_per_km": 15,
+      "taxi_per_day": 2500,
+      "amber_fort_entry_indian": 100,
+      "city_palace_entry": 200,
+      "elephant_ride_amber": 1000,
+      "blue_pottery_workshop": 500
+    },
+    "must_eat": [
+      "Dal Baati Churma (try Chokhi Dhani or Laxmi Misthan Bhandar)",
+      "Pyaaz Kachori at LMB (Laxmi Misthan Bhandar)",
+      "Lal Maas (fiery red mutton curry)",
+      "Ghewar (sweet disc dessert, seasonal)",
+      "Mirchi Bada at Rawat Misthan Bhandar",
+      "Masala Chai at any roadside stall near Hawa Mahal"
+    ],
+    "famous_spots": [
+      "Amber Fort (hire a guide, ₹300)",
+      "Hawa Mahal (best photos at sunrise)",
+      "City Palace",
+      "Jantar Mantar (largest stone sundial in world)",
+      "Nahargarh Fort (sunset views over Jaipur)",
+      "Jal Mahal (lake palace, view from road)",
+      "Bapu Bazaar & Johari Bazaar (shopping)"
+    ],
+    "hidden_gems": [
+      "Panna Meena Ka Kund (stepwell, photography gem)",
+      "Galtaji Monkey Temple (sunrise, outside Jaipur)",
+      "Sargasuli Tower (360° views, rarely crowded)",
+      "Riddhi Siddhi Area (local residential life)"
+    ],
+    "practical": {
+      "airport": "Jaipur International Airport (JAI) - 13km from city center",
+      "railway": "Jaipur Railway Station (JP) - excellent connectivity",
+      "best_local_transport": "Auto-rickshaw (meter or negotiate) / Ola/Uber available",
+      "sim_card": "Jio and Airtel both excellent",
+      "safety": "Very safe for tourists including solo women"
+    },
+    "seasonal_tips": {
+      "October": "Post-monsoon. Green and pleasant. Dussehra celebrations.",
+      "November": "Best month. Pleasant 15-28°C. Diwali period may be busy.",
+      "December": "Pleasant daytime, cold nights. Christmas/NYE tourism picks up.",
+      "January": "Jaipur Literature Festival. Cold mornings. Ideal weather.",
+      "February": "Excellent. Pushkar (90km) has camel fair.",
+      "March": "Holi festival — Jaipur has incredible Holi celebrations.",
+      "April": "Getting warm. Still manageable.",
+      "May": "Very hot 38-44°C. Avoid outdoor sightseeing midday.",
+      "June": "Scorching heat. Pre-monsoon dust storms.",
+      "July": "Monsoon. 35°C. Some rain.",
+      "August": "Monsoon. Beautiful green.",
+      "September": "Monsoon ending. Getting better."
+    }
+  },
+  "kerala": {
+    "overview": "God's Own Country — famous for backwaters (houseboats), tea gardens (Munnar), beaches (Kovalam, Varkala), Ayurveda treatments, and the Kochi cultural hub.",
+    "best_months": ["October", "November", "December", "January", "February", "March", "April"],
+    "avoid_months": ["June", "July"],
+    "price_benchmarks": {
+      "houseboat_per_night": 8000,
+      "budget_hotel_per_night": 1500,
+      "mid_hotel_per_night": 3000,
+      "luxury_resort_per_night": 10000,
+      "sadya_thali": 300,
+      "chai_at_plantation": 30,
+      "auto_per_km": 15,
+      "backwater_tour_day": 3000,
+      "ayurveda_massage": 1500,
+      "kathakali_show": 350
+    },
+    "must_eat": [
+      "Kerala Sadya (traditional feast on banana leaf — try during Onam or at any Kerala traditional restaurant)",
+      "Karimeen Pollichathu (pearl spot fish wrapped in banana leaf)",
+      "Appam with Stew",
+      "Kerala Prawn Curry at any coastal restaurant",
+      "Puttu & Kadala Curry (breakfast staple)",
+      "Fish Moilee",
+      "Banana chips (buy in Thrissur)"
+    ],
+    "famous_spots": [
+      "Alleppey (Alappuzha) Backwaters — houseboat essential",
+      "Munnar Tea Gardens — sunrise at Echo Point",
+      "Fort Kochi (Chinese fishing nets, Jew Town)",
+      "Kovalam Beach",
+      "Varkala Cliff Beach",
+      "Periyar Wildlife Sanctuary (Thekkady)",
+      "Wayanad Forests"
+    ],
+    "hidden_gems": [
+      "Kumarakom Bird Sanctuary (better than Alleppey for birds)",
+      "Thattekkad Bird Sanctuary (for birders)",
+      "Malampuzha Reservoir and Gardens",
+      "Vagamon Meadows (hill station, no crowds)"
+    ],
+    "practical": {
+      "airports": "Cochin (COK), Trivandrum (TRV), Calicut (CCJ), Kannur (CNN)",
+      "best_local_transport": "Private taxi for hill stations; ferry for backwaters",
+      "sim_card": "Jio and Airtel both work well",
+      "note": "Kerala is very safe. Prices slightly higher than other Indian states."
+    }
+  },
+  "leh_ladakh": {
+    "overview": "High-altitude desert region in the Himalayas at 3500m+. Buddhist monasteries, moonscapes, Pangong Lake, and some of the world's most dramatic mountain roads.",
+    "best_months": ["June", "July", "August", "September"],
+    "closed_months": ["December", "January", "February", "March"],
+    "price_benchmarks": {
+      "budget_guesthouse_per_night": 800,
+      "mid_guesthouse_per_night": 2000,
+      "mid_hotel_per_night": 3500,
+      "luxury_camp_per_night": 8000,
+      "dhaba_meal": 250,
+      "mid_restaurant_meal": 500,
+      "taxi_leh_to_pangong": 5000,
+      "inner_line_permit": 450,
+      "bike_rental_per_day": 1200,
+      "rafting_zanskar": 3000
+    },
+    "must_eat": [
+      "Thukpa (noodle soup at any restaurant)",
+      "Tibetan Butter Tea (acquired taste — try at a monastery)",
+      "Skyu (thick pasta stew)",
+      "Chhang (local barley beer, seasonal)",
+      "Apricot Jam (local specialty, buy at Leh market)"
+    ],
+    "famous_spots": [
+      "Pangong Tso Lake (160km from Leh, permit needed)",
+      "Nubra Valley (Bactrian camels, sand dunes)",
+      "Magnetic Hill",
+      "Hemis Monastery",
+      "Shanti Stupa (Leh)",
+      "Khardung La Pass (5359m, one of highest motorable roads)",
+      "Tso Moriri Lake"
+    ],
+    "practical": {
+      "airport": "Kushok Bakula Rimpochhe Airport, Leh (IXL) — daily flights from Delhi (shortest: 1h15m)",
+      "acclimatization": "MANDATORY: Rest first 2 days in Leh at 3500m. No alcohol first 2 days.",
+      "permits": "Inner Line Permit needed for Pangong, Nubra. Apply online 2-3 days before.",
+      "bike_trip": "Manali-Leh (480km, 2 days min, petrol stations scarce — carry extra).",
+      "sim_card": "BSNL and Jio prepaid work. Airtel limited. No postpaid works."
+    },
+    "seasonal_tips": {
+      "June": "Season opens. Roads clear. Pangong accessible. Not too crowded.",
+      "July": "Best weather. Hemis Festival. Slightly crowded.",
+      "August": "Peak season. Independence Day tourism. Full open.",
+      "September": "Excellent. Crowds thinning. Weather still perfect.",
+      "October": "Getting cold. Some passes closing. Last chance before winter.",
+      "November": "Very cold. Most guesthouses closed. Only for hardcore travelers."
+    }
+  },
+  "delhi": {
+    "overview": "India's capital — a layered city spanning 3000 years of history. From Mughal domes to British bungalows to modern metro. Rich food culture, excellent museums, and world-class street food.",
+    "best_months": ["October", "November", "December", "January", "February", "March"],
+    "avoid_months": ["May", "June"],
+    "price_benchmarks": {
+      "budget_hotel_per_night": 1000,
+      "mid_hotel_per_night": 3000,
+      "luxury_hotel_per_night": 10000,
+      "street_food_per_meal": 100,
+      "mid_restaurant_per_meal": 600,
+      "fine_dining_per_meal": 2000,
+      "metro_single_ride": 60,
+      "auto_per_km": 20,
+      "qutub_minar_entry": 35,
+      "red_fort_entry": 35
+    },
+    "must_eat": [
+      "Chole Bhature at Sita Ram Diwan Chand (Paharganj)",
+      "Paranthe at Paranthe Wali Gali (Chandni Chowk)",
+      "Jalebi at Old and Famous Jalebi Wala (Chandni Chowk)",
+      "Butter Chicken origin — Moti Mahal, Daryaganj",
+      "Streetside Golgappe (Panipuri) — any corner in Lajpat Nagar",
+      "Karim's at Jama Masjid (mutton korma, seekh kebab)",
+      "Bengali Sweets at Annapoorna (Karol Bagh)"
+    ],
+    "famous_spots": [
+      "Red Fort (Old Delhi)",
+      "Qutub Minar (800-year-old minaret)",
+      "India Gate (evening walk essential)",
+      "Humayun's Tomb (less crowded than Taj)",
+      "Chandni Chowk (Old Delhi market)",
+      "Lodhi Garden (morning jog, ancient tombs)",
+      "Akshardham Temple (free entry, 3 hours minimum)"
+    ]
+  },
+  "mumbai": {
+    "overview": "The City of Dreams — India's financial capital and entertainment hub. Bollywood, colonial architecture, street food paradise, and a 24/7 energy unlike any other Indian city.",
+    "best_months": ["November", "December", "January", "February", "March"],
+    "avoid_months": ["June", "July", "August"],
+    "price_benchmarks": {
+      "budget_hotel_per_night": 2000,
+      "mid_hotel_per_night": 5000,
+      "luxury_hotel_per_night": 15000,
+      "vada_pav": 20,
+      "mid_restaurant_meal": 800,
+      "fine_dining_meal": 2500,
+      "local_train_pass_per_day": 20,
+      "auto_per_km": 22,
+      "uber_per_km": 12,
+      "gateway_of_india_boat_ride": 100
+    },
+    "must_eat": [
+      "Vada Pav — try Ashok Vada Pav (Dadar) or any street stall",
+      "Mumbai Misal Pav at Aaswad (Dadar)",
+      "Pav Bhaji at Sardar Pav Bhaji (Tardeo)",
+      "Bombay Duck (fish) at Mahesh Lunch Home",
+      "Kulfi Falooda at Natural Ice Cream",
+      "Frankie at Tibb's Frankie",
+      "Kebabs at Bade Miyan (behind Taj Mahal Hotel)"
+    ],
+    "famous_spots": [
+      "Gateway of India + Taj Mahal Palace Hotel",
+      "Marine Drive (Queen's Necklace) at night",
+      "Dharavi (guided slum tour — eye-opening)",
+      "Elephanta Caves (boat from Gateway)",
+      "Bandra Bandstand (Bollywood star bungalows)",
+      "Colaba Causeway (shopping)",
+      "Siddhivinayak Temple"
+    ],
+    "practical": {
+      "airport": "Chhatrapati Shivaji International Airport (BOM) — T2",
+      "best_local_transport": "Local train (CSMT area) — fastest but can be overwhelming. Metro expanding.",
+      "sim_card": "Jio and Airtel both excellent",
+      "safety": "Very safe city, even for solo women. Always take Ola/Uber over street cabs at night."
+    }
+  },
+  "rishikesh": {
+    "overview": "Yoga capital of the world at the foothills of the Himalayas. Gateway to Uttarakhand adventure, white-water rafting, bungee jumping, Beatles Ashram, and sacred Ganga ghats.",
+    "best_months": ["September", "October", "November", "March", "April", "May"],
+    "avoid_months": ["July", "August"],
+    "price_benchmarks": {
+      "budget_guesthouse_per_night": 600,
+      "mid_hotel_per_night": 1500,
+      "luxury_resort_per_night": 5000,
+      "ashram_stay_per_day": 500,
+      "dhaba_meal": 150,
+      "cafe_meal": 350,
+      "white_water_rafting_9km": 600,
+      "white_water_rafting_36km": 1800,
+      "bungee_jump": 3500,
+      "yoga_class": 300,
+      "aarti_ghat": 0
+    },
+    "must_eat": [
+      "Thali at Chotiwala Restaurant",
+      "Fresh juice at any ghat cafe",
+      "Momos at any roadside stall",
+      "Banana pancake at Oasis Restaurant",
+      "Lassi at Little Buddha Cafe"
+    ],
+    "famous_spots": [
+      "Laxman Jhula & Ram Jhula (iconic suspension bridges)",
+      "Triveni Ghat Ganga Aarti (6:30pm daily)",
+      "Beatles Ashram (Maharishi Mahesh Yogi's abandoned ashram)",
+      "Rajaji National Park (half day)",
+      "Jumpin Heights Bungee (India's highest at 83m)",
+      "Camp sites along River Ganga"
+    ]
+  },
+  "agra": {
+    "overview": "Home to the Taj Mahal — one of the world's most iconic monuments. Also has Agra Fort and Fatehpur Sikri. Best visited as a 1-2 day trip from Delhi.",
+    "best_months": ["October", "November", "December", "January", "February", "March"],
+    "avoid_months": ["May", "June", "July"],
+    "price_benchmarks": {
+      "budget_hotel_per_night": 1000,
+      "mid_hotel_taj_view_per_night": 3500,
+      "taj_mahal_entry_indian": 50,
+      "taj_mahal_entry_foreign": 1100,
+      "agra_fort_entry": 50,
+      "fatehpur_sikri_entry": 40,
+      "auto_per_km": 10,
+      "tuk_tuk_full_day": 1500
+    },
+    "must_eat": [
+      "Petha (Agra's famous sweet — try Pancchi Petha)",
+      "Bedai Poori at Deviram",
+      "Mughlai Paratha at any Old City restaurant"
+    ],
+    "famous_spots": [
+      "Taj Mahal (sunrise visit recommended — least crowded, best light)",
+      "Agra Fort",
+      "Fatehpur Sikri (40km away)",
+      "Itimad-ud-Daulah (Baby Taj)",
+      "Mehtab Bagh (Taj views from opposite side)"
+    ],
+    "practical": {
+      "transport_from_delhi": "Gatimaan Express (fastest, ₹750, 1h40m), Taj Express, Road trip (3-4h from Delhi)",
+      "tip": "Taj Mahal closed on Fridays. Buy tickets online to skip queues.",
+      "air_quality_warning": "Winter can have smog. Morning visits best."
+    }
+  }
+}

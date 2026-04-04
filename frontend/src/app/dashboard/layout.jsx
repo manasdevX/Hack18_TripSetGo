@@ -9,8 +9,15 @@ export default function DashboardLayout({ children }) {
   const router = useRouter();
 
   useEffect(() => {
-    if (isHydrated && !isAuthenticated) {
-      router.push("/login");
+    if (isHydrated) {
+      const token = localStorage.getItem("access_token");
+      if (!isAuthenticated || !token) {
+        if (!token && isAuthenticated) {
+          useAuthStore.getState().logout();
+        } else {
+          router.push("/login");
+        }
+      }
     }
   }, [isAuthenticated, isHydrated, router]);
 

@@ -1,0 +1,71 @@
+{
+    "destination": "Goa",
+    "total_days": 3,
+    "total_estimated_cost_inr": 22500.0,
+    "within_budget": true,
+    "itinerary": [
+        {
+            "day": 1,
+            "date_label": "Day 1 \u2013 Arrival",
+            "morning": "Visit Basilica of Bom Jesus (Old Goa)",
+            "afternoon": "Explore Calangute Market",
+            "evening": "Dinner at Britto's (Baga)",
+            "accommodation": "Casa de Olga (\u20b92,000 per night)",
+            "meals_summary": "Breakfast at Caf\u00e9 Bodega, Lunch at Curlies, Dinner at Britto's",
+            "estimated_day_cost_inr": 7500.0
+        },
+        {
+            "day": 2,
+            "date_label": "Day 2 \u2013 Beaches",
+            "morning": "Visit Fort Aguada (Candolim)",
+            "afternoon": "Relax at Anjuna Beach",
+            "evening": "Drinks at Curlies (Anjuna)",
+            "accommodation": "Casa de Olga (\u20b92,000 per night)",
+            "meals_summary": "Breakfast at Caf\u00e9 Bodega, Lunch at Fisherman's Wharf, Dinner at Venite Restaurant",
+            "estimated_day_cost_inr": 7500.0
+        },
+        {
+            "day": 3,
+            "date_label": "Day 3 \u2013 Waterfalls",
+            "morning": "Jeep safari to Dudhsagar Falls",
+            "afternoon": "Visit Chapora Fort (Vagator)",
+            "evening": "Farewell dinner at Caf\u00e9 Bodega",
+            "accommodation": "Casa de Olga (\u20b92,000 per night)",
+            "meals_summary": "Breakfast at Caf\u00e9 Bodega, Lunch at Britto's, Dinner at Caf\u00e9 Bodega",
+            "estimated_day_cost_inr": 7500.0
+        }
+    ],
+    "recommended_hotels": [
+        {
+            "name": "Pousada Tauma",
+            "area": "Porvorim, North Goa",
+            "price_per_night_inr": 5500.0,
+            "rating": 4.5,
+            "why_recommended": "One of Goa's best boutique hotels"
+        },
+        {
+            "name": "Casa de Olga",
+            "area": "Anjuna, North Goa",
+            "price_per_night_inr": 2000.0,
+            "rating": 4.0,
+            "why_recommended": "Clean, comfortable rooms with AC, close to Anjuna beach"
+        },
+        {
+            "name": "Zostel Goa",
+            "area": "Calangute, North Goa",
+            "price_per_night_inr": 900.0,
+            "rating": 4.2,
+            "why_recommended": "Popular backpacker hostel with pool and social events"
+        }
+    ],
+    "travel_tips": [
+        "Best time to visit Goa: November to February",
+        "Book flights and accommodations in advance to avoid high prices"
+    ],
+    "context_limitation": null,
+    "_meta": {
+        "generated_at": "2026-04-04T20:27:15.595941Z",
+        "model": "llama-3.3-70b-versatile",
+        "context_retrieved": true
+    }
+}

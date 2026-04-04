@@ -96,8 +96,23 @@ export const usePlannerStore = create((set, get) => ({
 
       set({ plan: planData, isPlanning: false, progress: 100, progressLabel: "✅ Interactive plan ready!", error: null, selectedTransport: recT, selectedHotel: recH, selectedFood: recF, selectedActivities: autoActs, activeTab: "transport" });
     } catch (err) {
-      clearInterval(iv);
-      set({ error: err?.response?.data?.detail || "Planning failed. Please try again.", isPlanning: false, progress: 0 });
+      clearInterval(interval);
+      let errorMsg = "Planning failed. Try again.";
+      const detail = err?.response?.data?.detail;
+      
+      if (typeof detail === "string") {
+        errorMsg = detail;
+      } else if (detail && typeof detail === "object") {
+        if (detail.error && detail.daily_limit !== undefined) {
+          errorMsg = `${detail.error} (Used ${detail.daily_usage}/${detail.daily_limit} on ${detail.plan} plan)`;
+        } else if (detail.error) {
+          errorMsg = detail.error;
+        } else {
+          errorMsg = JSON.stringify(detail);
+        }
+      }
+      
+      set({ error: errorMsg, isPlanning: false, progress: 0 });
       throw err;
     }
   },
