@@ -2,6 +2,44 @@ import { create } from "zustand";
 import api from "../lib/api";
 
 export const useTripStore = create((set, get) => ({
+  // ── NEW: Saved trips CRUD ────────────────────────────────────────────────
+  fetchMyTrips: async () => {
+    set({ tripsLoaded: false });
+    try {
+      const res = await api.get("/trips/mine");
+      set({ trips: res.data || [], tripsLoaded: true });
+    } catch {
+      set({ trips: [], tripsLoaded: true });
+    }
+  },
+
+  deleteTrip: async (tripId) => {
+    try {
+      await api.delete(`/trips/${tripId}`);
+      set((s) => ({ trips: s.trips.filter((t) => t.id !== tripId) }));
+    } catch (e) { throw e; }
+  },
+
+  duplicateTrip: async (tripId) => {
+    const res = await api.post(`/trips/${tripId}/duplicate`);
+    const newTrip = res.data?.trip;
+    if (newTrip) set((s) => ({ trips: [newTrip, ...s.trips] }));
+    return newTrip;
+  },
+
+  toggleFavTrip: async (tripId) => {
+    const res = await api.patch(`/trips/${tripId}/favorite`);
+    const { is_favorite } = res.data;
+    set((s) => ({
+      trips: s.trips.map((t) => t.id === tripId
+        ? { ...t, is_favorite, tags: is_favorite ? [...(t.tags||[]),"favorite"] : (t.tags||[]).filter(x=>x!=="favorite") }
+        : t
+      )
+    }));
+    return is_favorite;
+  },
+
+  // ── Legacy state ──────────────────────────────────────────────────────────
   tripData: null,
   isLoading: false,
   error: null,

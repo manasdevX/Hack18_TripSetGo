@@ -1,641 +1,252 @@
 """
-TripSetGo LLM-Based Interactive Trip Planner
-=============================================
-Returns MULTIPLE OPTIONS per category — transport, hotels, food, activities.
-Schema designed for frontend interactive selection + live budget tracking.
+TripSetGo LLM-Based Interactive Planner — RAG Edition
+=======================================================
+Uses vector_store.py for retrieval-augmented context injection.
 """
-
 from __future__ import annotations
-
-import json
-import logging
-import re
-import time
+import json, logging, re, time
 from datetime import date, timedelta
 from typing import Any, Dict, List, Optional
-
-import httpx
+import httpx, asyncio as _asyncio
 
 from app.core.config import settings
-from app.planning_engine.data import (
-    get_transport_options,
-    get_stay_options,
-    get_places_for_destination,
-    DESTINATIONS,
-)
+from app.planning_engine.vector_store import retrieve_context, build_vector_context_string, VECTOR_DATA
+from app.planning_engine.data import get_transport_options, get_stay_options, get_places_for_destination
 
 logger = logging.getLogger(__name__)
 
+# ─── Groq client ──────────────────────────────────────────────────────────────
 
-# ─────────────────────────────────────────────────────────────────────────────
-# TOOL FUNCTIONS
-# ─────────────────────────────────────────────────────────────────────────────
-
-def tool_get_hotels(destination: str, budget: float) -> Dict:
-    nights = 3
-    num_travelers = 2
-    options = get_stay_options(destination, nights, num_travelers, budget)
-    return {
-        "destination": destination,
-        "options": [
-            {
-                "id": f"hotel_{i}",
-                "name": o["name"],
-                "tier": o["tier"],
-                "type": o["type"],
-                "price_per_night": o["price_per_room_per_night"],
-                "total_for_stay": o["total_stay_cost"],
-                "rating": o["rating"],
-                "amenities": o["amenities"],
-                "privacy": o["privacy"],
-                "best_for": o["best_for"],
-            }
-            for i, o in enumerate(options)
-        ],
-    }
-
-
-def tool_get_attractions(destination: str) -> Dict:
-    places = get_places_for_destination(destination)
-    return {
-        "destination": destination,
-        "attractions": [
-            {
-                "id": f"attr_{i}",
-                "name": p["name"],
-                "type": p["type"],
-                "duration_hrs": p.get("avg_time_hrs", 2),
-                "entry_cost": p.get("cost", 0),
-                "best_time": p.get("best_time", "Morning"),
-                "group_types": p.get("group_types", ["all"]),
-            }
-            for i, p in enumerate(places)
-        ],
-    }
-
-
-def tool_get_transport(source: str, destination: str, num_travelers: int) -> Dict:
-    options = get_transport_options(source, destination, num_travelers)
-    return {
-        "source": source,
-        "destination": destination,
-        "options": [
-            {
-                "id": f"tx_{i}",
-                "mode": o.get("mode", ""),
-                "provider": o.get("provider", ""),
-                "cost_per_person": o.get("cost_per_person", 0),
-                "total_cost": o.get("total_cost", 0),
-                "duration_hrs": o.get("duration_hours", o.get("duration_hrs", 0)),
-                "comfort_rating": o.get("comfort_rating", 3),
-                "best_for": o.get("best_for", ""),
-                "details": o.get("details", ""),
-            }
-            for i, o in enumerate(options)
-        ],
-    }
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-# GROQ CLIENT
-# ─────────────────────────────────────────────────────────────────────────────
-
-async def _call_groq(messages: List[Dict], max_tokens: int = 8000) -> Optional[str]:
+async def _call_groq(messages: List[Dict], max_tokens: int = 7000) -> Optional[str]:
     if not settings.GROQ_API_KEY:
         return None
-    payload: Dict[str, Any] = {
-        "model": settings.GROQ_MODEL,
-        "messages": messages,
-        "temperature": 0.4,
-        "max_tokens": max_tokens,
-    }
-    headers = {
-        "Authorization": f"Bearer {settings.GROQ_API_KEY}",
-        "Content-Type": "application/json",
-    }
-    # Retry up to 3 times (handles 429 rate limits with backoff)
-    import asyncio as _asyncio
+    payload = {"model": settings.GROQ_MODEL, "messages": messages, "temperature": 0.4, "max_tokens": max_tokens}
+    headers = {"Authorization": f"Bearer {settings.GROQ_API_KEY}", "Content-Type": "application/json"}
     for attempt in range(3):
         try:
-            async with httpx.AsyncClient(timeout=60.0) as client:
-                resp = await client.post(
-                    f"{settings.GROQ_BASE_URL}/chat/completions",
-                    json=payload,
-                    headers=headers,
-                )
-                if resp.status_code == 429:
-                    wait = 2 ** attempt  # 1s, 2s, 4s
-                    logger.warning("[LLM] Rate limited (429) — retrying in %ds", wait)
-                    await _asyncio.sleep(wait)
+            async with httpx.AsyncClient(timeout=60.0) as c:
+                r = await c.post(f"{settings.GROQ_BASE_URL}/chat/completions", json=payload, headers=headers)
+                if r.status_code == 429:
+                    await _asyncio.sleep(2 ** attempt)
                     continue
-                resp.raise_for_status()
-                return resp.json()["choices"][0]["message"]["content"]
-        except httpx.HTTPStatusError as exc:
-            if exc.response.status_code == 429 and attempt < 2:
-                await _asyncio.sleep(2 ** attempt)
-                continue
-            logger.error("[LLM] Groq HTTP error: %s", exc)
-            return None
-        except Exception as exc:
-            logger.error("[LLM] Groq error: %s", exc)
-            return None
+                r.raise_for_status()
+                return r.json()["choices"][0]["message"]["content"]
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code == 429 and attempt < 2:
+                await _asyncio.sleep(2 ** attempt); continue
+            logger.error("[LLM] HTTP error: %s", e); return None
+        except Exception as e:
+            logger.error("[LLM] error: %s", e); return None
     return None
 
 
 def _extract_json(raw: str) -> Dict:
-    if not raw:
-        return {}
+    if not raw: return {}
     cleaned = re.sub(r"```(?:json)?\s*", "", raw).strip().rstrip("`").strip()
-    try:
-        return json.loads(cleaned)
+    try: return json.loads(cleaned)
     except Exception:
-        match = re.search(r"\{.*\}", cleaned, re.DOTALL)
-        if match:
-            try:
-                return json.loads(match.group())
-            except Exception:
-                pass
+        m = re.search(r"\{.*\}", cleaned, re.DOTALL)
+        if m:
+            try: return json.loads(m.group())
+            except: pass
     return {}
 
+# ─── System prompt ────────────────────────────────────────────────────────────
 
-# ─────────────────────────────────────────────────────────────────────────────
-# SYSTEM PROMPT — MULTI-OPTION INTERACTIVE SCHEMA
-# ─────────────────────────────────────────────────────────────────────────────
-
-SYSTEM_PROMPT = """You are TripSetGo AI — an elite interactive travel planning assistant.
-
-Generate an INTERACTIVE trip plan where users can choose from MULTIPLE OPTIONS per category.
+SYSTEM_PROMPT = """You are TripSetGo AI — an elite interactive travel planner using RAG (Retrieval-Augmented Generation).
 
 CRITICAL RULES:
-1. Use ONLY data from the provided tool context — never hallucinate
-2. Generate 3-5 real options per category
-3. Return ONLY valid JSON — no markdown, no explanation text
-4. All costs must be in INR (Indian Rupees) as integers
-5. Use real place names, hotel names, and transport providers from the tool data
+1. ONLY use data from the provided RETRIEVED CONTEXT — never hallucinate
+2. If data is missing from context → say "No data available in database" for that field
+3. Return ONLY valid JSON — no markdown fences, no explanation
+4. All prices must be integers in INR
+5. Use the exact IDs from the context (tx_001, ht_002, ac_003, fp_004, etc.)
 
-RETURN THIS EXACT JSON SCHEMA (nothing else):
-
+OUTPUT SCHEMA (return this exactly):
 {
-  "meta": {
-    "source": "string",
-    "destination": "string",
-    "total_days": number,
-    "total_nights": number,
-    "num_travelers": number,
-    "group_type": "string",
-    "total_budget": number,
-    "theme": "luxury|budget|balanced|adventure",
-    "tags": ["string"],
-    "summary_text": "string - exciting 2-3 sentence Instagram-worthy description"
-  },
-  "transport_options": [
-    {
-      "id": "tx_0",
-      "mode": "string",
-      "provider": "string",
-      "cost_per_person": number,
-      "total_cost": number,
-      "duration": "string (e.g. 2h 30m)",
-      "comfort": number (1-5),
-      "best_for": "string",
-      "highlights": ["string"],
-      "recommended": boolean
-    }
-  ],
-  "hotel_options": [
-    {
-      "id": "hotel_0",
-      "name": "string",
-      "tier": "budget|standard|premium|luxury",
-      "price_per_night": number,
-      "total_stay_cost": number,
-      "rating": number (1-5),
-      "location": "string",
-      "amenities": ["string"],
-      "best_for": "string",
-      "recommended": boolean
-    }
-  ],
-  "food_plans": [
-    {
-      "id": "food_0",
-      "name": "string (e.g. Budget Local Eats)",
-      "description": "string",
-      "cost_per_day": number,
-      "total_cost": number,
-      "highlights": ["string"],
-      "recommended": boolean
-    }
-  ],
-  "itinerary": [
-    {
-      "day": number,
-      "date": "YYYY-MM-DD",
-      "day_summary": "string",
-      "morning": {
-        "time": "08:00 AM",
-        "activities": [
-          {
-            "id": "act_d1_m_0",
-            "name": "string",
-            "type": "adventure|culture|relaxation|food|shopping|nature",
-            "duration": "string",
-            "cost": number,
-            "location": "string",
-            "description": "string",
-            "tags": ["string"]
-          }
-        ]
-      },
-      "afternoon": {
-        "time": "01:00 PM",
-        "activities": [
-          {
-            "id": "act_d1_a_0",
-            "name": "string",
-            "type": "string",
-            "duration": "string",
-            "cost": number,
-            "location": "string",
-            "description": "string",
-            "tags": ["string"]
-          }
-        ]
-      },
-      "evening": {
-        "time": "06:00 PM",
-        "activities": [
-          {
-            "id": "act_d1_e_0",
-            "name": "string",
-            "type": "string",
-            "duration": "string",
-            "cost": number,
-            "location": "string",
-            "description": "string",
-            "tags": ["string"]
-          }
-        ]
-      }
-    }
-  ],
-  "ai_suggestions": [
-    {
-      "type": "upgrade|tip|warning|romantic|adventure",
-      "icon": "emoji",
-      "title": "string",
-      "description": "string",
-      "potential_cost": number
-    }
-  ],
-  "budget_breakdown_estimate": {
-    "transport": number,
-    "stay": number,
-    "food": number,
-    "activities": number,
-    "misc": number,
-    "total": number
-  },
-  "ui": {
-    "color_primary": "hex color",
-    "color_secondary": "hex color",
-    "color_accent": "hex color",
-    "destination_vibe": "beach|mountain|city|heritage|island|desert"
-  }
+  "meta": {"source":"","destination":"","total_days":0,"total_nights":0,"num_travelers":0,"group_type":"","total_budget":0,"theme":"","tags":[],"summary_text":""},
+  "transport_options": [{"id":"","mode":"","provider":"","cost_per_person":0,"total_cost":0,"duration":"","comfort":0,"highlights":[],"recommended":false,"best_for":""}],
+  "hotel_options": [{"id":"","name":"","tier":"","price_per_night":0,"total_stay_cost":0,"rating":0,"location":"","amenities":[],"best_for":"","recommended":false}],
+  "food_plans": [{"id":"","name":"","description":"","cost_per_day":0,"total_cost":0,"highlights":[],"recommended":false}],
+  "itinerary": [{"day":0,"date":"","day_summary":"","morning":{"time":"08:00 AM","activities":[{"id":"","name":"","type":"","duration":"","cost":0,"location":"","description":"","tags":[]}]},"afternoon":{"time":"01:00 PM","activities":[]},"evening":{"time":"06:00 PM","activities":[]}}],
+  "budget_breakdown_estimate": {"transport":0,"stay":0,"food":0,"activities":0,"misc":0,"total":0},
+  "ai_suggestions": [{"type":"","icon":"","title":"","description":"","potential_cost":0}],
+  "ui": {"color_primary":"#6366f1","destination_vibe":"city"}
 }
 
-RULES FOR ACTIVITIES:
-- Morning: 3 options (early activities, sightseeing)
-- Afternoon: 3 options (main attractions, adventure)
-- Evening: 3 options (dining, sunset, nightlife, cultural shows)
-- NEVER repeat the same activity in multiple slots
-- Include realistic costs from the tool data
-- Day 1: include arrival/check-in activity in morning slot
-- Last day: include checkout/departure activity in morning slot"""
+ACTIVITY RULES:
+- 3 options per slot (morning/afternoon/evening) per day
+- Use activity IDs from context (ac_xxx) for real activities
+- Day 1 morning: include Arrival & Check-in as first option
+- Last day morning: include Checkout & Departure as first option
+- Mix categories: adventure, culture, relaxation, food, nature"""
 
-
-# ─────────────────────────────────────────────────────────────────────────────
-# MAIN PLANNER
-# ─────────────────────────────────────────────────────────────────────────────
 
 async def generate_interactive_plan(
-    source: str,
-    destination: str,
-    start_date: date,
-    end_date: date,
-    budget: float,
-    num_travelers: int,
-    group_type: str,
-    preferences: List[str] = None,
+    source: str, destination: str, start_date: date, end_date: date,
+    budget: float, num_travelers: int, group_type: str, preferences: List[str] = None,
 ) -> Dict[str, Any]:
     t0 = time.perf_counter()
     preferences = preferences or []
     nights = (end_date - start_date).days
     num_days = nights + 1
-    budget_per_person = budget / num_travelers
 
-    logger.info("[LLMPlanner] %s→%s | %d days | ₹%s | %s", source, destination, num_days, budget, group_type)
-
-    # ── Gather tool data ───────────────────────────────────────────────────
-    hotels_data = tool_get_hotels(destination, budget)
-    attractions_data = tool_get_attractions(destination)
-    transport_data = tool_get_transport(source, destination, num_travelers)
+    # ── RAG: Retrieve context from vector store ────────────────────────────
+    rag_ctx = retrieve_context(
+        destination=destination, budget=budget, num_days=num_days,
+        num_travelers=num_travelers, preferences=preferences,
+        group_type=group_type, source=source,
+    )
+    context_str = build_vector_context_string(rag_ctx)
 
     date_list = [(start_date + timedelta(days=i)).isoformat() for i in range(num_days)]
 
-    user_message = f"""Plan an INTERACTIVE trip with MULTIPLE OPTIONS per category.
+    user_msg = f"""Generate an INTERACTIVE RAG-based trip plan.
 
-TRIP DETAILS:
-- Source: {source}
-- Destination: {destination}
+TRIP INPUT:
+- Source: {source} → Destination: {destination}
 - Dates: {start_date} to {end_date} ({num_days} days, {nights} nights)
-- Budget: ₹{budget:,.0f} total (₹{budget_per_person:,.0f}/person)
-- Travelers: {num_travelers} ({group_type} group)
-- Preferences: {', '.join(preferences) if preferences else 'general sightseeing, food, culture'}
-- Day dates: {json.dumps(date_list)}
+- Budget: ₹{budget:,.0f} total for {num_travelers} travelers (₹{budget/num_travelers:,.0f}/person)
+- Group: {num_travelers} {group_type}
+- Preferences: {', '.join(preferences) or 'general sightseeing, food, culture'}
+- Day dates: {date_list}
 
-=== TOOL DATA — USE THIS, DO NOT HALLUCINATE ===
+{context_str}
 
-TRANSPORT OPTIONS (use these exact modes and costs):
-{json.dumps(transport_data, indent=2)}
-
-HOTELS AVAILABLE (use these exact names and prices):
-{json.dumps(hotels_data, indent=2)}
-
-ATTRACTIONS (use these exact places):
-{json.dumps(attractions_data, indent=2)}
-
-=== INSTRUCTIONS ===
-1. Include ALL transport modes from tool data as transport_options (3-5 options)
-2. Include ALL hotel tiers from tool data as hotel_options (3-5 options)
-3. Mark ONE transport and ONE hotel as recommended=true (best value for budget)
-4. Create 3 food_plans: budget (₹300-400/day/person), balanced (₹600-800), fine dining (₹1500+)
-5. For EACH of {num_days} days, create morning/afternoon/evening slots with 3 activity choices EACH
-6. Use attraction names from the tool data
-7. ai_suggestions: 4-5 smart tips (mix of romantic, upgrade, tip, warning)
-8. budget_breakdown_estimate should sum to roughly ₹{budget:,.0f}
-9. ui.destination_vibe: pick based on {destination}
-10. Choose color palette matching {destination}'s personality
+INSTRUCTIONS:
+1. transport_options: use ONLY transport entries from context (3–5 options, use their exact IDs)
+2. hotel_options: use ONLY hotel entries from context (4–5 tiers, budget to luxury)
+3. food_plans: use ONLY food entries from context OR create 3 tiers if none found
+4. Each day: 3-4 options per morning/afternoon/evening slot, use activity IDs from context
+5. Mark best-value options as recommended=true
+6. budget_breakdown_estimate should sum to ≈ ₹{budget:,.0f}
+7. ai_suggestions: 4 targeted tips based on budget and {destination}
 
 Generate the complete JSON now:"""
 
     messages = [
         {"role": "system", "content": SYSTEM_PROMPT},
-        {"role": "user", "content": user_message},
+        {"role": "user", "content": user_msg},
     ]
 
-    raw = await _call_groq(messages, max_tokens=8000)
+    raw = await _call_groq(messages)
     plan = _extract_json(raw) if raw else {}
-
     elapsed = (time.perf_counter() - t0) * 1000
 
     if plan and plan.get("meta") and plan.get("itinerary"):
-        plan = _patch_interactive_plan(plan, source, destination, start_date, end_date, budget, num_travelers, nights, transport_data, hotels_data)
-        plan["_meta"] = {
-            "planning_time_ms": round(elapsed, 1),
-            "llm_used": True,
-            "model": settings.GROQ_MODEL,
-            "interactive": True,
-        }
-        logger.info("[LLMPlanner] ✓ LLM success in %.0fms", elapsed)
+        plan = _patch_plan(plan, source, destination, budget, num_travelers, nights, rag_ctx)
+        plan["_meta"] = {"planning_time_ms": round(elapsed, 1), "llm_used": True, "model": settings.GROQ_MODEL, "rag_retrieved": rag_ctx["retrieved_count"], "vector_store_size": rag_ctx["vector_data_count"]}
+        logger.info("[Planner] ✓ LLM+RAG success %.0fms | retrieved=%d", elapsed, rag_ctx["retrieved_count"])
         return plan
 
-    # ── Fallback to deterministic ──────────────────────────────────────────
-    logger.warning("[LLMPlanner] LLM failed (%.0fms) — building interactive fallback", elapsed)
-    return _build_deterministic_interactive(
-        source, destination, start_date, end_date, budget,
-        num_travelers, group_type, nights, num_days, date_list,
-        transport_data, hotels_data, attractions_data, elapsed
-    )
+    logger.warning("[Planner] LLM failed — deterministic fallback")
+    return _deterministic_fallback(source, destination, start_date, end_date, budget, num_travelers, group_type, nights, num_days, date_list, rag_ctx, elapsed)
 
 
-def _patch_interactive_plan(plan, source, destination, start_date, end_date, budget, num_travelers, nights, transport_data, hotels_data):
-    """Ensure all required fields are present."""
+def _patch_plan(plan, source, destination, budget, num_travelers, nights, rag_ctx):
     meta = plan.setdefault("meta", {})
-    meta.setdefault("source", source)
-    meta.setdefault("destination", destination)
-    meta.setdefault("total_days", nights + 1)
-    meta.setdefault("total_nights", nights)
-    meta.setdefault("num_travelers", num_travelers)
-    meta.setdefault("total_budget", budget)
-    meta.setdefault("tags", [])
-    meta.setdefault("summary_text", f"An unforgettable {nights + 1}-day trip to {destination}!")
+    meta.setdefault("source", source); meta.setdefault("destination", destination)
+    meta.setdefault("total_days", nights + 1); meta.setdefault("total_nights", nights)
+    meta.setdefault("num_travelers", num_travelers); meta.setdefault("total_budget", budget)
+    meta.setdefault("tags", []); meta.setdefault("summary_text", f"An unforgettable trip to {destination}!")
 
-    # Ensure transport options have required fields
+    # Patch transport defaults
     for i, t in enumerate(plan.get("transport_options", [])):
-        t.setdefault("id", f"tx_{i}")
-        t.setdefault("recommended", i == 1)
-        t.setdefault("highlights", [t.get("best_for", "Good option")])
+        t.setdefault("id", f"tx_{i:03d}"); t.setdefault("recommended", i == 1); t.setdefault("highlights", [])
 
-    # Ensure hotel options
-    for i, h in enumerate(plan.get("hotel_options", [])):
-        h.setdefault("id", f"hotel_{i}")
-        h.setdefault("recommended", i == 1)
-        h.setdefault("location", f"Central {destination}")
-
-    # Fill transport/hotels from tool data if empty
+    # Fill from RAG if LLM returned empty lists
+    by_type = rag_ctx["by_type"]
     if not plan.get("transport_options"):
-        plan["transport_options"] = [
-            {
-                "id": f"tx_{i}",
-                "mode": o.get("mode", ""),
-                "provider": o.get("provider", ""),
-                "cost_per_person": int(o.get("cost_per_person", 0)),
-                "total_cost": int(o.get("total_cost", 0)),
-                "duration": f"{o.get('duration_hrs', 0)}h",
-                "comfort": o.get("comfort_rating", 3),
-                "best_for": o.get("best_for", ""),
-                "highlights": [o.get("details", "")[:60]],
-                "recommended": i == 1,
-            }
-            for i, o in enumerate(transport_data.get("options", []))
-        ]
-
+        plan["transport_options"] = [_rag_to_transport(e, i, num_travelers) for i, e in enumerate(by_type.get("transport", [])[:5])]
     if not plan.get("hotel_options"):
-        plan["hotel_options"] = [
-            {
-                "id": f"hotel_{i}",
-                "name": h.get("name", ""),
-                "tier": h.get("tier", "standard"),
-                "price_per_night": int(h.get("price_per_night", 2000)),
-                "total_stay_cost": int(h.get("price_per_night", 2000)) * int(nights),
-                "rating": h.get("rating", 3.5),
-                "location": f"Central {destination}",
-                "amenities": h.get("amenities", ["WiFi", "AC"]),
-                "best_for": h.get("best_for", "All travelers"),
-                "recommended": h.get("tier") == "mid_range",
-            }
-            for i, h in enumerate(hotels_data.get("options", []))
-        ]
-
-    # Food plans default
+        plan["hotel_options"] = [_rag_to_hotel(e, i, nights) for i, e in enumerate(by_type.get("hotel", [])[:6])]
     if not plan.get("food_plans"):
-        plan["food_plans"] = [
-            {"id": "food_0", "name": "Budget Local Eats", "description": "Street food, local dhabas, and casual restaurants", "cost_per_day": 350 * num_travelers, "total_cost": 350 * num_travelers * (nights + 1), "highlights": ["Street food", "Local chai", "Home-style meals"], "recommended": False},
-            {"id": "food_1", "name": "Balanced Cafe & Restaurants", "description": "Mix of cafes, restaurants, and local eateries", "cost_per_day": 700 * num_travelers, "total_cost": 700 * num_travelers * (nights + 1), "highlights": ["Cafes", "Local restaurants", "Rooftop dining"], "recommended": True},
-            {"id": "food_2", "name": "Fine Dining Experience", "description": "Premium restaurants and curated food experiences", "cost_per_day": 1500 * num_travelers, "total_cost": 1500 * num_travelers * (nights + 1), "highlights": ["Fine dining", "Chef's specials", "Wine pairing"], "recommended": False},
-        ]
+        plan["food_plans"] = _default_food_plans(destination, num_travelers, nights + 1)
 
-    # AI suggestions default
-    if not plan.get("ai_suggestions"):
-        plan["ai_suggestions"] = [
-            {"type": "tip", "icon": "💡", "title": "Book in advance", "description": "Book transport and hotels at least 2 weeks early for best prices", "potential_cost": 0},
-            {"type": "upgrade", "icon": "⬆️", "title": "Upgrade your hotel", "description": f"A premium hotel in {destination} adds only ₹{2000 * nights:,} but transforms your stay", "potential_cost": 2000 * nights},
-        ]
+    plan.setdefault("ai_suggestions", _default_suggestions(destination, budget, nights))
+    ui = plan.setdefault("ui", {}); ui.setdefault("color_primary", "#6366f1"); ui.setdefault("destination_vibe", "city")
 
-    # UI defaults
-    ui = plan.setdefault("ui", {})
-    ui.setdefault("color_primary", "#6366f1")
-    ui.setdefault("color_secondary", "#a5b4fc")
-    ui.setdefault("color_accent", "#f59e0b")
-    ui.setdefault("destination_vibe", "city")
-
-    # Budget breakdown
     bb = plan.setdefault("budget_breakdown_estimate", {})
-    tx_cost = plan["transport_options"][1]["total_cost"] if len(plan.get("transport_options", [])) > 1 else 5000
-    ht_cost = next((h["total_stay_cost"] for h in plan.get("hotel_options", []) if h.get("recommended")), budget * 0.35)
-    bb.setdefault("transport", int(tx_cost))
-    bb.setdefault("stay", int(ht_cost))
-    bb.setdefault("food", int(700 * num_travelers * (nights + 1)))
-    bb.setdefault("activities", int(budget * 0.12))
-    bb.setdefault("misc", int(budget * 0.05))
-    bb["total"] = sum([bb["transport"], bb["stay"], bb["food"], bb["activities"], bb["misc"]])
-
+    tx = next((t["total_cost"] for t in plan.get("transport_options", []) if t.get("recommended")), budget * 0.15)
+    ht = next((h["total_stay_cost"] for h in plan.get("hotel_options", []) if h.get("recommended")), budget * 0.35)
+    fd = next((f["total_cost"] for f in plan.get("food_plans", []) if f.get("recommended")), 700 * num_travelers * (nights + 1))
+    bb.setdefault("transport", int(tx)); bb.setdefault("stay", int(ht)); bb.setdefault("food", int(fd))
+    bb.setdefault("activities", int(budget * 0.12)); bb.setdefault("misc", int(budget * 0.05))
+    bb["total"] = sum(v for k, v in bb.items() if k != "total")
     return plan
 
 
-def _build_deterministic_interactive(source, destination, start_date, end_date, budget, num_travelers, group_type, nights, num_days, date_list, transport_data, hotels_data, attractions_data, elapsed):
-    """Build a full interactive plan from deterministic data when LLM fails."""
-    places = attractions_data.get("attractions", [])
+def _rag_to_transport(e, i, num_travelers):
+    return {"id": e["id"], "mode": e.get("name", e.get("category", "Flight")).split()[0], "provider": e["name"], "cost_per_person": int(e["price"]), "total_cost": int(e["price"] * num_travelers), "duration": e["duration"], "comfort": e.get("metadata", {}).get("comfort", 3), "highlights": e.get("tags", [])[:2], "recommended": i == 1, "best_for": e.get("metadata", {}).get("best_for", "")}
 
-    def _activity(place, slot_prefix, day_num, idx):
-        return {
-            "id": f"act_d{day_num}_{slot_prefix}_{idx}",
-            "name": place.get("name", f"Activity {idx}"),
-            "type": place.get("type", "culture"),
-            "duration": f"{place.get('duration_hrs', 2)} hrs",
-            "cost": int(place.get("entry_cost", 0)),
-            "location": destination,
-            "description": f"Visit {place.get('name', 'this attraction')}. Entry: ₹{place.get('entry_cost', 0):,}. Best time: {place.get('best_time', 'Morning')}.",
-            "tags": [place.get("type", "culture")],
-        }
+def _rag_to_hotel(e, i, nights):
+    return {"id": e["id"], "name": e["name"], "tier": e.get("category", "mid_range"), "price_per_night": int(e["price"]), "total_stay_cost": int(e["price"] * nights), "rating": e.get("rating", 4.0), "location": e.get("metadata", {}).get("location", "City Center"), "amenities": e.get("metadata", {}).get("amenities", ["WiFi", "AC"]), "best_for": e.get("tags", ["all travelers"])[0], "recommended": i == 2}
 
-    # Build a safe pool: cycle places using modulo so we never run out
-    import itertools as _itertools
-    # Ensure we have at least 9 unique-looking entries by cycling
-    if not places:
-        places = [
-            {"name": "City Exploration", "type": "culture", "duration_hrs": 2, "entry_cost": 0, "best_time": "Morning"},
-            {"name": "Local Market", "type": "shopping", "duration_hrs": 1, "entry_cost": 0, "best_time": "Afternoon"},
-            {"name": "Sunset Point", "type": "nature", "duration_hrs": 2, "entry_cost": 0, "best_time": "Evening"},
-        ]
-    # Infinite cycling pool — safe for any number of days
-    pool = list(_itertools.islice(_itertools.cycle(places), num_days * 9 + 9))
+def _default_food_plans(destination, num_travelers, days):
+    return [
+        {"id": "food_budget", "name": "Budget Local Eats", "description": f"Street food, local dhabas and cafes in {destination}", "cost_per_day": 350 * num_travelers, "total_cost": 350 * num_travelers * days, "highlights": ["Street food", "Local chai", "Authentic flavours"], "recommended": False},
+        {"id": "food_balanced", "name": "Balanced Cafe & Restaurant", "description": "Cafes, mid-range restaurants and local specialties", "cost_per_day": 700 * num_travelers, "total_cost": 700 * num_travelers * days, "highlights": ["Cafes", "Regional cuisine", "Rooftop dining"], "recommended": True},
+        {"id": "food_premium", "name": "Fine Dining Experience", "description": "Premium restaurants and curated food experiences", "cost_per_day": 1500 * num_travelers, "total_cost": 1500 * num_travelers * days, "highlights": ["Fine dining", "Chef's specials", "Wine & cocktails"], "recommended": False},
+    ]
+
+def _default_suggestions(destination, budget, nights):
+    return [
+        {"type": "tip", "icon": "💡", "title": "Book 2+ weeks early", "description": "Save 20–30% on hotels and transport.", "potential_cost": 0},
+        {"type": "upgrade", "icon": "⬆️", "title": "Upgrade your hotel", "description": f"A premium stay in {destination} adds only ₹{2500 * nights:,} but transforms your experience.", "potential_cost": 2500 * nights},
+        {"type": "tip", "icon": "🗺️", "title": "Download offline maps", "description": "Use Google Maps offline to navigate without data.", "potential_cost": 0},
+        {"type": "warning", "icon": "⚠️", "title": "Check visa & permits", "description": f"Some areas near {destination} may require advance permits.", "potential_cost": 0},
+    ]
+
+
+def _deterministic_fallback(source, destination, start_date, end_date, budget, num_travelers, group_type, nights, num_days, date_list, rag_ctx, elapsed):
+    import itertools
+    by_type = rag_ctx["by_type"]
+    acts = by_type.get("activity", [])
+
+    if not acts:
+        acts = [{"id": f"ac_gen_{i}", "name": n, "type": t, "price": p, "duration": d, "city": destination, "tags": tg, "metadata": {"best_time": bt}} for i, (n, t, p, d, tg, bt) in enumerate([
+            ("City Exploration", "culture", 0, "2 hrs", ["culture", "morning"], "Morning"),
+            ("Local Market Walk", "shopping", 0, "1.5 hrs", ["local", "morning"], "Morning"),
+            ("Heritage Site", "heritage", 200, "2 hrs", ["heritage", "afternoon"], "Afternoon"),
+            ("Viewpoint Trek", "adventure", 0, "2 hrs", ["nature", "afternoon"], "Afternoon"),
+            ("Sunset Point", "nature", 0, "1 hr", ["sunset", "evening"], "Evening"),
+            ("Local Dinner", "food", 800, "2 hrs", ["food", "evening"], "Evening"),
+        ])]
+
+    pool = list(itertools.islice(itertools.cycle(acts), num_days * 9 + 9))
+
+    def _act(raw, slot, day_num, idx):
+        return {"id": raw.get("id", f"act_d{day_num}_{slot}_{idx}"), "name": raw.get("name", "Activity"), "type": raw.get("category", raw.get("type", "culture")), "duration": raw.get("duration", "2 hrs"), "cost": int(raw.get("price", 0)), "location": raw.get("city", destination), "description": f"Visit {raw.get('name','this attraction')} in {destination}.", "tags": raw.get("tags", [])[:3]}
 
     itinerary = []
     for d in range(num_days):
         base = d * 9
-        morning_places  = pool[base:base + 3]
-        afternoon_places = pool[base + 3:base + 6]
-        evening_places  = pool[base + 6:base + 9]
+        morn = [_act(pool[base + i], "m", d+1, i) for i in range(3)]
+        aft  = [_act(pool[base + 3 + i], "a", d+1, i) for i in range(3)]
+        eve  = [_act(pool[base + 6 + i], "e", d+1, i) for i in range(3)]
+        if d == 0:           morn[0] = {"id": "act_arrival", "name": "Arrival & Check-in", "type": "relaxation", "duration": "2 hrs", "cost": 0, "location": destination, "description": "Arrive, check in, freshen up.", "tags": ["arrival"]}
+        if d == num_days-1:  morn[0] = {"id": "act_checkout", "name": "Checkout & Departure", "type": "relaxation", "duration": "2 hrs", "cost": 0, "location": source, "description": "Check out and head to departure.", "tags": ["departure"]}
+        itinerary.append({"day": d+1, "date": date_list[d], "day_summary": f"Day {d+1} in {destination}", "morning": {"time": "08:00 AM", "activities": morn}, "afternoon": {"time": "01:00 PM", "activities": aft}, "evening": {"time": "06:00 PM", "activities": eve}})
 
-        morning_acts   = [_activity(morning_places[i],   "m", d + 1, i) for i in range(3)]
-        afternoon_acts = [_activity(afternoon_places[i], "a", d + 1, i) for i in range(3)]
-        evening_acts   = [_activity(evening_places[i],   "e", d + 1, i) for i in range(3)]
+    transport_options = [_rag_to_transport(e, i, num_travelers) for i, e in enumerate(by_type.get("transport", [])[:5])]
+    if not transport_options:
+        transport_options = [{"id": "tx_default", "mode": "Flight", "provider": "Domestic Carrier", "cost_per_person": 5500, "total_cost": 5500 * num_travelers, "duration": "2h", "comfort": 4, "highlights": ["Fast"], "recommended": True, "best_for": "Speed"}]
 
-        # Override morning slot of day 1 (arrival) and last day (checkout)
-        if d == 0:
-            morning_acts[0] = {"id": "act_d1_m_arrival", "name": "Arrival & Check-in", "type": "relaxation", "duration": "2 hrs", "cost": 0, "location": destination, "description": "Arrive, check in to hotel, and freshen up.", "tags": ["arrival"]}
-        if d == num_days - 1:
-            morning_acts[0] = {"id": "act_dlast_m_checkout", "name": "Checkout & Departure", "type": "relaxation", "duration": "2 hrs", "cost": 0, "location": source, "description": "Check out from hotel and head to departure point.", "tags": ["departure"]}
+    hotel_options = [_rag_to_hotel(e, i, nights) for i, e in enumerate(by_type.get("hotel", [])[:6])]
+    if not hotel_options:
+        hotel_options = [{"id": "ht_default", "name": f"Standard Hotel {destination}", "tier": "mid_range", "price_per_night": 2500, "total_stay_cost": 2500 * nights, "rating": 4.0, "location": destination, "amenities": ["WiFi", "AC", "Pool"], "best_for": "All travelers", "recommended": True}]
 
-        itinerary.append({
-            "day": d + 1,
-            "date": date_list[d],
-            "day_summary": f"Day {d + 1} in {destination}",
-            "morning":   {"time": "08:00 AM", "activities": morning_acts},
-            "afternoon": {"time": "01:00 PM", "activities": afternoon_acts},
-            "evening":   {"time": "06:00 PM", "activities": evening_acts},
-        })
-
-    transport_options = [
-        {
-            "id": f"tx_{i}",
-            "mode": o.get("mode", ""),
-            "provider": o.get("provider", ""),
-            "cost_per_person": int(o.get("cost_per_person", 0)),
-            "total_cost": int(o.get("total_cost", 0)),
-            "duration": f"{o.get('duration_hours', o.get('duration_hrs', 0))}h",
-            "comfort": o.get("comfort_rating", 3),
-            "best_for": o.get("best_for", ""),
-            "highlights": [o.get("details", "")[:80]],
-            "recommended": i == 1,
-        }
-        for i, o in enumerate(transport_data.get("options", []))
-    ]
-
-    hotel_options = [
-        {
-            "id": f"hotel_{i}",
-            "name": h.get("name", ""),
-            "tier": h.get("tier", "standard"),
-            "price_per_night": int(h.get("price_per_night", 2000)),
-            "total_stay_cost": int(h.get("price_per_night", 2000)) * nights,
-            "rating": h.get("rating", 3.5),
-            "location": f"Central {destination}",
-            "amenities": h.get("amenities", ["WiFi"]),
-            "best_for": h.get("best_for", "All travelers"),
-            "recommended": h.get("tier") == "budget_hotel",
-        }
-        for i, h in enumerate(hotels_data.get("options", []))
-    ]
-
-    # Safe fallback for budget breakdown — never crash on empty lists
-    def _safe_tx_cost(opts):
-        for o in opts:
-            if o.get("recommended"):
-                return o.get("total_cost", 5000)
-        return opts[0].get("total_cost", 5000) if opts else 5000
-
-    def _safe_ht_cost(opts):
-        for o in opts:
-            if o.get("recommended"):
-                return o.get("total_stay_cost", int(budget * 0.35))
-        return opts[1]["total_stay_cost"] if len(opts) > 1 else (opts[0]["total_stay_cost"] if opts else int(budget * 0.35))
-
-    bb = {
-        "transport": _safe_tx_cost(transport_options),
-        "stay": _safe_ht_cost(hotel_options),
-        "food": 700 * num_travelers * num_days,
-        "activities": int(budget * 0.12),
-        "misc": int(budget * 0.05),
-    }
+    bb = {"transport": transport_options[0]["total_cost"], "stay": hotel_options[min(2, len(hotel_options)-1)]["total_stay_cost"], "food": 700 * num_travelers * num_days, "activities": int(budget * 0.12), "misc": int(budget * 0.05)}
     bb["total"] = sum(bb.values())
 
     return {
-        "meta": {
-            "source": source, "destination": destination,
-            "total_days": num_days, "total_nights": nights,
-            "num_travelers": num_travelers, "group_type": group_type,
-            "total_budget": budget, "theme": "balanced",
-            "tags": ["sightseeing", "culture", "food"],
-            "summary_text": f"Discover the best of {destination} in {num_days} days — a perfect blend of sightseeing, food, and unforgettable experiences!",
-        },
+        "meta": {"source": source, "destination": destination, "total_days": num_days, "total_nights": nights, "num_travelers": num_travelers, "group_type": group_type, "total_budget": budget, "theme": "balanced", "tags": ["sightseeing", "culture", "food"], "summary_text": f"Discover the best of {destination} in {num_days} days!"},
         "transport_options": transport_options,
         "hotel_options": hotel_options,
-        "food_plans": [
-            {"id": "food_0", "name": "Budget Local Eats", "description": "Street food, dhabas, casual eateries", "cost_per_day": 350 * num_travelers, "total_cost": 350 * num_travelers * num_days, "highlights": ["Street food", "Chai stops", "Local thali"], "recommended": False},
-            {"id": "food_1", "name": "Balanced Cafes & Dining", "description": "Casual cafes, restaurants, and local specialties", "cost_per_day": 700 * num_travelers, "total_cost": 700 * num_travelers * num_days, "highlights": ["Local restaurants", "Cafe culture", "Regional cuisine"], "recommended": True},
-            {"id": "food_2", "name": "Fine Dining & Experiences", "description": "Premium dining with curated experiences", "cost_per_day": 1500 * num_travelers, "total_cost": 1500 * num_travelers * num_days, "highlights": ["Fine dining", "Food tours", "Chef's table"], "recommended": False},
-        ],
+        "food_plans": _default_food_plans(destination, num_travelers, num_days),
         "itinerary": itinerary,
-        "ai_suggestions": [
-            {"type": "tip", "icon": "💡", "title": "Book Early", "description": "Book 2+ weeks ahead for 20-30% savings on hotels and transport.", "potential_cost": 0},
-            {"type": "upgrade", "icon": "⬆️", "title": "Go Premium", "description": f"Upgrade to a 4-star hotel for ₹{2500 * nights:,} more — worth every rupee!", "potential_cost": 2500 * nights},
-            {"type": "tip", "icon": "🗺️", "title": "Download Offline Maps", "description": "Use Google Maps offline to navigate without data.", "potential_cost": 0},
-            {"type": "warning", "icon": "⚠️", "title": "Peak Season", "description": "December-January is peak season — book early to avoid price surges.", "potential_cost": 0},
-        ],
         "budget_breakdown_estimate": bb,
-        "ui": {"color_primary": "#6366f1", "color_secondary": "#a5b4fc", "color_accent": "#f59e0b", "destination_vibe": "city"},
-        "_meta": {"planning_time_ms": round(elapsed, 1), "llm_used": False, "model": "deterministic", "interactive": True},
+        "ai_suggestions": _default_suggestions(destination, budget, nights),
+        "ui": {"color_primary": "#6366f1", "destination_vibe": "city"},
+        "_meta": {"planning_time_ms": round(elapsed, 1), "llm_used": False, "model": "deterministic-rag-fallback", "rag_retrieved": rag_ctx["retrieved_count"], "vector_store_size": rag_ctx["vector_data_count"]},
     }
