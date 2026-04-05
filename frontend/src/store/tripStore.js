@@ -13,6 +13,21 @@ export const useTripStore = create((set, get) => ({
     }
   },
 
+  fetchTripById: async (tripId) => {
+    set({ isLoading: true, error: null });
+    try {
+      const res = await api.get(`/trips/${tripId}`);
+      set({ tripData: res.data, isLoading: false });
+      return res.data;
+    } catch (err) {
+      set({
+        isLoading: false,
+        error: err?.response?.data?.detail || "Failed to load trip"
+      });
+      throw err;
+    }
+  },
+
   deleteTrip: async (tripId) => {
     try {
       await api.delete(`/trips/${tripId}`);

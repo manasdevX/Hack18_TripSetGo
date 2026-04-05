@@ -8,7 +8,7 @@ import {
   MapPin, Calendar, Wallet, Users, Compass, Plane, Train, Bus, Car,
   Hotel, Star, Clock, ChevronDown, ChevronUp, Sparkles, CheckCircle,
   AlertTriangle, Info, Utensils, Zap, RotateCcw,
-  Heart, Globe, TrendingUp, ArrowRight,
+  Heart, Globe, TrendingUp, ArrowRight, Navigation,
   Filter, BookmarkPlus, Database, Loader2, PartyPopper,
 } from "lucide-react";
 
@@ -144,12 +144,18 @@ function BudgetTracker({ plan }) {
 
 function TransportSelector({ options }) {
   const { selectedTransport, selectTransport } = usePlannerStore();
-  const TIcon = (mode) => { const I = TRANSPORT_ICON[mode] || Plane; return <I className="w-5 h-5" />; };
+  const TIcon = (opt) => {
+    const text = (opt.mode + " " + opt.provider).toLowerCase();
+    if (text.includes("train") || text.includes("railway") || text.includes("express") || text.includes("irctc")) return <Train className="w-5 h-5" />;
+    if (text.includes("cab") || text.includes("car") || text.includes("taxi") || text.includes("private") || text.includes("drive")) return <Car className="w-5 h-5" />;
+    if (text.includes("bus") || text.includes("volvo") || text.includes("coach") || text.includes("travels")) return <Bus className="w-5 h-5" />;
+    return <Plane className="w-5 h-5" />;
+  };
 
   return (
     <div>
       <h3 className="text-lg font-black text-main-pure mb-4 flex items-center gap-2">
-        <div className="p-2 bg-sky-100 dark:bg-sky-900/30 rounded-xl"><Plane className="w-5 h-5 text-sky-500" /></div>
+        <div className="p-2 bg-sky-100 dark:bg-sky-900/30 rounded-xl"><Navigation className="w-5 h-5 text-sky-500" /></div>
         Transport Options
         <span className="text-xs text-slate-400 font-normal ml-1">— choose one</span>
       </h3>
@@ -162,7 +168,7 @@ function TransportSelector({ options }) {
               <div className="flex items-start justify-between mb-2">
                 <div className="flex items-center gap-2">
                   <div className={`p-2 rounded-xl ${sel ? "bg-sky-500 text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-500"} transition-colors`}>
-                    {TIcon(opt.mode)}
+                    {TIcon(opt)}
                   </div>
                   <div>
                     <div className="font-black text-main-pure">{opt.mode}</div>

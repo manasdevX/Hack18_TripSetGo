@@ -127,30 +127,40 @@ export default function AnalyticsPage() {
 
   // Category pie: from trip data if available, else estimate from budget splits
   const categoryData = useMemo(() => {
-    let transport = 0, stay = 0, activities = 0, misc = 0;
+    let transport = 0, stay = 0, activities = 0, food = 0;
     filtered.forEach((t) => {
-      const b = t.trip_data?.budget || t.plan?.budget || {};
-      transport += Number(b.transport || b.allocated_transport || 0);
-      stay += Number(b.accommodation || b.allocated_stay || 0);
-      activities += Number(b.activities || b.allocated_activities || 0);
-      misc += Number(b.miscellaneous || 0);
+      // 1. Try real confirmed data first (new schema)
+      if (t.budget_summary || t.transport || t.stay) {
+        transport += Number(t.budget_summary?.transport_cost || t.transport?.total_cost || 0);
+        stay += Number(t.budget_summary?.stay_cost || t.stay?.total_stay_cost || 0);
+        food += Number(t.budget_summary?.selected_food?.total_cost || 0);
+        
+        // Sum cost from selected activities
+        const selActs = t.itinerary?.selected_activities || {};
+        Object.values(selActs).forEach(act => {
+          activities += Number(act.cost || 0);
+        });
+      } 
+      // 2. Fallback to older schemas or estimates
+      else {
+        const tb = Number(t.budget) || 0;
+        transport += tb * 0.25;
+        stay += tb * 0.35;
+        food += tb * 0.25;
+        activities += tb * 0.15;
+      }
     });
-    const total = transport + stay + activities + misc;
-    if (total === 0) {
-      // Estimate from total budget with typical splits
-      const tb = totalBudget;
-      transport = tb * 0.28;
-      stay = tb * 0.40;
-      activities = tb * 0.22;
-      misc = tb * 0.10;
-    }
+
+    const total = transport + stay + activities + food;
+    if (total === 0) return [];
+
     return [
       { name: "Transport", value: Math.round(transport) },
       { name: "Stay", value: Math.round(stay) },
+      { name: "Food", value: Math.round(food) },
       { name: "Activities", value: Math.round(activities) },
-      { name: "Misc", value: Math.round(misc) },
     ].filter((c) => c.value > 0);
-  }, [filtered, totalBudget]);
+  }, [filtered]);
 
   const insights = useMemo(() => [
     filtered.length > 0 && `You've planned ${filtered.length} trip${filtered.length > 1 ? "s" : ""} totalling ${fmtFull(totalBudget)}`,

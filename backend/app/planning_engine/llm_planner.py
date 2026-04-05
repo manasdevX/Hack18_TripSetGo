@@ -177,7 +177,17 @@ def _patch_plan(plan, source, destination, budget, num_travelers, nights, rag_ct
 
 
 def _rag_to_transport(e, i, num_travelers):
-    return {"id": e["id"], "mode": e.get("name", e.get("category", "Flight")).split()[0], "provider": e["name"], "cost_per_person": int(e["price"]), "total_cost": int(e["price"] * num_travelers), "duration": e["duration"], "comfort": e.get("metadata", {}).get("comfort", 3), "highlights": e.get("tags", [])[:2], "recommended": i == 1, "best_for": e.get("metadata", {}).get("best_for", "")}
+    raw_name = (e.get("name") or e.get("category", "Flight")).lower()
+    if any(k in raw_name for k in ["train", "railway", "irctc", "express"]):
+        mode = "Train"
+    elif any(k in raw_name for k in ["cab", "taxi", "car", "uber", "ola", "private"]):
+        mode = "Car"
+    elif any(k in raw_name for k in ["bus", "volvo", "coach", "roadways"]):
+        mode = "Bus"
+    else:
+        mode = "Flight"
+    
+    return {"id": e["id"], "mode": mode, "provider": e["name"], "cost_per_person": int(e["price"]), "total_cost": int(e["price"] * num_travelers), "duration": e["duration"], "comfort": e.get("metadata", {}).get("comfort", 3), "highlights": e.get("tags", [])[:2], "recommended": i == 1, "best_for": e.get("metadata", {}).get("best_for", "")}
 
 def _rag_to_hotel(e, i, nights):
     return {"id": e["id"], "name": e["name"], "tier": e.get("category", "mid_range"), "price_per_night": int(e["price"]), "total_stay_cost": int(e["price"] * nights), "rating": e.get("rating", 4.0), "location": e.get("metadata", {}).get("location", "City Center"), "amenities": e.get("metadata", {}).get("amenities", ["WiFi", "AC"]), "best_for": e.get("tags", ["all travelers"])[0], "recommended": i == 2}
