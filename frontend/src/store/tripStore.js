@@ -168,40 +168,98 @@ export const useTripStore = create((set, get) => ({
     };
   },
 
-  // Generate a new trip via planning engine
+  // Generate a new trip via Agentic planning engine
   generateTrip: async (searchParams) => {
     set({ isLoading: true, error: null, tripData: null });
 
     try {
-      const payload = {
-        source: searchParams.source || searchParams.origin,
-        destination: searchParams.destination,
-        start_date: searchParams.startDate || searchParams.start_date,
-        end_date: searchParams.endDate || searchParams.end_date,
-        budget: Number(searchParams.budget),
-        num_travelers: Number(searchParams.travelers || searchParams.travellers) || 1,
-        group_type: searchParams.groupType || searchParams.group_type || "friends",
-        preferences: searchParams.preferences || null,
-      };
-
-      const response = await api.post("/trips", payload);
-      const mapped = get()._mapOrchestratorToDashboardTrip(
-        response.data,
-        searchParams
-      );
-
-      if (!mapped) {
-        if (response.data?.status === "need_more_info") {
-          throw new Error(response.data?.question || "Need more information to plan the trip.");
-        }
-        throw new Error(response.data?.warnings?.[0] || "Trip generation failed");
+      const budgetNum = Number(searchParams.budget) || 2000;
+      const travelers = Number(searchParams.travelers || searchParams.travellers) || 1;
+      const daysInfo = searchParams.startDate ? ` from ${searchParams.startDate} to ${searchParams.endDate}` : " for 3 days";
+      
+      const query = `Plan a trip to ${searchParams.destination}${daysInfo} for ${travelers} people with a $${budgetNum} budget.`;
+      
+      // Hit the new LangGraph API directly
+      const response = await fetch("http://127.0.0.1:8000/plan", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query }),
+      });
+      
+      if (!response.ok) throw new Error("Agentic API error");
+      const data = await response.json();
+      
+      if (data.status !== "success") {
+         throw new Error("Failed to plan trip gracefully under constraints.");
       }
+
+      // Map our new Agentic LangGraph format into the Dashboard UI format
+      const booked_flights = data.booked_flights || {};
+      const booked_hotels = data.booked_hotels || {};
+      const booked_food = data.booked_food || [];
+      const activities = data.daily_itinerary || [];
+      const totalCostRaw = parseFloat(data.total_cost) || 0;
+
+      // Extract restaurant details safely
+      const restaurant = booked_food.length > 0 ? booked_food[0] : null;
+
+      const mapped = {
+        destination: searchParams.destination || data.destination || "Destination",
+        source: searchParams.source || "Origin",
+        status: "success",
+        weather: {
+          temp: "—", // Strict logic: no weather API integration yet, so intentionally blank
+          condition: "—",
+          advice: `Enjoy your planned trip to ${data.destination}!`,
+          advisories: [],
+          areas: [],
+          best_areas: []
+        },
+        budget: {
+          total: `₹${(totalCostRaw * 80).toLocaleString()}`, // rough USD to INR for UI sake if UI uses INR
+          total_raw: totalCostRaw * 80,
+          user_budget: budgetNum * 80,
+          remaining: (data.budget - totalCostRaw) * 80,
+          within_budget: data.budget_adhered,
+        },
+        route: {
+          distance: `${searchParams.source || 'Origin'} → ${data.destination || 'Destination'}`,
+          duration: booked_flights.time ? `Departing: ${booked_flights.time}` : "—",
+          mode: booked_flights.type || "flight"
+        },
+        transport: Object.keys(booked_flights).length ? [{
+          mode: booked_flights.type || "flight",
+          provider: booked_flights.airline || booked_flights.train_name || "Unknown Provider",
+          departure: booked_flights.time || "TBD",
+          arrival: booked_flights.arrival || "TBD",
+          price: (booked_flights.price || 0) * 80,
+          currency: "INR",
+          class_type: booked_flights.class || "Economy"
+        }] : [],
+        stay: Object.keys(booked_hotels).length ? [{
+          name: booked_hotels.hotel || "Unknown Hotel",
+          rating: booked_hotels.rating || 4.0,
+          price_per_night: (booked_hotels.price_per_night || 0) * 80,
+          total_price: ((booked_hotels.price_per_night || 0) * 3) * 80,
+          currency: "INR",
+          area: data.destination
+        }] : [],
+        itinerary: [{
+          day: 1,
+          title: "Agentic Planned Excursion",
+          meals: restaurant ? [`Dinner at ${restaurant.restaurant} (Rating: ${restaurant.rating}, ~US$${restaurant.price_per_meal})`] : [],
+          activities: activities.map((act) => ({
+             title: act.attraction || act.activity,
+             description: `Cost: $${act.cost}. Rating: ${act.rating}`
+          }))
+        }]
+      };
 
       set({ isLoading: false, tripData: mapped, error: null });
     } catch (err) {
       set({
         isLoading: false,
-        error: err?.response?.data?.detail || err?.message || "Failed to generate trip. Please try again.",
+        error: err?.message || "Failed to generate trip via Agent. Please try again.",
       });
     }
   },

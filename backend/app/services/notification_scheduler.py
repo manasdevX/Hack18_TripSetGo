@@ -81,6 +81,27 @@ async def check_upcoming_trips():
         db.close()
 
 def start_scheduler():
-    scheduler.add_job(check_upcoming_trips, 'interval', minutes=10) # Checks every 10 min
+    scheduler.add_job(check_upcoming_trips, 'interval', minutes=10)  # Trip reminders every 10 min
+    scheduler.add_job(                                                 # Data pipeline weekly refresh
+        _run_pipeline_sync,
+        'cron',
+        day_of_week='sun',
+        hour=2,
+        minute=0,
+        id='weekly_data_pipeline',
+    )
     scheduler.start()
-    logger.info("Notification scheduler started.")
+    logger.info("Notification scheduler started (trip reminders + weekly data pipeline).")
+
+
+def _run_pipeline_sync():
+    """Wrapper to run async pipeline from sync scheduler context."""
+    import asyncio
+    try:
+        from app.services.data_pipeline.pipeline_runner import run_weekly_pipeline
+        loop = asyncio.new_event_loop()
+        loop.run_until_complete(run_weekly_pipeline())
+        loop.close()
+    except Exception as e:
+        logger.error("[Scheduler] Weekly pipeline failed: %s", e)
+

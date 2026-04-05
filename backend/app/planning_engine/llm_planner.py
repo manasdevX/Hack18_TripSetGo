@@ -10,7 +10,10 @@ from typing import Any, Dict, List, Optional
 import httpx, asyncio as _asyncio
 
 from app.core.config import settings
-from app.planning_engine.vector_store import retrieve_context, build_vector_context_string, VECTOR_DATA
+from app.planning_engine.vector_store import (
+    retrieve_context, build_vector_context_string, VECTOR_DATA,
+    retrieve_real_trains, retrieve_real_restaurants, build_enriched_context_string,
+)
 from app.planning_engine.data import get_transport_options, get_stay_options, get_places_for_destination
 from app.services.weather_service import WeatherService
 
@@ -109,7 +112,22 @@ async def generate_interactive_plan(
         num_travelers=num_travelers, preferences=preferences,
         group_type=group_type, source=source,
     )
-    context_str = build_vector_context_string(rag_ctx)
+
+    # ── REAL DATA: Fetch trains + restaurants from pipeline cache ─────────────
+    real_trains = []
+    real_restaurants = []
+    try:
+        from app.database.session import SessionLocal
+        db = SessionLocal()
+        real_trains = retrieve_real_trains(db, source, destination)
+        vibe_tags = preferences + ([group_type] if group_type else [])
+        real_restaurants = retrieve_real_restaurants(db, destination, vibe_tags=vibe_tags, max_results=5)
+        db.close()
+    except Exception as _e:
+        logger.warning("[Planner] Real data fetch failed (non-fatal): %s", _e)
+
+    # Build enriched context — merges vector store + real trains + real restaurants
+    context_str = build_enriched_context_string(rag_ctx, real_trains, real_restaurants, source, destination)
 
     # ── WEATHER: Get actual forecast for the dates ────────────────────────
     weather_data = await _weather_service.get_forecast(destination, start_date, end_date)
@@ -153,34 +171,61 @@ Generate the complete JSON now:"""
     elapsed = (time.perf_counter() - t0) * 1000
 
     if plan and plan.get("meta") and plan.get("itinerary"):
-        plan = _patch_plan(plan, source, destination, budget, num_travelers, nights, rag_ctx, weather_data)
+        plan = _patch_plan(plan, source, destination, budget, num_travelers, nights, rag_ctx, weather_data,
+                           real_trains=real_trains, real_restaurants=real_restaurants)
         plan["_meta"] = {"planning_time_ms": round(elapsed, 1), "llm_used": True, "model": settings.GROQ_MODEL, "rag_retrieved": rag_ctx["retrieved_count"], "vector_store_size": rag_ctx["vector_data_count"]}
-        logger.info("[Planner] ✓ LLM+RAG success %.0fms | retrieved=%d", elapsed, rag_ctx["retrieved_count"])
+        logger.info("[Planner] ✓ LLM+RAG success %.0fms | retrieved=%d | real_trains=%d", elapsed, rag_ctx["retrieved_count"], len(real_trains))
         return plan
 
     logger.warning("[Planner] LLM failed — deterministic fallback")
-    return _deterministic_fallback(source, destination, start_date, end_date, budget, num_travelers, group_type, nights, num_days, date_list, rag_ctx, weather_data, elapsed)
+    return _deterministic_fallback(source, destination, start_date, end_date, budget, num_travelers, group_type, nights, num_days, date_list, rag_ctx, weather_data, elapsed,
+                                   real_trains=real_trains, real_restaurants=real_restaurants)
 
 
-def _patch_plan(plan, source, destination, budget, num_travelers, nights, rag_ctx, weather_data):
+def _patch_plan(plan, source, destination, budget, num_travelers, nights, rag_ctx, weather_data,
+                real_trains=None, real_restaurants=None):
     meta = plan.setdefault("meta", {})
     meta.setdefault("source", source); meta.setdefault("destination", destination)
     meta.setdefault("total_days", nights + 1); meta.setdefault("total_nights", nights)
     meta.setdefault("num_travelers", num_travelers); meta.setdefault("total_budget", budget)
     meta.setdefault("tags", []); meta.setdefault("summary_text", f"An unforgettable trip to {destination}!")
 
-    # Patch transport defaults
-    for i, t in enumerate(plan.get("transport_options", [])):
-        t.setdefault("id", f"tx_{i:03d}"); t.setdefault("recommended", i == 1); t.setdefault("highlights", [])
+    # ── ALWAYS inject real trains as the first transport options (before LLM ones) ──
+    real_train_cards = []
+    if real_trains:
+        real_train_cards = [_real_train_to_transport(t, i, num_travelers) for i, t in enumerate(real_trains[:3])]
 
-    # Fill from RAG if LLM returned empty lists
+    # Keep LLM-generated non-train options (flights, bus, self-drive)
+    llm_options = [
+        t for t in plan.get("transport_options", [])
+        if (t.get("mode") or "").lower() not in ("train", "railway")
+    ]
+
+    # Merge: real trains first, then other LLM options (flights etc), cap at 6
+    merged = real_train_cards + llm_options
+    if not merged:
+        # No real trains and LLM returned nothing — use RAG vector store
+        by_type = rag_ctx["by_type"]
+        merged = [_rag_to_transport(e, i, num_travelers) for i, e in enumerate(by_type.get("transport", [])[:5])]
+
+    # Patch IDs and set recommended
+    for i, t in enumerate(merged):
+        t.setdefault("id", f"tx_{i:03d}")
+        t.setdefault("highlights", [])
+        # Mark first real train as recommended if budget train, else index 1
+        if real_train_cards and i == 0:
+            t["recommended"] = True
+        else:
+            t.setdefault("recommended", i == 1 and not real_train_cards)
+
+    plan["transport_options"] = merged[:6]
+
+    # Fill hotel from RAG if LLM returned empty
     by_type = rag_ctx["by_type"]
-    if not plan.get("transport_options"):
-        plan["transport_options"] = [_rag_to_transport(e, i, num_travelers) for i, e in enumerate(by_type.get("transport", [])[:5])]
     if not plan.get("hotel_options"):
         plan["hotel_options"] = [_rag_to_hotel(e, i, nights) for i, e in enumerate(by_type.get("hotel", [])[:6])]
     if not plan.get("food_plans"):
-        plan["food_plans"] = _default_food_plans(destination, num_travelers, nights + 1)
+        plan["food_plans"] = _default_food_plans(destination, num_travelers, nights + 1, real_restaurants)
 
     plan.setdefault("ai_suggestions", _default_suggestions(destination, budget, nights, weather_data))
     ui = plan.setdefault("ui", {}); ui.setdefault("color_primary", "#6366f1"); ui.setdefault("destination_vibe", "city")
@@ -202,6 +247,62 @@ def _patch_plan(plan, source, destination, budget, num_travelers, nights, rag_ct
     return plan
 
 
+def _real_train_to_transport(train: dict, i: int, num_travelers: int) -> dict:
+    """Convert a real pipeline train entry into a transport_option card."""
+    name = train.get("train_name", "Train")
+    number = train.get("train_number", "")
+    dep = train.get("departure", "")
+    arr = train.get("arrival", "")
+    dur = train.get("duration_hrs", 0)
+    days = train.get("days", ["Daily"])
+    classes = train.get("class_types", ["SL", "3A"])
+
+    # Best fare to display (prefer 3A as most popular)
+    fare_3a = train.get("approx_fare_3a")
+    fare_sl = train.get("approx_fare_sl")
+    fare_2a = train.get("approx_fare_2a")
+    display_fare = fare_3a or fare_sl or 800  # fallback estimate
+
+    # Build highlights
+    runs_str = ", ".join(days[:3]) if days else "Check schedule"
+    fare_detail = []
+    if fare_sl: fare_detail.append(f"SL: ₹{fare_sl}")
+    if fare_3a: fare_detail.append(f"3A: ₹{fare_3a}")
+    if fare_2a: fare_detail.append(f"2A: ₹{fare_2a}")
+    highlights = [
+        f"🚪 Departs {dep} → Arrives {arr}" if dep and arr else "Check IRCTC for schedule",
+        f"📅 Runs: {runs_str}",
+        f"🎫 Classes: {', '.join(classes)}",
+    ] + (fare_detail if fare_detail else [])
+
+    dur_str = f"{dur:.1f}h" if dur else "Check schedule"
+    label = f"#{number} {name}" if number else name
+
+    return {
+        "id": f"real_train_{i}",
+        "mode": "Train",
+        "provider": label,
+        "train_number": number,
+        "train_name": name,
+        "departure_time": dep,
+        "arrival_time": arr,
+        "duration_hrs": dur,
+        "run_days": days,
+        "class_types": classes,
+        "fare_sl": fare_sl,
+        "fare_3a": fare_3a,
+        "fare_2a": fare_2a,
+        "cost_per_person": int(display_fare),
+        "total_cost": int(display_fare * num_travelers),
+        "duration": dur_str,
+        "comfort": 4 if fare_3a else 3,
+        "highlights": highlights,
+        "recommended": i == 0,
+        "best_for": "Budget travelers" if fare_sl else "Comfortable travel",
+        "source": "real_data",
+    }
+
+
 def _rag_to_transport(e, i, num_travelers):
     raw_name = (e.get("name") or e.get("category", "Flight")).lower()
     if any(k in raw_name for k in ["train", "railway", "irctc", "express"]):
@@ -218,11 +319,43 @@ def _rag_to_transport(e, i, num_travelers):
 def _rag_to_hotel(e, i, nights):
     return {"id": e["id"], "name": e["name"], "tier": e.get("category", "mid_range"), "price_per_night": int(e["price"]), "total_stay_cost": int(e["price"] * nights), "rating": e.get("rating", 4.0), "location": e.get("metadata", {}).get("location", "City Center"), "amenities": e.get("metadata", {}).get("amenities", ["WiFi", "AC"]), "best_for": e.get("tags", ["all travelers"])[0], "recommended": i == 2}
 
-def _default_food_plans(destination, num_travelers, days):
+def _default_food_plans(destination, num_travelers, days, real_restaurants=None):
+    """Build food plans, enriching with real restaurant names if available."""
+    # Extract restaurant names by price tier
+    budget_rests = []
+    mid_rests = []
+    premium_rests = []
+    if real_restaurants:
+        for r in real_restaurants:
+            pl = r.get("price_level", 2)
+            name = r.get("name", "")
+            if pl <= 1:
+                budget_rests.append(name)
+            elif pl <= 2:
+                mid_rests.append(name)
+            elif pl >= 3:
+                premium_rests.append(name)
+
+    budget_highlights = budget_rests[:2] if budget_rests else ["Street food", "Local chai", "Authentic flavours"]
+    mid_highlights = mid_rests[:2] if mid_rests else ["Cafes", "Regional cuisine", "Rooftop dining"]
+    premium_highlights = premium_rests[:2] if premium_rests else ["Fine dining", "Chef's specials", "Wine & cocktails"]
+
     return [
-        {"id": "food_budget", "name": "Budget Local Eats", "description": f"Street food, local dhabas and cafes in {destination}", "cost_per_day": 350 * num_travelers, "total_cost": 350 * num_travelers * days, "highlights": ["Street food", "Local chai", "Authentic flavours"], "recommended": False},
-        {"id": "food_balanced", "name": "Balanced Cafe & Restaurant", "description": "Cafes, mid-range restaurants and local specialties", "cost_per_day": 700 * num_travelers, "total_cost": 700 * num_travelers * days, "highlights": ["Cafes", "Regional cuisine", "Rooftop dining"], "recommended": True},
-        {"id": "food_premium", "name": "Fine Dining Experience", "description": "Premium restaurants and curated food experiences", "cost_per_day": 1500 * num_travelers, "total_cost": 1500 * num_travelers * days, "highlights": ["Fine dining", "Chef's specials", "Wine & cocktails"], "recommended": False},
+        {"id": "food_budget", "name": "Budget Local Eats",
+         "description": f"Street food, local dhabas and authentic spots in {destination}",
+         "cost_per_day": 350 * num_travelers, "total_cost": 350 * num_travelers * days,
+         "highlights": budget_highlights + ["Street food", "Local chai"],
+         "recommended": False},
+        {"id": "food_balanced", "name": "Cafe & Restaurant Mix",
+         "description": f"Cafes, mid-range restaurants and local specialties in {destination}",
+         "cost_per_day": 700 * num_travelers, "total_cost": 700 * num_travelers * days,
+         "highlights": mid_highlights + ["Regional cuisine"],
+         "recommended": True},
+        {"id": "food_premium", "name": "Fine Dining Experience",
+         "description": f"Premium restaurants and curated dining experiences in {destination}",
+         "cost_per_day": 1500 * num_travelers, "total_cost": 1500 * num_travelers * days,
+         "highlights": premium_highlights + ["Chef's table"],
+         "recommended": False},
     ]
 
 def _default_suggestions(destination, budget, nights, weather_data=None):
@@ -248,7 +381,9 @@ def _default_suggestions(destination, budget, nights, weather_data=None):
     return suggestions[:5]
 
 
-def _deterministic_fallback(source, destination, start_date, end_date, budget, num_travelers, group_type, nights, num_days, date_list, rag_ctx, weather_data, elapsed):
+def _deterministic_fallback(source, destination, start_date, end_date, budget, num_travelers,
+                            group_type, nights, num_days, date_list, rag_ctx, weather_data, elapsed,
+                            real_trains=None, real_restaurants=None):
     import itertools
     by_type = rag_ctx["by_type"]
     acts = by_type.get("activity", [])
@@ -286,7 +421,16 @@ def _deterministic_fallback(source, destination, start_date, end_date, budget, n
             "evening": {"time": "06:00 PM", "activities": eve}
         })
 
-    transport_options = [_rag_to_transport(e, i, num_travelers) for i, e in enumerate(by_type.get("transport", [])[:5])]
+    # Build transport: real trains first, then RAG vector options
+    transport_options = []
+    if real_trains:
+        transport_options = [_real_train_to_transport(t, i, num_travelers) for i, t in enumerate(real_trains[:3])]
+    rag_transport = [_rag_to_transport(e, i + len(transport_options), num_travelers)
+                     for i, e in enumerate(by_type.get("transport", [])[:3])]
+    # Only add RAG transport types not already covered by trains (flights, bus, car)
+    for rt in rag_transport:
+        if (rt.get("mode") or "").lower() not in ("train", "railway"):
+            transport_options.append(rt)
     if not transport_options:
         transport_options = [{"id": "tx_default", "mode": "Flight", "provider": "Domestic Carrier", "cost_per_person": 5500, "total_cost": 5500 * num_travelers, "duration": "2h", "comfort": 4, "highlights": ["Fast"], "recommended": True, "best_for": "Speed"}]
 
@@ -301,7 +445,7 @@ def _deterministic_fallback(source, destination, start_date, end_date, budget, n
         "meta": {"source": source, "destination": destination, "total_days": num_days, "total_nights": nights, "num_travelers": num_travelers, "group_type": group_type, "total_budget": budget, "theme": "balanced", "tags": ["sightseeing", "culture", "food"], "summary_text": f"Discover the best of {destination} in {num_days} days!"},
         "transport_options": transport_options,
         "hotel_options": hotel_options,
-        "food_plans": _default_food_plans(destination, num_travelers, num_days),
+        "food_plans": _default_food_plans(destination, num_travelers, num_days, real_restaurants),
         "itinerary": itinerary,
         "budget_breakdown_estimate": bb,
         "ai_suggestions": _default_suggestions(destination, budget, nights, weather_data),
