@@ -4,7 +4,8 @@ import { usePathname, useRouter } from "next/navigation";
 import { useAuthStore } from "../store/authStore";
 import { useSubscriptionStore } from "../store/subscriptionStore";
 import { useThemeStore } from "../store/themeStore";
-import { useEffect } from "react";
+import { useNotificationStore } from "../store/notificationStore";
+import { useEffect, useState, useRef } from "react";
 import {
   PlaneTakeoff,
   LayoutDashboard,
@@ -71,11 +72,47 @@ export default function Sidebar() {
   const { user, logout } = useAuthStore();
   const { subscription, fetchStatus } = useSubscriptionStore();
   const { darkMode, toggleDarkMode } = useThemeStore();
+  const { 
+    unreadCount, 
+    notifications, 
+    initSocket, 
+    fetchNotifications, 
+    markAllAsRead,
+    disconnectSocket 
+  } = useNotificationStore();
+
+  const [showNotifications, setShowNotifications] = useState(false);
+  const notificationRef = useRef(null);
 
   // Fetch subscription on mount (lightweight)
   useEffect(() => {
     fetchStatus();
-  }, [fetchStatus]);
+    initSocket();
+    fetchNotifications();
+
+    return () => {
+      disconnectSocket();
+    };
+  }, [fetchStatus, initSocket, fetchNotifications, disconnectSocket]);
+
+  // Click outside to close notifications dropdown
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (notificationRef.current && !notificationRef.current.contains(event.target)) {
+        setShowNotifications(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [notificationRef]);
+
+  const handleNotificationsClick = () => {
+    setShowNotifications(!showNotifications);
+    if (!showNotifications && unreadCount > 0) {
+      // Mark as read when opening
+      markAllAsRead();
+    }
+  };
 
   const handleLogout = () => {
     logout();
@@ -172,13 +209,42 @@ export default function Sidebar() {
           <span className="text-sm font-semibold">{darkMode ? "Light Mode" : "Dark Mode"}</span>
         </button>
 
-        <button className="sidebar-notification-btn">
-          <div className="flex items-center gap-3">
-            <Bell className="w-4 h-4" />
-            <span className="text-sm font-bold">Updates</span>
-          </div>
-          <span className="sidebar-badge">3</span>
-        </button>
+        <div className="relative" ref={notificationRef}>
+          <button 
+            className="sidebar-notification-btn w-full"
+            onClick={handleNotificationsClick}
+          >
+            <div className="flex items-center gap-3">
+              <Bell className="w-4 h-4" />
+              <span className="text-sm font-bold">Updates</span>
+            </div>
+            {unreadCount > 0 && (
+              <span className="sidebar-badge bg-red-500 text-white">{unreadCount}</span>
+            )}
+          </button>
+
+          {/* Notifications Dropdown */}
+          {showNotifications && (
+            <div className="absolute bottom-12 left-0 w-64 max-h-80 overflow-y-auto bg-slate-800 border border-slate-700 shadow-xl rounded-xl z-50 p-2">
+              <h4 className="text-xs font-bold text-slate-400 mb-2 px-2 uppercase tracking-wider">Notifications</h4>
+              {notifications.length === 0 ? (
+                <p className="text-sm text-slate-500 px-2 pb-2">No new updates</p>
+              ) : (
+                <div className="space-y-1">
+                  {notifications.map((n) => (
+                    <div 
+                      key={n.id} 
+                      className={`p-2 rounded-lg text-sm ${!n.is_read ? 'bg-indigo-500/10 border border-indigo-500/20' : 'hover:bg-white/5'}`}
+                    >
+                      <p className="font-semibold text-white text-[13px]">{n.title}</p>
+                      <p className="text-slate-400 text-xs mt-0.5 leading-tight">{n.message}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
 
         <div className="sidebar-user mt-4">
           <div className="relative shrink-0">
