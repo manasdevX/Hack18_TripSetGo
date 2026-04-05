@@ -2,6 +2,8 @@
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { usePlannerStore } from "../../../store/plannerStore";
+import { useTripStore } from "../../../store/tripStore";
+import { useNotificationStore } from "../../../store/notificationStore";
 import {
   MapPin, Calendar, Wallet, Users, Compass, Plane, Train, Bus, Car,
   Hotel, Star, Clock, ChevronDown, ChevronUp, Sparkles, CheckCircle,
@@ -565,19 +567,38 @@ function PlanningProgress({ progress, label }) {
 
 export default function PlannerPage() {
   const { isPlanning, plan, error, progress, progressLabel, planTrip, resetPlan, saveTrip, isSaving, savedTripId } = usePlannerStore();
+  const { fetchMyTrips } = useTripStore();
+  const { fetchNotifications } = useNotificationStore();
   const nights = plan?.meta?.total_nights || 0;
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [savedTrip, setSavedTrip] = useState(null);
   const formDataRef = useRef(null);
   const router = useRouter();
 
   const handleSaveTrip = async () => {
     try {
-      await saveTrip(formDataRef.current);
+      const res = await saveTrip(formDataRef.current);
+      const trip = res?.trip;
+      setSavedTrip(trip || null);
       setSaveSuccess(true);
-      setTimeout(() => setSaveSuccess(false), 4000);
+      // Refresh My Trips list and notifications in background
+      fetchMyTrips();
+      fetchNotifications();
+      setTimeout(() => setSaveSuccess(false), 5000);
     } catch (e) {
       alert(e?.response?.data?.detail || "Failed to save trip. Please try again.");
     }
+  };
+
+  // Build Google Calendar deep link for accepted trips
+  const buildGCalLink = (trip, formData) => {
+    if (!trip || !formData) return null;
+    const title = encodeURIComponent(`${trip.destination} Trip`);
+    const details = encodeURIComponent(`Trip planned with TripSetGo. Destination: ${trip.destination}`);
+    const startDate = (formData.startDate || "").replace(/-/g, "");
+    const endDate = (formData.endDate || "").replace(/-/g, "");
+    if (!startDate || !endDate) return null;
+    return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${startDate}/${endDate}&details=${details}`;
   };
 
   if (plan && plan.meta && plan.itinerary) {
@@ -627,28 +648,42 @@ export default function PlannerPage() {
           <div className="lg:col-span-1 space-y-4">
             <BudgetTracker plan={plan} />
 
-            {/* Save Trip Button */}
+            {/* Accept Plan / Save Trip */}
             <div className="card-pure rounded-3xl p-5 border border-pure">
-              <h4 className="font-black text-main-pure mb-3 flex items-center gap-2 text-sm">
-                <BookmarkPlus className="w-4 h-4 text-indigo-500" /> Save Trip
+              <h4 className="font-black text-main-pure mb-1 flex items-center gap-2 text-sm">
+                <BookmarkPlus className="w-4 h-4 text-indigo-500" /> Accept Plan
               </h4>
-              <p className="text-xs text-slate-400 mb-4">Lock in your selections and save this trip to My Journeys.</p>
+              <p className="text-xs text-slate-400 mb-4">Lock in your selections and add to My Trips.</p>
+
               {savedTripId ? (
-                <div className="flex items-center gap-2 text-emerald-600 font-bold text-sm">
-                  <CheckCircle className="w-4 h-4" /> Saved to My Trips!
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-emerald-600 font-bold text-sm">
+                    <CheckCircle className="w-4 h-4" /> Saved to My Trips!
+                  </div>
+                  <button onClick={() => router.push("/dashboard/trips")}
+                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-2xl font-bold text-xs border transition-all hover:bg-indigo-50"
+                    style={{ borderColor: "var(--border-color)", color: "var(--accent-primary)" }}>
+                    View in My Trips <ArrowRight className="w-3 h-3" />
+                  </button>
+                  {/* Google Calendar link */}
+                  {buildGCalLink(savedTrip, formDataRef.current) && (
+                    <a
+                      href={buildGCalLink(savedTrip, formDataRef.current)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full flex items-center justify-center gap-2 py-2.5 rounded-2xl font-bold text-xs border border-blue-200 text-blue-600 bg-blue-50 hover:bg-blue-100 transition-all"
+                    >
+                      <Calendar className="w-3.5 h-3.5" /> Add to Google Calendar
+                    </a>
+                  )}
                 </div>
               ) : (
                 <button onClick={handleSaveTrip} disabled={isSaving}
-                  className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl font-bold text-sm text-white transition-all hover:opacity-90 disabled:opacity-60"
+                  className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl font-black text-sm text-white transition-all hover:opacity-90 hover:-translate-y-0.5 disabled:opacity-60 shadow-lg shadow-indigo-100"
                   style={{ background: "linear-gradient(135deg,#6366f1,#8b5cf6)" }}>
-                  {isSaving ? <><Loader2 className="w-4 h-4 animate-spin" /> Saving...</> : <><BookmarkPlus className="w-4 h-4" /> Add to My Trips</>}
-                </button>
-              )}
-              {savedTripId && (
-                <button onClick={() => router.push("/dashboard/trips")}
-                  className="w-full mt-2 flex items-center justify-center gap-2 py-2.5 rounded-2xl font-bold text-xs border transition-all hover:bg-indigo-50"
-                  style={{ borderColor: "var(--border-color)", color: "var(--accent-primary)" }}>
-                  View in My Trips <ArrowRight className="w-3 h-3" />
+                  {isSaving
+                    ? <><Loader2 className="w-4 h-4 animate-spin" /> Saving...</>
+                    : <><BookmarkPlus className="w-4 h-4" /> ✅ Accept &amp; Save Trip</>}
                 </button>
               )}
             </div>

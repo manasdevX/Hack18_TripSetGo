@@ -181,6 +181,36 @@ async def save_trip(
     db.add(trip)
     db.commit()
     db.refresh(trip)
+
+    # ── Create a notification for the saved trip ──────────────────────────────
+    try:
+        from app.models.notification import Notification
+        notif = Notification(
+            user_id=current_user.id,
+            title="Trip Saved! ✈️",
+            message=f"Your trip to {trip.destination} has been saved to My Trips!",
+            type="trip_saved",
+            reference_id=str(trip.id),
+        )
+        db.add(notif)
+        db.commit()
+        db.refresh(notif)
+
+        # Emit real-time notification via Socket.IO
+        from app.main import sio
+        notification_payload = {
+            "id": str(notif.id),
+            "title": notif.title,
+            "message": notif.message,
+            "type": notif.type,
+            "reference_id": str(trip.id),
+            "created_at": notif.created_at.isoformat() if notif.created_at else None,
+        }
+        await sio.emit("new_notification", notification_payload, room=str(current_user.id))
+    except Exception as notif_err:
+        import logging
+        logging.getLogger(__name__).warning(f"Notification creation failed (non-fatal): {notif_err}")
+
     return {"message": "Trip saved successfully", "trip": _trip_to_dict(trip)}
 
 

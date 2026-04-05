@@ -191,19 +191,7 @@ export const useTripStore = create((set, get) => ({
     }
   },
 
-  // Fetch all saved trips for the current user
-  fetchMyTrips: async () => {
-    try {
-      const res = await api.get("/my-discover-trips");
-      const trips = Array.isArray(res.data) ? res.data : (res.data?.trips || []);
-      set({ trips, tripsLoaded: true });
-      return trips;
-    } catch (err) {
-      console.error("[tripStore] fetchMyTrips failed:", err);
-      set({ trips: [], tripsLoaded: true });
-      return [];
-    }
-  },
+  // (fetchMyTrips is defined at top of store — calls /trips/mine)
 
   // Load a saved trip into the active viewer
   loadTrip: (trip) => {

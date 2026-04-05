@@ -8,6 +8,7 @@ import {
   SlidersHorizontal, Filter, Star, Clock, Eye, BookOpen
 } from "lucide-react";
 import { useTripStore } from "../../../store/tripStore";
+import { useNotificationStore } from "../../../store/notificationStore";
 
 /* ── helpers ─────────────────────────────────────────────────── */
 const fmtRs = (n) => n ? `₹${Number(n).toLocaleString("en-IN")}` : "—";
@@ -234,7 +235,9 @@ export default function MyTripsPage() {
   const [filterFav, setFilterFav] = useState(false);
   const router = useRouter();
 
-  useEffect(() => { fetchMyTrips(); }, []);
+  const { fetchNotifications } = useNotificationStore();
+
+  useEffect(() => { fetchMyTrips(); fetchNotifications(); }, []);
 
   const filtered = useMemo(() => {
     let list = [...trips];
