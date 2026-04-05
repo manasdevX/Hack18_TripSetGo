@@ -140,17 +140,18 @@ function BudgetTracker({ plan }) {
   );
 }
 
-// ─── TRANSPORT SELECTOR ───────────────────────────────────────────────────────
-
 function TransportSelector({ options }) {
   const { selectedTransport, selectTransport } = usePlannerStore();
+
   const TIcon = (opt) => {
-    const text = (opt.mode + " " + opt.provider).toLowerCase();
+    const text = ((opt.mode || "") + " " + (opt.provider || "")).toLowerCase();
     if (text.includes("train") || text.includes("railway") || text.includes("express") || text.includes("irctc")) return <Train className="w-5 h-5" />;
-    if (text.includes("cab") || text.includes("car") || text.includes("taxi") || text.includes("private") || text.includes("drive")) return <Car className="w-5 h-5" />;
+    if (text.includes("cab") || text.includes("car") || text.includes("taxi") || text.includes("drive")) return <Car className="w-5 h-5" />;
     if (text.includes("bus") || text.includes("volvo") || text.includes("coach") || text.includes("travels")) return <Bus className="w-5 h-5" />;
     return <Plane className="w-5 h-5" />;
   };
+
+  const isRealTrain = (opt) => opt.source === "real_data" || (opt.train_number && opt.departure_time);
 
   return (
     <div>
@@ -162,30 +163,91 @@ function TransportSelector({ options }) {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         {options?.map((opt) => {
           const sel = selectedTransport === opt.id;
+          const realTrain = isRealTrain(opt);
           return (
             <button key={opt.id} onClick={() => selectTransport(opt.id)}
-              className={`text-left p-4 rounded-2xl border-2 transition-all duration-200 group ${sel ? "border-sky-500 bg-sky-50 dark:bg-sky-900/20 shadow-lg shadow-sky-100 dark:shadow-sky-900/20 scale-[1.02]" : "border-slate-200 dark:border-slate-700 hover:border-sky-300 hover:scale-[1.01]"}`}>
+              className={`text-left p-4 rounded-2xl border-2 transition-all duration-200 group ${sel
+                ? "border-sky-500 bg-sky-50 dark:bg-sky-900/20 shadow-lg shadow-sky-100 dark:shadow-sky-900/20 scale-[1.02]"
+                : "border-slate-200 dark:border-slate-700 hover:border-sky-300 hover:scale-[1.01]"}`}>
+
+              {/* Header row */}
               <div className="flex items-start justify-between mb-2">
                 <div className="flex items-center gap-2">
                   <div className={`p-2 rounded-xl ${sel ? "bg-sky-500 text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-500"} transition-colors`}>
                     {TIcon(opt)}
                   </div>
                   <div>
-                    <div className="font-black text-main-pure">{opt.mode}</div>
-                    <div className="text-xs text-slate-400">{opt.provider}</div>
+                    <div className="font-black text-main-pure text-sm leading-tight">{opt.mode}</div>
+                    <div className="text-xs text-slate-500 leading-tight">{opt.provider}</div>
                   </div>
                 </div>
-                <div className="text-right">
-                  <div className={`font-black text-lg ${sel ? "text-sky-600" : "text-slate-700 dark:text-slate-300"}`}>{fmt(opt.total_cost)}</div>
+                <div className="text-right flex-shrink-0 ml-2">
+                  <div className={`font-black text-base ${sel ? "text-sky-600" : "text-slate-700 dark:text-slate-300"}`}>{fmt(opt.total_cost)}</div>
                   <div className="text-xs text-slate-400">{fmt(opt.cost_per_person)}/person</div>
                 </div>
               </div>
-              <div className="flex items-center gap-3 text-xs text-slate-500 mb-2">
-                <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{opt.duration}</span>
-                <span className="flex items-center gap-1"><Star className="w-3 h-3 text-yellow-400" />{opt.comfort}/5 comfort</span>
-              </div>
-              {opt.highlights?.[0] && <p className="text-xs text-slate-400 line-clamp-2">{opt.highlights[0]}</p>}
-              <div className="flex items-center justify-between mt-3">
+
+              {/* Real train: schedule row */}
+              {realTrain && opt.departure_time && opt.arrival_time && (
+                <div className="mb-2 px-3 py-2 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800/40">
+                  <div className="flex items-center justify-between">
+                    <div className="text-center">
+                      <div className="text-base font-black text-slate-800 dark:text-slate-200">{opt.departure_time}</div>
+                      <div className="text-xs text-slate-400">Departs</div>
+                    </div>
+                    <div className="flex-1 flex flex-col items-center mx-2">
+                      <div className="text-xs font-semibold text-slate-400">{opt.duration}</div>
+                      <div className="w-full flex items-center gap-1">
+                        <div className="flex-1 border-t-2 border-dashed border-slate-300"></div>
+                        <Train className="w-3 h-3 text-emerald-500" />
+                        <div className="flex-1 border-t-2 border-dashed border-slate-300"></div>
+                      </div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-base font-black text-slate-800 dark:text-slate-200">{opt.arrival_time}</div>
+                      <div className="text-xs text-slate-400">Arrives</div>
+                    </div>
+                  </div>
+                  {/* Train number + live badge */}
+                  <div className="flex items-center justify-between mt-1.5">
+                    {opt.train_number && <span className="text-xs font-bold text-emerald-700 dark:text-emerald-400">Train #{opt.train_number}</span>}
+                    <span className="text-xs bg-emerald-500 text-white px-2 py-0.5 rounded-full font-bold">🛤 Live Data</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Real train: fare breakdown */}
+              {realTrain && (opt.fare_sl || opt.fare_3a || opt.fare_2a) && (
+                <div className="flex gap-1.5 mb-2 flex-wrap">
+                  {opt.fare_sl && <span className="text-xs px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 font-semibold text-slate-600 dark:text-slate-300">SL ₹{opt.fare_sl}</span>}
+                  {opt.fare_3a && <span className="text-xs px-2 py-0.5 rounded-lg bg-blue-100 dark:bg-blue-900/30 font-semibold text-blue-700 dark:text-blue-300">3A ₹{opt.fare_3a}</span>}
+                  {opt.fare_2a && <span className="text-xs px-2 py-0.5 rounded-lg bg-purple-100 dark:bg-purple-900/30 font-semibold text-purple-700 dark:text-purple-300">2A ₹{opt.fare_2a}</span>}
+                </div>
+              )}
+
+              {/* Real train: run days */}
+              {realTrain && opt.run_days?.length > 0 && (
+                <div className="flex items-center gap-1 mb-2">
+                  <Calendar className="w-3 h-3 text-slate-400" />
+                  <span className="text-xs text-slate-500">{opt.run_days.slice(0,4).join(", ")}{opt.run_days.length > 4 ? "..." : ""}</span>
+                </div>
+              )}
+
+              {/* Non-train: duration + comfort */}
+              {!realTrain && (
+                <div className="flex items-center gap-3 text-xs text-slate-500 mb-2">
+                  <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{opt.duration}</span>
+                  <span className="flex items-center gap-1"><Star className="w-3 h-3 text-yellow-400" />{opt.comfort}/5 comfort</span>
+                </div>
+              )}
+
+              {/* Highlight tag */}
+              {!realTrain && opt.highlights?.[0] && (
+                <p className="text-xs text-slate-400 line-clamp-1 mb-1">{opt.highlights[0]}</p>
+              )}
+
+              {/* Footer */}
+              <div className="flex items-center justify-between mt-2">
                 {opt.recommended && <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-semibold">⭐ Recommended</span>}
                 <div className={`ml-auto w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${sel ? "border-sky-500 bg-sky-500" : "border-slate-300 dark:border-slate-600"}`}>
                   {sel && <CheckCircle className="w-4 h-4 text-white" />}

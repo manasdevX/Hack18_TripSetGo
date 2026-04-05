@@ -64,10 +64,14 @@ class Settings(BaseSettings):
     
     WEATHER_API_KEY: str = ""
     GOOGLE_MAPS_API_KEY: str = ""
+    GOOGLE_PLACES_API_KEY: str = ""
+    FOURSQUARE_API_KEY: str = ""
+    RAPIDAPI_KEY: str = ""
+    RAPIDAPI_RAILWAYS_HOST: str = "indian-railway-irctc.p.rapidapi.com"
 
     # --- Groq LLM ---
     GROQ_API_KEY: str = ""
-    GROQ_MODEL: str = "llama3-70b-8192"
+    GROQ_MODEL: str = "llama-3.3-70b-versatile"
     GROQ_BASE_URL: str = "https://api.groq.com/openai/v1"
 
     # --- Razorpay ---

@@ -325,3 +325,97 @@ def build_vector_context_string(ctx: Dict) -> str:
             lines.append(f"  [{f['id']}] {f['name']} | ₹{f['price']:,}/person/day | {f['category']}")
 
     return "\n".join(lines)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# REAL-DATA RETRIEVAL — uses pipeline cache (transport_cache / restaurant_cache)
+# ─────────────────────────────────────────────────────────────────────────────
+
+def retrieve_real_trains(db, source: str, destination: str) -> List[Dict]:
+    """
+    Retrieve real cached train data from the data pipeline.
+    Falls back to in-memory mock if DB lookup fails.
+    """
+    try:
+        from app.services.data_pipeline.fetch_train_data import get_cached_trains, MOCK_TRAINS
+        trains = get_cached_trains(db, source, destination)
+        if trains:
+            return trains
+        # Fallback: use built-in mock for this route
+        route_key = f"{source}-{destination}"
+        reverse_key = f"{destination}-{source}"
+        return MOCK_TRAINS.get(route_key) or MOCK_TRAINS.get(reverse_key) or []
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).warning("[VectorStore] retrieve_real_trains failed: %s", e)
+        return []
+
+
+def retrieve_real_restaurants(db, destination: str,
+                              vibe_tags: Optional[List[str]] = None,
+                              max_results: int = 5) -> List[Dict]:
+    """
+    Retrieve real cached restaurant data from the data pipeline.
+    Filters by vibe_tags if provided. Falls back to mock data.
+    """
+    try:
+        from app.services.data_pipeline.fetch_restaurant_data import (
+            get_cached_restaurants, MOCK_RESTAURANTS
+        )
+        restaurants = get_cached_restaurants(db, destination)
+
+        if not restaurants:
+            # Fallback to in-memory mock
+            mock = MOCK_RESTAURANTS.get(destination, [])
+            restaurants = mock
+
+        if vibe_tags and restaurants:
+            vibe_set = {v.lower() for v in vibe_tags}
+            def _score(r):
+                r_vibes = {v.lower() for v in (r.get("vibe_tags") or [])}
+                return len(vibe_set & r_vibes)
+            restaurants = sorted(restaurants, key=_score, reverse=True)
+
+        return restaurants[:max_results]
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).warning("[VectorStore] retrieve_real_restaurants failed: %s", e)
+        return []
+
+
+def build_enriched_context_string(ctx: Dict, real_trains: List[Dict],
+                                  real_restaurants: List[Dict],
+                                  source: str, destination: str) -> str:
+    """
+    Build a richer context string that merges RAG vector data with
+    real pipeline data (trains + restaurants).
+    """
+    base = build_vector_context_string(ctx)
+    extra_lines = []
+
+    if real_trains:
+        extra_lines.append("\n=== REAL TRAIN SCHEDULES (Live Data) ===")
+        for t in real_trains[:4]:
+            fare_info = ""
+            if t.get("approx_fare_sl"):
+                fare_info = f" | SL: ₹{t['approx_fare_sl']} | 3A: ₹{t.get('approx_fare_3a','?')}"
+            elif t.get("approx_fare_3a"):
+                fare_info = f" | 3A: ₹{t['approx_fare_3a']} | 2A: ₹{t.get('approx_fare_2a','?')}"
+            days_str = ", ".join(t.get("days", ["Daily"])[:3])
+            extra_lines.append(
+                f"  {t['train_name']} #{t['train_number']} | "
+                f"{t['departure']}→{t['arrival']} ({t.get('duration_hrs', '?')}h){fare_info} | "
+                f"Runs: {days_str}"
+            )
+
+    if real_restaurants:
+        extra_lines.append("\n=== REAL RESTAURANTS (Live Data) ===")
+        for r in real_restaurants[:5]:
+            vibes = ", ".join((r.get("vibe_tags") or [])[:3])
+            price_sym = "₹" * (r.get("price_level") or 2)
+            extra_lines.append(
+                f"  {r['name']} — {r.get('category','Restaurant')} | "
+                f"{r.get('rating','?')}★ | {price_sym} | Vibe: {vibes}"
+            )
+
+    return base + "\n".join(extra_lines)
