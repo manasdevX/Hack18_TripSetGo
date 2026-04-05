@@ -96,7 +96,7 @@ export const usePlannerStore = create((set, get) => ({
 
       set({ plan: planData, isPlanning: false, progress: 100, progressLabel: "✅ Interactive plan ready!", error: null, selectedTransport: recT, selectedHotel: recH, selectedFood: recF, selectedActivities: autoActs, activeTab: "transport" });
     } catch (err) {
-      clearInterval(interval);
+      clearInterval(iv);
       let errorMsg = "Planning failed. Try again.";
       const detail = err?.response?.data?.detail;
       

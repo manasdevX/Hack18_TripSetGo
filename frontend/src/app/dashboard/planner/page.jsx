@@ -1,12 +1,13 @@
 "use client";
-import { useState, useMemo } from "react";
+import { useState, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { usePlannerStore } from "../../../store/plannerStore";
 import {
   MapPin, Calendar, Wallet, Users, Compass, Plane, Train, Bus, Car,
   Hotel, Star, Clock, ChevronDown, ChevronUp, Sparkles, CheckCircle,
-  AlertTriangle, Info, Utensils, Camera, Zap, RotateCcw, Sun, Moon,
-  Heart, Globe, TrendingUp, ArrowRight, Flame, Crown, Share2,
-  Filter, RefreshCw, Download, ChevronRight, Plus, Minus,
+  AlertTriangle, Info, Utensils, Zap, RotateCcw,
+  Heart, Globe, TrendingUp, ArrowRight,
+  Filter, BookmarkPlus, Database, Loader2, PartyPopper,
 } from "lucide-react";
 
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
@@ -563,12 +564,34 @@ function PlanningProgress({ progress, label }) {
 // ─── MAIN PAGE ─────────────────────────────────────────────────────────────────
 
 export default function PlannerPage() {
-  const { isPlanning, plan, error, progress, progressLabel, planTrip, resetPlan } = usePlannerStore();
+  const { isPlanning, plan, error, progress, progressLabel, planTrip, resetPlan, saveTrip, isSaving, savedTripId } = usePlannerStore();
   const nights = plan?.meta?.total_nights || 0;
+  const [saveSuccess, setSaveSuccess] = useState(false);
+  const formDataRef = useRef(null);
+  const router = useRouter();
+
+  const handleSaveTrip = async () => {
+    try {
+      await saveTrip(formDataRef.current);
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 4000);
+    } catch (e) {
+      alert(e?.response?.data?.detail || "Failed to save trip. Please try again.");
+    }
+  };
 
   if (plan && plan.meta && plan.itinerary) {
     return (
       <div className="max-w-7xl mx-auto pb-20">
+        {/* Save success toast */}
+        {saveSuccess && (
+          <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 px-6 py-4 rounded-2xl text-white font-bold shadow-2xl animate-in slide-in-from-bottom-4"
+            style={{ background: "linear-gradient(135deg,#10b981,#059669)" }}>
+            <PartyPopper className="w-5 h-5" />
+            Trip saved to My Journeys!
+            <button onClick={() => router.push("/dashboard/trips")} className="ml-2 underline text-sm font-semibold">View →</button>
+          </div>
+        )}
         <HeroSection plan={plan} onReset={resetPlan} />
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main content */}
@@ -600,17 +623,47 @@ export default function PlannerPage() {
             )}
           </div>
 
-          {/* Sidebar: Budget Tracker */}
-          <div className="lg:col-span-1">
+          {/* Sidebar: Budget Tracker + Save + Meta */}
+          <div className="lg:col-span-1 space-y-4">
             <BudgetTracker plan={plan} />
-            <div className="mt-4 card-pure rounded-3xl p-5 border border-pure">
+
+            {/* Save Trip Button */}
+            <div className="card-pure rounded-3xl p-5 border border-pure">
               <h4 className="font-black text-main-pure mb-3 flex items-center gap-2 text-sm">
-                <Zap className="w-4 h-4 text-indigo-500" /> AI Powered By
+                <BookmarkPlus className="w-4 h-4 text-indigo-500" /> Save Trip
+              </h4>
+              <p className="text-xs text-slate-400 mb-4">Lock in your selections and save this trip to My Journeys.</p>
+              {savedTripId ? (
+                <div className="flex items-center gap-2 text-emerald-600 font-bold text-sm">
+                  <CheckCircle className="w-4 h-4" /> Saved to My Trips!
+                </div>
+              ) : (
+                <button onClick={handleSaveTrip} disabled={isSaving}
+                  className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl font-bold text-sm text-white transition-all hover:opacity-90 disabled:opacity-60"
+                  style={{ background: "linear-gradient(135deg,#6366f1,#8b5cf6)" }}>
+                  {isSaving ? <><Loader2 className="w-4 h-4 animate-spin" /> Saving...</> : <><BookmarkPlus className="w-4 h-4" /> Add to My Trips</>}
+                </button>
+              )}
+              {savedTripId && (
+                <button onClick={() => router.push("/dashboard/trips")}
+                  className="w-full mt-2 flex items-center justify-center gap-2 py-2.5 rounded-2xl font-bold text-xs border transition-all hover:bg-indigo-50"
+                  style={{ borderColor: "var(--border-color)", color: "var(--accent-primary)" }}>
+                  View in My Trips <ArrowRight className="w-3 h-3" />
+                </button>
+              )}
+            </div>
+
+            {/* RAG + AI Meta */}
+            <div className="card-pure rounded-3xl p-5 border border-pure">
+              <h4 className="font-black text-main-pure mb-3 flex items-center gap-2 text-sm">
+                <Database className="w-4 h-4 text-indigo-500" /> RAG Vector Store
               </h4>
               <div className="space-y-2 text-xs text-slate-500">
-                <div className="flex justify-between"><span>Model</span><span className="font-semibold text-slate-700 dark:text-slate-300">{plan._meta?.model?.includes("llama") ? "Llama 3.3 70B" : "Rule Engine"}</span></div>
-                <div className="flex justify-between"><span>Generated in</span><span className="font-semibold text-slate-700 dark:text-slate-300">{plan._meta?.planning_time_ms?.toFixed(0)}ms</span></div>
-                <div className="flex justify-between"><span>LLM Used</span><span className={`font-semibold ${plan._meta?.llm_used ? "text-emerald-600" : "text-amber-600"}`}>{plan._meta?.llm_used ? "Yes ✓" : "Fallback"}</span></div>
+                <div className="flex justify-between"><span>Vector DB Size</span><span className="font-semibold text-slate-700 dark:text-slate-300">{plan._meta?.vector_store_size || 135} entries</span></div>
+                <div className="flex justify-between"><span>Retrieved</span><span className="font-semibold text-emerald-600">{plan._meta?.rag_retrieved || 0} items</span></div>
+                <div className="flex justify-between"><span>Model</span><span className="font-semibold text-slate-700 dark:text-slate-300">{plan._meta?.model?.includes("llama") ? "Llama 3.3 70B" : "Fallback"}</span></div>
+                <div className="flex justify-between"><span>Time</span><span className="font-semibold text-slate-700 dark:text-slate-300">{plan._meta?.planning_time_ms?.toFixed(0)}ms</span></div>
+                <div className="flex justify-between"><span>LLM</span><span className={`font-semibold ${plan._meta?.llm_used ? "text-emerald-600" : "text-amber-600"}`}>{plan._meta?.llm_used ? "✓ Groq" : "Deterministic"}</span></div>
               </div>
             </div>
           </div>
@@ -628,12 +681,12 @@ export default function PlannerPage() {
           </div>
           <div>
             <h1 className="text-3xl font-black text-main-pure tracking-tight">AI Trip Planner</h1>
-            <p className="text-muted-pure text-sm">Interactive · Multiple Options Per Category · Live Budget Tracker</p>
+            <p className="text-muted-pure text-sm">RAG-Powered · Multiple Options · Live Budget Tracker</p>
           </div>
         </div>
       </div>
       <div className="card-pure rounded-[2rem] p-8 border border-pure shadow-xl">
-        {isPlanning ? <PlanningProgress progress={progress} label={progressLabel} /> : <PlannerForm onSubmit={planTrip} isPlanning={isPlanning} error={error} />}
+        {isPlanning ? <PlanningProgress progress={progress} label={progressLabel} /> : <PlannerForm onSubmit={(fd) => { formDataRef.current = fd; planTrip(fd); }} isPlanning={isPlanning} error={error} />}
       </div>
       {!isPlanning && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
