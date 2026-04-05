@@ -379,11 +379,24 @@ function DayPlanner({ day, index }) {
             <div className="text-xs text-slate-400 mt-0.5">{day.date}</div>
           </div>
         </div>
-        <div className="flex items-center gap-3">
-          <span className="text-xs bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 px-2.5 py-1 rounded-full font-semibold">
-            {selCount}/3 slots filled
-          </span>
-          {open ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
+        <div className="flex items-center gap-4">
+          {day.weather && (
+            <div className="flex items-center gap-2 bg-white/50 dark:bg-slate-700/50 px-3 py-1.5 rounded-2xl border border-slate-200/50 dark:border-slate-600/50">
+              <img src={day.weather.icon} alt={day.weather.condition} className="w-8 h-8" />
+              <div className="hidden sm:block">
+                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider leading-none mb-0.5">{day.weather.condition}</div>
+                <div className="text-sm font-black text-slate-700 dark:text-slate-200 leading-none">
+                  {day.weather.temp_max}°<span className="text-slate-400 font-medium">/{day.weather.temp_min}°</span>
+                </div>
+              </div>
+            </div>
+          )}
+          <div className="flex items-center gap-2">
+            <span className="text-xs bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 px-2.5 py-1 rounded-full font-semibold">
+              {selCount}/3 slots filled
+            </span>
+            {open ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
+          </div>
         </div>
       </button>
       {open && (
@@ -401,25 +414,51 @@ function DayPlanner({ day, index }) {
 
 function AISuggestions({ suggestions }) {
   if (!suggestions?.length) return null;
-  const bg = { upgrade: "bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800", tip: "bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800", warning: "bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800", romantic: "bg-pink-50 dark:bg-pink-900/20 border-pink-200 dark:border-pink-800", adventure: "bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800" };
+  const config = {
+    upgrade: { bg: "bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800", text: "text-purple-700 dark:text-purple-300", iconBg: "bg-purple-100 dark:bg-purple-900/40", label: "Value Upgrade" },
+    tip: { bg: "bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800", text: "text-blue-700 dark:text-blue-300", iconBg: "bg-blue-100 dark:bg-blue-900/40", label: "Smart Tip" },
+    warning: { bg: "bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800", text: "text-amber-700 dark:text-amber-300", iconBg: "bg-amber-100 dark:bg-amber-900/40", label: "Caution" },
+    romantic: { bg: "bg-pink-50 dark:bg-pink-900/20 border-pink-200 dark:border-pink-800", text: "text-pink-700 dark:text-pink-300", iconBg: "bg-pink-100 dark:bg-pink-900/40", label: "Couples" },
+    adventure: { bg: "bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800", text: "text-emerald-700 dark:text-emerald-300", iconBg: "bg-emerald-100 dark:bg-emerald-900/40", label: "Adventure" },
+    weather: { bg: "bg-sky-50 dark:bg-sky-900/20 border-sky-200 dark:border-sky-800", text: "text-sky-700 dark:text-sky-300", iconBg: "bg-sky-100 dark:bg-sky-900/40", label: "Weather Insider" }
+  };
+
   return (
     <div>
-      <h3 className="text-lg font-black text-main-pure mb-4 flex items-center gap-2">
-        <Sparkles className="w-5 h-5 text-indigo-500" /> AI Suggestions
-      </h3>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        {suggestions.map((s, i) => (
-          <div key={i} className={`p-4 rounded-2xl border ${bg[s.type] || bg.tip}`}>
-            <div className="flex items-start gap-3">
-              <span className="text-2xl">{s.icon}</span>
-              <div>
-                <div className="font-bold text-slate-800 dark:text-slate-200 text-sm">{s.title}</div>
-                <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{s.description}</div>
-                {s.potential_cost > 0 && <div className="text-xs font-semibold text-indigo-600 mt-1">+{fmt(s.potential_cost)}</div>}
+      <div className="flex items-center justify-between mb-6">
+        <h3 className="text-lg font-black text-main-pure flex items-center gap-2">
+          <Sparkles className="w-5 h-5 text-indigo-500 animate-pulse" />
+          AI Personalization Tips
+        </h3>
+        <span className="text-[10px] font-bold text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-full uppercase tracking-tighter">Powered by Llama 3.3</span>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {suggestions.map((s, i) => {
+          const cfg = config[s.type] || config.tip;
+          return (
+            <div key={i} className={`group relative p-5 rounded-3xl border transition-all duration-300 hover:shadow-lg hover:shadow-indigo-100 dark:hover:shadow-none hover:-translate-y-1 ${cfg.bg}`}>
+              <div className="flex items-start gap-4">
+                <div className={`w-12 h-12 rounded-2xl ${cfg.iconBg} flex items-center justify-center text-2xl shadow-inner transition-transform group-hover:scale-110`}>
+                  {s.icon}
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className={`text-[10px] font-black uppercase tracking-wider ${cfg.text}`}>
+                      {cfg.label}
+                    </span>
+                    {s.potential_cost > 0 && (
+                      <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-900/40 px-1.5 py-0.5 rounded-lg border border-emerald-100/50">
+                        Suggest Exp: {fmt(s.potential_cost)}
+                      </span>
+                    )}
+                  </div>
+                  <div className="font-black text-slate-800 dark:text-slate-100 text-sm mb-1 leading-tight">{s.title}</div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">{s.description}</div>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

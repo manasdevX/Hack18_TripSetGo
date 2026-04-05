@@ -20,6 +20,7 @@ from .data import (
     get_stay_options,
     get_places_for_destination,
 )
+from app.services.weather_service import WeatherService
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -229,6 +230,7 @@ class ItineraryEngine:
         group_type: str,
         transport_mode: str,
         places: List[Dict],
+        weather_forecast: Optional[Dict] = None,
     ) -> Dict[str, Any]:
         # Filter places for group type
         def place_matches(p: Dict) -> bool:
@@ -334,6 +336,7 @@ class ItineraryEngine:
                 "notes": notes,
                 "activities": activities,
                 "total_entry_cost": sum(p.get("cost", 0) for p in day_places),
+                "weather": weather_forecast.get(current_date.isoformat()) if weather_forecast else None,
             })
 
         return {
@@ -506,6 +509,7 @@ class TripPlanner:
         self.itinerary_engine = ItineraryEngine()
         self.budget_engine = BudgetEngine()
         self.optimizer = Optimizer()
+        self.weather_service = WeatherService()
 
     def plan(self, inp: TripPlanInput) -> TripPlanResult:
         import time
@@ -548,6 +552,9 @@ class TripPlanner:
         # ── 6. Places for itinerary ───────────────────────────────────────
         places = get_places_for_destination(inp.destination)
 
+        # ── 6.5 Catch Actual Weather Forecast ────────────────────────────
+        weather_data = self.weather_service.get_forecast_sync(inp.destination, inp.start_date, inp.end_date)
+
         # ── 7. Itinerary Engine ───────────────────────────────────────────
         itinerary = self.itinerary_engine.process(
             inp.destination,
@@ -556,6 +563,7 @@ class TripPlanner:
             inp.group_type,
             transport_result["recommended"]["mode"],
             places,
+            weather_forecast=weather_data,
         )
 
         # ── 8. Optimizer (constraint solver) ──────────────────────────────

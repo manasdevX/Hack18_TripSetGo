@@ -12,6 +12,9 @@ import httpx, asyncio as _asyncio
 from app.core.config import settings
 from app.planning_engine.vector_store import retrieve_context, build_vector_context_string, VECTOR_DATA
 from app.planning_engine.data import get_transport_options, get_stay_options, get_places_for_destination
+from app.services.weather_service import WeatherService
+
+_weather_service = WeatherService()
 
 logger = logging.getLogger(__name__)
 
@@ -70,9 +73,18 @@ OUTPUT SCHEMA (return this exactly):
   "food_plans": [{"id":"","name":"","description":"","cost_per_day":0,"total_cost":0,"highlights":[],"recommended":false}],
   "itinerary": [{"day":0,"date":"","day_summary":"","morning":{"time":"08:00 AM","activities":[{"id":"","name":"","type":"","duration":"","cost":0,"location":"","description":"","tags":[]}]},"afternoon":{"time":"01:00 PM","activities":[]},"evening":{"time":"06:00 PM","activities":[]}}],
   "budget_breakdown_estimate": {"transport":0,"stay":0,"food":0,"activities":0,"misc":0,"total":0},
-  "ai_suggestions": [{"type":"","icon":"","title":"","description":"","potential_cost":0}],
+  "ai_suggestions": [
+     {"type":"upgrade|tip|warning|romantic|adventure|weather","icon":"emoji","title":"","description":"","potential_cost":0}
+  ],
   "ui": {"color_primary":"#6366f1","destination_vibe":"city"}
 }
+
+SUGGESTION CATEGORIES (choose at least 4):
+- upgrade: High-value hospitality or travel improvements
+- tip: Secret local spots or logistical hacks from context
+- warning: Logistics or budget constraints to watch for
+- weather: Specific advice based on the ACTUAL WEATHER FORECAST provided in the user prompt
+- adventure/romantic: Targeted activities based on group_type
 
 ACTIVITY RULES:
 - 3 options per slot (morning/afternoon/evening) per day
@@ -99,6 +111,10 @@ async def generate_interactive_plan(
     )
     context_str = build_vector_context_string(rag_ctx)
 
+    # ── WEATHER: Get actual forecast for the dates ────────────────────────
+    weather_data = await _weather_service.get_forecast(destination, start_date, end_date)
+    weather_info = "\n".join([f"- {d}: {w['description']}" for d, w in weather_data.items()])
+
     date_list = [(start_date + timedelta(days=i)).isoformat() for i in range(num_days)]
 
     user_msg = f"""Generate an INTERACTIVE RAG-based trip plan.
@@ -110,6 +126,9 @@ TRIP INPUT:
 - Group: {num_travelers} {group_type}
 - Preferences: {', '.join(preferences) or 'general sightseeing, food, culture'}
 - Day dates: {date_list}
+
+ACTUAL WEATHER FORECAST:
+{weather_info}
 
 {context_str}
 
@@ -134,16 +153,16 @@ Generate the complete JSON now:"""
     elapsed = (time.perf_counter() - t0) * 1000
 
     if plan and plan.get("meta") and plan.get("itinerary"):
-        plan = _patch_plan(plan, source, destination, budget, num_travelers, nights, rag_ctx)
+        plan = _patch_plan(plan, source, destination, budget, num_travelers, nights, rag_ctx, weather_data)
         plan["_meta"] = {"planning_time_ms": round(elapsed, 1), "llm_used": True, "model": settings.GROQ_MODEL, "rag_retrieved": rag_ctx["retrieved_count"], "vector_store_size": rag_ctx["vector_data_count"]}
         logger.info("[Planner] ✓ LLM+RAG success %.0fms | retrieved=%d", elapsed, rag_ctx["retrieved_count"])
         return plan
 
     logger.warning("[Planner] LLM failed — deterministic fallback")
-    return _deterministic_fallback(source, destination, start_date, end_date, budget, num_travelers, group_type, nights, num_days, date_list, rag_ctx, elapsed)
+    return _deterministic_fallback(source, destination, start_date, end_date, budget, num_travelers, group_type, nights, num_days, date_list, rag_ctx, weather_data, elapsed)
 
 
-def _patch_plan(plan, source, destination, budget, num_travelers, nights, rag_ctx):
+def _patch_plan(plan, source, destination, budget, num_travelers, nights, rag_ctx, weather_data):
     meta = plan.setdefault("meta", {})
     meta.setdefault("source", source); meta.setdefault("destination", destination)
     meta.setdefault("total_days", nights + 1); meta.setdefault("total_nights", nights)
@@ -163,7 +182,7 @@ def _patch_plan(plan, source, destination, budget, num_travelers, nights, rag_ct
     if not plan.get("food_plans"):
         plan["food_plans"] = _default_food_plans(destination, num_travelers, nights + 1)
 
-    plan.setdefault("ai_suggestions", _default_suggestions(destination, budget, nights))
+    plan.setdefault("ai_suggestions", _default_suggestions(destination, budget, nights, weather_data))
     ui = plan.setdefault("ui", {}); ui.setdefault("color_primary", "#6366f1"); ui.setdefault("destination_vibe", "city")
 
     bb = plan.setdefault("budget_breakdown_estimate", {})
@@ -173,6 +192,13 @@ def _patch_plan(plan, source, destination, budget, num_travelers, nights, rag_ct
     bb.setdefault("transport", int(tx)); bb.setdefault("stay", int(ht)); bb.setdefault("food", int(fd))
     bb.setdefault("activities", int(budget * 0.12)); bb.setdefault("misc", int(budget * 0.05))
     bb["total"] = sum(v for k, v in bb.items() if k != "total")
+
+    # Inject weather per day
+    for day in plan.get("itinerary", []):
+        day_date = day.get("date")
+        if day_date and day_date in weather_data:
+            day["weather"] = weather_data[day_date]
+
     return plan
 
 
@@ -199,16 +225,30 @@ def _default_food_plans(destination, num_travelers, days):
         {"id": "food_premium", "name": "Fine Dining Experience", "description": "Premium restaurants and curated food experiences", "cost_per_day": 1500 * num_travelers, "total_cost": 1500 * num_travelers * days, "highlights": ["Fine dining", "Chef's specials", "Wine & cocktails"], "recommended": False},
     ]
 
-def _default_suggestions(destination, budget, nights):
-    return [
-        {"type": "tip", "icon": "💡", "title": "Book 2+ weeks early", "description": "Save 20–30% on hotels and transport.", "potential_cost": 0},
-        {"type": "upgrade", "icon": "⬆️", "title": "Upgrade your hotel", "description": f"A premium stay in {destination} adds only ₹{2500 * nights:,} but transforms your experience.", "potential_cost": 2500 * nights},
-        {"type": "tip", "icon": "🗺️", "title": "Download offline maps", "description": "Use Google Maps offline to navigate without data.", "potential_cost": 0},
-        {"type": "warning", "icon": "⚠️", "title": "Check visa & permits", "description": f"Some areas near {destination} may require advance permits.", "potential_cost": 0},
+def _default_suggestions(destination, budget, nights, weather_data=None):
+    suggestions = [
+        {"type": "tip", "icon": "💡", "title": f"The '{destination}' Secret", "description": f"Exploring {destination} by private cab is often 20% faster than public transport based on recent traveler data.", "potential_cost": 0},
+        {"type": "upgrade", "icon": "💎", "title": "Priority Experience", "description": f"Upgrading to a guided heritage tour in {destination} ensures you don't miss the hidden historical spots.", "potential_cost": 1500},
+        {"type": "warning", "icon": "⚠️", "title": "Budget Optimization", "description": "Local food spots are significantly cheaper and more authentic than hotel dining. Save up to ₹800 per day.", "potential_cost": 0},
+        {"type": "adventure", "icon": "🏔️", "title": "Off-Beat Path", "description": "If you have 3 hours free on Day 2, check out the local viewpoints for a breathtaking sunset.", "potential_cost": 400},
     ]
+    
+    # Add weather tip if we have data
+    if weather_data:
+        first_day = next(iter(weather_data.values()), None)
+        if first_day:
+            suggestions.append({
+                "type": "weather",
+                "icon": "🌤️",
+                "title": "Weather Insider",
+                "description": f"Expect {first_day['condition']} with a high of {first_day['temp_max']}°C. Pack layers for maximum comfort!",
+                "potential_cost": 0
+            })
+            
+    return suggestions[:5]
 
 
-def _deterministic_fallback(source, destination, start_date, end_date, budget, num_travelers, group_type, nights, num_days, date_list, rag_ctx, elapsed):
+def _deterministic_fallback(source, destination, start_date, end_date, budget, num_travelers, group_type, nights, num_days, date_list, rag_ctx, weather_data, elapsed):
     import itertools
     by_type = rag_ctx["by_type"]
     acts = by_type.get("activity", [])
@@ -236,7 +276,15 @@ def _deterministic_fallback(source, destination, start_date, end_date, budget, n
         eve  = [_act(pool[base + 6 + i], "e", d+1, i) for i in range(3)]
         if d == 0:           morn[0] = {"id": "act_arrival", "name": "Arrival & Check-in", "type": "relaxation", "duration": "2 hrs", "cost": 0, "location": destination, "description": "Arrive, check in, freshen up.", "tags": ["arrival"]}
         if d == num_days-1:  morn[0] = {"id": "act_checkout", "name": "Checkout & Departure", "type": "relaxation", "duration": "2 hrs", "cost": 0, "location": source, "description": "Check out and head to departure.", "tags": ["departure"]}
-        itinerary.append({"day": d+1, "date": date_list[d], "day_summary": f"Day {d+1} in {destination}", "morning": {"time": "08:00 AM", "activities": morn}, "afternoon": {"time": "01:00 PM", "activities": aft}, "evening": {"time": "06:00 PM", "activities": eve}})
+        itinerary.append({
+            "day": d+1,
+            "date": date_list[d],
+            "day_summary": f"Day {d+1} in {destination}",
+            "weather": weather_data.get(date_list[d]),
+            "morning": {"time": "08:00 AM", "activities": morn},
+            "afternoon": {"time": "01:00 PM", "activities": aft},
+            "evening": {"time": "06:00 PM", "activities": eve}
+        })
 
     transport_options = [_rag_to_transport(e, i, num_travelers) for i, e in enumerate(by_type.get("transport", [])[:5])]
     if not transport_options:
@@ -256,7 +304,7 @@ def _deterministic_fallback(source, destination, start_date, end_date, budget, n
         "food_plans": _default_food_plans(destination, num_travelers, num_days),
         "itinerary": itinerary,
         "budget_breakdown_estimate": bb,
-        "ai_suggestions": _default_suggestions(destination, budget, nights),
+        "ai_suggestions": _default_suggestions(destination, budget, nights, weather_data),
         "ui": {"color_primary": "#6366f1", "destination_vibe": "city"},
         "_meta": {"planning_time_ms": round(elapsed, 1), "llm_used": False, "model": "deterministic-rag-fallback", "rag_retrieved": rag_ctx["retrieved_count"], "vector_store_size": rag_ctx["vector_data_count"]},
     }

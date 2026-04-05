@@ -254,6 +254,7 @@ def _fmt_itinerary(iti: Any, payload: dict) -> dict:
             "date": payload.get("start_date", ""),
             "notes": day.get("notes", "") or "",
             "activities": formatted_activities,
+            "weather": day.get("weather"),
         })
 
     return {
