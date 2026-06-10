@@ -9,6 +9,7 @@ const userSchema = new mongoose.Schema({
   googleId:        { type: String, default: null, sparse: true },
   avatar:          { type: String, default: null },
   bio:             { type: String, default: '', maxlength: 300 },
+  location:        { type: String, default: '' },
   isEmailVerified: { type: Boolean, default: false },
   role:            { type: String, enum: ['user', 'admin'], default: 'user' },
   plan:            { type: String, enum: ['free', 'pro'], default: 'free' },
@@ -16,6 +17,9 @@ const userSchema = new mongoose.Schema({
   followingCount:  { type: Number, default: 0 },
   tripsCount:      { type: Number, default: 0 },
   preferences:     [{ type: String }],
+  reputationScore: { type: Number, default: 0 },
+  badges:          [{ type: String }],
+  status:          { type: String, enum: ['active', 'suspended', 'deleted'], default: 'active' },
   followers:       [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   following:       [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
 }, { timestamps: true })

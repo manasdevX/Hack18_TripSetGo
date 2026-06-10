@@ -24,7 +24,19 @@ const tripSchema = new mongoose.Schema({
     activities: [{ type: mongoose.Schema.Types.Mixed }],
   },
 
-  isPublic:      { type: Boolean, default: false },
+  // TripAdvisor-like relational itinerary
+  itinerary: [{
+    day:  { type: Number, required: true },
+    date: { type: Date },
+    activities: [{
+      targetType: { type: String, enum: ['Attraction', 'Restaurant', 'Hotel', 'Custom'] },
+      targetId:   { type: mongoose.Schema.Types.ObjectId, refPath: 'itinerary.activities.targetType' },
+      notes:      { type: String, maxlength: 1000 },
+      startTime:  { type: Date }
+    }]
+  }],
+
+  isPublic:      { type: Boolean, default: false, index: true },
   usedFallback:  { type: Boolean, default: false },
   likesCount:    { type: Number, default: 0 },
   savesCount:    { type: Number, default: 0 },
