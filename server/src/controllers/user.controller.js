@@ -4,18 +4,31 @@ const Trip         = require('../models/Trip.model')
 const Notification = require('../models/Notification.model')
 const { success, notFound, badRequest } = require('../utils/response')
 const asyncHandler = require('../utils/asyncHandler')
+const { uploadImageBuffer } = require('../services/cloudinary.service')
 
 exports.getMe = asyncHandler(async (req, res) => {
   success(res, req.user)
 })
 
 exports.updateMe = asyncHandler(async (req, res) => {
-  const allowed = ['name', 'bio', 'avatar', 'preferences']
+  const allowed = ['name', 'bio', 'location', 'travelInterests', 'favoriteDestinations']
   const updates = {}
   allowed.forEach(f => { if (req.body[f] !== undefined) updates[f] = req.body[f] })
 
   const user = await User.findByIdAndUpdate(req.user._id, updates, { new: true, runValidators: true })
   success(res, user, 'Profile updated')
+})
+
+exports.uploadAvatar = asyncHandler(async (req, res) => {
+  if (!req.file) return badRequest(res, 'No image file provided')
+
+  try {
+    const avatarUrl = await uploadImageBuffer(req.file.buffer)
+    const user = await User.findByIdAndUpdate(req.user._id, { avatar: avatarUrl }, { new: true })
+    success(res, user, 'Avatar uploaded successfully')
+  } catch (error) {
+    badRequest(res, 'Failed to upload image to Cloudinary')
+  }
 })
 
 exports.getUser = asyncHandler(async (req, res) => {
