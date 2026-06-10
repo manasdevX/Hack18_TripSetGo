@@ -5,21 +5,26 @@ const { v4: uuidv4 } = require('uuid')
 const User           = require('../models/User.model')
 const RefreshToken   = require('../models/RefreshToken.model')
 const Subscription   = require('../models/Subscription.model')
+const OTP            = require('../models/OTP.model')
 const { signAccessToken, signRefreshToken, verifyRefreshToken } = require('../utils/jwt')
 const { success, badRequest, unauthorized, created } = require('../utils/response')
 const asyncHandler   = require('../utils/asyncHandler')
 const emailService   = require('../services/email.service')
 const logger         = require('../utils/logger')
 
-// In-memory OTP store (use Redis in production)
-const otpStore = new Map()
+// Helper functions for MongoDB OTP storage
+const setOTP = async (email, otp) => {
+  // Overwrite existing OTP for this email to prevent spamming
+  await OTP.findOneAndDelete({ email })
+  await OTP.create({ email, otp })
+}
 
-const setOTP   = (email, otp) => otpStore.set(email, { otp, expiresAt: Date.now() + 10 * 60 * 1000 })
-const verifyOTPFromStore = (email, otp) => {
-  const entry = otpStore.get(email)
-  if (!entry || Date.now() > entry.expiresAt) return false
+const verifyOTPFromStore = async (email, otp) => {
+  const entry = await OTP.findOne({ email })
+  if (!entry) return false
   if (entry.otp !== otp) return false
-  otpStore.delete(email)
+  // Delete after successful verification
+  await OTP.deleteOne({ _id: entry._id })
   return true
 }
 
@@ -41,7 +46,7 @@ exports.signup = asyncHandler(async (req, res) => {
 
   // Generate & send OTP
   const otp = String(Math.floor(100000 + Math.random() * 900000))
-  setOTP(email, otp)
+  await setOTP(email, otp)
   await emailService.sendOTP(email, name, otp)
 
   logger.info(`New signup: ${email}`)
@@ -54,7 +59,8 @@ exports.verifyOTP = asyncHandler(async (req, res) => {
   const { email, otp } = req.body
   if (!email || !otp) return badRequest(res, 'Email and OTP are required')
 
-  if (!verifyOTPFromStore(email, otp)) return badRequest(res, 'Invalid or expired OTP')
+  const isValid = await verifyOTPFromStore(email, otp)
+  if (!isValid) return badRequest(res, 'Invalid or expired OTP')
 
   await User.updateOne({ email }, { isEmailVerified: true })
   success(res, null, 'Email verified successfully')
@@ -151,7 +157,7 @@ exports.forgotPassword = asyncHandler(async (req, res) => {
   if (!user) return success(res, null, 'If that email exists, a reset OTP has been sent')
 
   const otp = String(Math.floor(100000 + Math.random() * 900000))
-  setOTP(`reset-${email}`, otp)
+  await setOTP(`reset-${email}`, otp)
   await emailService.sendPasswordResetOTP(email, user.name, otp)
 
   success(res, null, 'Password reset OTP sent to your email')
@@ -164,7 +170,8 @@ exports.resetPassword = asyncHandler(async (req, res) => {
   if (!email || !otp || !newPassword) return badRequest(res, 'Email, OTP and new password are required')
   if (newPassword.length < 8) return badRequest(res, 'Password must be at least 8 characters')
 
-  if (!verifyOTPFromStore(`reset-${email}`, otp)) return badRequest(res, 'Invalid or expired OTP')
+  const isValid = await verifyOTPFromStore(`reset-${email}`, otp)
+  if (!isValid) return badRequest(res, 'Invalid or expired OTP')
 
   const user = await User.findOne({ email })
   if (!user) return badRequest(res, 'User not found')

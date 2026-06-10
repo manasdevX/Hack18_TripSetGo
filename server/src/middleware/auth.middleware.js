@@ -13,6 +13,7 @@ const authenticate = async (req, res, next) => {
 
     const user = await User.findById(decoded.userId).select('-passwordHash')
     if (!user) return unauthorized(res, 'User not found')
+    if (user.status !== 'active') return unauthorized(res, 'Account is suspended or deleted')
 
     req.user = user
     next()
