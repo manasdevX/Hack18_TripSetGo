@@ -96,3 +96,47 @@ exports.searchCityOverview = asyncHandler(async (req, res) => {
 
   success(res, { city, hotels, restaurants, attractions })
 })
+
+/**
+ * GET /api/v1/search/nearby?lng=&lat=&radius=&type=&limit=
+ * Returns all entities within a radius (km) of the given coordinates.
+ * type can be: hotels | restaurants | attractions | all
+ */
+exports.searchNearby = asyncHandler(async (req, res) => {
+  const { lng, lat, radius = 10, type = 'all', limit = 20 } = req.query
+
+  if (!lng || !lat) {
+    return res.status(400).json({ success: false, message: 'lng and lat are required' })
+  }
+
+  const lng_ = parseFloat(lng)
+  const lat_ = parseFloat(lat)
+  const radiusInRadians = parseFloat(radius) / 6371 // Earth radius in km
+
+  const geoQuery = {
+    location: {
+      $geoWithin: {
+        $centerSphere: [[lng_, lat_], radiusInRadians]
+      }
+    }
+  }
+
+  const lim = parseInt(limit, 10)
+
+  const runQuery = async (Model, tag) =>
+    (await Model.find(geoQuery).limit(lim).lean()).map(d => ({ ...d, _entityType: tag }))
+
+  let results = {}
+
+  if (type === 'hotels' || type === 'all') {
+    results.hotels = await runQuery(Hotel, 'Hotel')
+  }
+  if (type === 'restaurants' || type === 'all') {
+    results.restaurants = await runQuery(Restaurant, 'Restaurant')
+  }
+  if (type === 'attractions' || type === 'all') {
+    results.attractions = await runQuery(Attraction, 'Attraction')
+  }
+
+  success(res, results)
+})

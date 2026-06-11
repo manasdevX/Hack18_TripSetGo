@@ -23,6 +23,7 @@ const Analytics    = lazy(() => import('@/pages/Dashboard/Analytics'))
 const Subscription = lazy(() => import('@/pages/Dashboard/Subscription'))
 const Notifications = lazy(() => import('@/pages/Dashboard/Notifications'))
 const Profile      = lazy(() => import('@/pages/Dashboard/Profile'))
+const MapPage      = lazy(() => import('@/pages/Dashboard/Map'))
 const NotFound     = lazy(() => import('@/pages/NotFound'))
 
 // Route guards
@@ -62,6 +63,7 @@ export const router = createBrowserRouter([
       { path: 'subscription',        element: <Wrap element={<Subscription />} /> },
       { path: 'notifications',       element: <Wrap element={<Notifications />} /> },
       { path: 'profile',             element: <Wrap element={<Profile />} /> },
+      { path: 'map',                 element: <Wrap element={<MapPage />} /> },
     ],
   },
   // Top-level discover page (public)
