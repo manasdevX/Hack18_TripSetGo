@@ -1,7 +1,17 @@
 {
-  "dependencies": {
-    "axios": "^1.14.0",
-    "lucide-react": "^1.7.0",
-    "zustand": "^5.0.12"
+  "name": "tripsetgo",
+  "version": "1.0.0",
+  "description": "TripSetGo — AI-powered travel planner (MERN stack)",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently --kill-others-on-fail --names \"backend,frontend\" --prefix-colors \"cyan,magenta\" \"npm run dev --prefix backend\" \"npm run dev --prefix frontend\"",
+    "dev:frontend": "npm run dev --prefix frontend",
+    "dev:backend": "npm run dev --prefix backend",
+    "build": "npm run build --prefix frontend",
+    "install:all": "npm install --prefix frontend && npm install --prefix backend",
+    "lint": "npm run lint --prefix frontend"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0"
   }
 }

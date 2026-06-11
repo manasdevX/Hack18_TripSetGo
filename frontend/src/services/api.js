@@ -1,73 +1,77 @@
-import axios from "axios";
+// src/services/api.js — Axios instance with JWT interceptors
+import axios from 'axios'
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api/v1";
+const api = axios.create({
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000',
+  withCredentials: true,
+  headers: { 'Content-Type': 'application/json' },
+})
 
-const apiClient = axios.create({
-  baseURL: API_BASE_URL,
-  headers: {
-    "Content-Type": "application/json",
+// ── Request interceptor: attach access token ──────────────────────────────
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('accessToken')
+    if (token) config.headers.Authorization = `Bearer ${token}`
+    return config
   },
-});
+  (error) => Promise.reject(error)
+)
 
-// Request Interceptor: Attach JWT to every request
-apiClient.interceptors.request.use((config) => {
-  if (typeof window !== "undefined") {
-    const token = localStorage.getItem("access_token");
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-  }
-  return config;
-});
+// ── Response interceptor: refresh token on 401 ───────────────────────────
+let isRefreshing = false
+let failedQueue = []
 
-// Response Interceptor: Handle Global Errors
-apiClient.interceptors.response.use(
+const processQueue = (error, token = null) => {
+  failedQueue.forEach((prom) => {
+    if (error) prom.reject(error)
+    else prom.resolve(token)
+  })
+  failedQueue = []
+}
+
+api.interceptors.response.use(
   (response) => response,
-  (error) => {
-    // If token expires, wipe storage and boot to login
-    if (error.response?.status === 401 && !window.location.pathname.includes('/login')) {
-      localStorage.clear();
-      window.location.href = "/login?session=expired";
+  async (error) => {
+    const originalRequest = error.config
+
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      if (isRefreshing) {
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject })
+        })
+          .then((token) => {
+            originalRequest.headers.Authorization = `Bearer ${token}`
+            return api(originalRequest)
+          })
+          .catch((err) => Promise.reject(err))
+      }
+
+      originalRequest._retry = true
+      isRefreshing = true
+
+      try {
+        const { data } = await axios.post(
+          `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/v1/auth/refresh`,
+          {},
+          { withCredentials: true }
+        )
+        const newToken = data.data.accessToken
+        localStorage.setItem('accessToken', newToken)
+        api.defaults.headers.Authorization = `Bearer ${newToken}`
+        processQueue(null, newToken)
+        return api(originalRequest)
+      } catch (refreshError) {
+        processQueue(refreshError, null)
+        localStorage.removeItem('accessToken')
+        window.location.href = '/auth/login'
+        return Promise.reject(refreshError)
+      } finally {
+        isRefreshing = false
+      }
     }
-    return Promise.reject(error);
+
+    return Promise.reject(error)
   }
-);
+)
 
-export const authAPI = {
-  // --- INLINE SIGNUP FLOW ---
-  
-  // Step 1: Send OTP (No user created yet)
-  sendSignupOTP: (email) => apiClient.post("/auth/send-signup-otp", { email }),
-
-  // Step 2: Verify OTP
-  verifySignupOTP: (email, otp_code) => 
-    apiClient.post("/auth/verify-signup-otp", { email, otp_code }),
-
-  // Step 3: Final Signup (User created in DB)
-  signup: (data) => apiClient.post("/auth/signup", data),
-
-  // --- LOGIN & GOOGLE ---
-  
-  login: (email, password) => apiClient.post("/auth/login", { email, password }),
-
-  googleStart: (id_token) => apiClient.post("/auth/google/start", { id_token }),
-
-  // --- UTILS ---
-  
-  resendOtp: (email) => apiClient.post("/auth/resend-otp", { email }),
-
-  getProfile: () => apiClient.get("/auth/me"),
-  
-  logout: () => {
-    localStorage.clear();
-    // We don't necessarily need a backend call for JWT logout, but good for logs
-    return apiClient.post("/auth/logout").catch(() => {});
-  }
-};
-
-export const tripAPI = {
-  getTrips: () => apiClient.get("/trips"),
-  createTrip: (data) => apiClient.post("/trips", data),
-};
-
-export default apiClient;
+export default api
