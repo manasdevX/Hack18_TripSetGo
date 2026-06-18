@@ -28,6 +28,7 @@ const TTL = {
   'attractions':           1800,  // 30 min
   'search:city':           900,   // 15 min
   'search:nearby':         600,   // 10 min
+  'search:es':             300,   // 5 min  ← Elasticsearch results
   'itinerary':             3600,  // 60 min
   'default':               300,   // 5 min
 }

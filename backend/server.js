@@ -33,7 +33,21 @@ process.on('uncaughtException', (err) => {
 })
 
 // Connect to MongoDB & Start Server
-connectDB().then(() => {
+connectDB().then(async () => {
+  // ── Elasticsearch bootstrap (non-fatal) ─────────────────────────────────
+  // Register Mongoose ↔ ES sync hooks (must run after DB models are loaded)
+  require('./src/services/es.sync')
+
+  const { pingElasticsearch }   = require('./src/config/elasticsearch')
+  const { createIndices }       = require('./src/services/elasticsearch.service')
+
+  const esReachable = await pingElasticsearch()
+  if (esReachable) {
+    await createIndices()
+    logger.info('🔍 Elasticsearch indices ready')
+  }
+  // ───────────────────────────────────────────────────────────────────────
+
   server.listen(PORT, () => {
     logger.info(`🚀 TripSetGo Server running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`)
   })
