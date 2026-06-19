@@ -26,6 +26,13 @@ const csrfProtection = (req, res, next) => {
     return next()
   }
 
+  // If the request contains a Bearer Authorization header, it is immune to CSRF.
+  // This supports cross-domain production environments (Vercel + Render) where
+  // frontend scripts cannot read cookies set on the backend domain.
+  if (req.headers.authorization?.startsWith('Bearer ')) {
+    return next()
+  }
+
   const csrfCookie = req.cookies?.csrfToken
   const csrfHeader = req.headers['x-csrf-token']
 
