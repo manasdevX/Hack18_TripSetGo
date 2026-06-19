@@ -20,18 +20,29 @@ const server = http.createServer(app)
 // and express-rate-limit key off the real client IP in production.
 app.set('trust proxy', 1)
 
-// Sanitize CLIENT_URL (remove trailing slash if present to avoid CORS preflight failures)
-let clientUrl = process.env.CLIENT_URL || 'http://localhost:3000'
-if (clientUrl.endsWith('/')) {
-  clientUrl = clientUrl.slice(0, -1)
+// Build the allowed origins list from env.
+// CLIENT_URL can be a comma-separated list of origins, e.g.:
+//   http://localhost:3000,https://your-app.vercel.app
+const allowedOrigins = (process.env.CLIENT_URL || 'http://localhost:3000')
+  .split(',')
+  .map((o) => o.trim().replace(/\/$/, ''))
+  .filter(Boolean)
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    // Allow server-to-server / curl calls (origin is undefined) in dev
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true)
+    } else {
+      callback(new Error(`CORS: origin '${origin}' not allowed`))
+    }
+  },
+  credentials: true,
 }
 
 // Socket.io setup for real-time notifications
 const io = new Server(server, {
-  cors: {
-    origin: clientUrl,
-    credentials: true,
-  },
+  cors: corsOptions,
 })
 
 // Keep track of connected users { userId: socketId }
@@ -101,10 +112,7 @@ app.use((req, res, next) => {
 
 // Middleware
 app.use(helmet())
-app.use(cors({
-  origin: clientUrl,
-  credentials: true,
-}))
+app.use(cors(corsOptions))
 app.use(compression())
 app.use(cookieParser())
 

@@ -142,7 +142,7 @@ exports.login = asyncHandler(async (req, res) => {
 
   res.cookie('refreshToken', refreshToken, {
     httpOnly: true, secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict', maxAge: 7 * 24 * 60 * 60 * 1000,
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', maxAge: 7 * 24 * 60 * 60 * 1000,
   })
 
   await auditLogger.logEvent({ userId: user._id, action: 'LOGIN_SUCCESS', status: 'success', req })
@@ -182,7 +182,7 @@ exports.refresh = asyncHandler(async (req, res) => {
 
   res.cookie('refreshToken', newRefresh, {
     httpOnly: true, secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict', maxAge: 7 * 24 * 60 * 60 * 1000,
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', maxAge: 7 * 24 * 60 * 60 * 1000,
   })
 
   success(res, { accessToken: newAccess }, 'Token refreshed')
@@ -293,7 +293,7 @@ exports.googleToken = asyncHandler(async (req, res) => {
 
   res.cookie('refreshToken', refreshToken, {
     httpOnly: true, secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict', maxAge: 7 * 24 * 60 * 60 * 1000,
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', maxAge: 7 * 24 * 60 * 60 * 1000,
   })
 
   success(res, { accessToken, user })
@@ -419,7 +419,7 @@ exports.verifyMfaLogin = asyncHandler(async (req, res) => {
 
   res.cookie('refreshToken', refreshToken, {
     httpOnly: true, secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict', maxAge: 7 * 24 * 60 * 60 * 1000,
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', maxAge: 7 * 24 * 60 * 60 * 1000,
   })
 
   success(res, { 

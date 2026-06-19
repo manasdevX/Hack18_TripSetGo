@@ -25,11 +25,27 @@ export const verifyOTP = createAsyncThunk('auth/verifyOTP', async (data, { rejec
 export const login = createAsyncThunk('auth/login', async (data, { rejectWithValue }) => {
   try {
     const res = await api.post('/api/v1/auth/login', data)
-    const { accessToken, user } = res.data.data
+    const payload = res.data.data
+    // MFA challenge — backend returns { mfaRequired: true, mfaToken }
+    if (payload.mfaRequired) {
+      return { mfaRequired: true, mfaToken: payload.mfaToken }
+    }
+    const { accessToken, user } = payload
     localStorage.setItem('accessToken', accessToken)
     return { user, accessToken }
   } catch (err) {
     return rejectWithValue(err.response?.data?.message || 'Login failed')
+  }
+})
+
+export const mfaVerify = createAsyncThunk('auth/mfaVerify', async (data, { rejectWithValue }) => {
+  try {
+    const res = await api.post('/api/v1/auth/mfa/verify-login', data)
+    const { accessToken, user } = res.data.data
+    localStorage.setItem('accessToken', accessToken)
+    return { user, accessToken }
+  } catch (err) {
+    return rejectWithValue(err.response?.data?.message || 'MFA verification failed')
   }
 })
 
@@ -82,11 +98,14 @@ const authSlice = createSlice({
     error: null,
     successMessage: null,
     pendingEmail: null, // used for OTP flow
+    mfaPending: false,  // true when MFA challenge is active
+    mfaToken: null,     // temporary MFA token from backend
   },
   reducers: {
     clearError: (state) => { state.error = null },
     clearSuccess: (state) => { state.successMessage = null },
     setPendingEmail: (state, action) => { state.pendingEmail = action.payload },
+    clearMfa: (state) => { state.mfaPending = false; state.mfaToken = null },
     setGoogleUser: (state, action) => {
       const { user, accessToken } = action.payload
       state.user = user
@@ -121,17 +140,36 @@ const authSlice = createSlice({
       .addCase(login.pending,   (state) => { state.loading = true; state.error = null })
       .addCase(login.fulfilled, (state, { payload }) => {
         state.loading = false
+        if (payload.mfaRequired) {
+          state.mfaPending = true
+          state.mfaToken   = payload.mfaToken
+        } else {
+          state.user = payload.user
+          state.accessToken = payload.accessToken
+          state.isAuthenticated = true
+        }
+      })
+      .addCase(login.rejected,  (state, { payload }) => { state.loading = false; state.error = payload })
+
+    // MFA verify
+      .addCase(mfaVerify.pending,   (state) => { state.loading = true; state.error = null })
+      .addCase(mfaVerify.fulfilled, (state, { payload }) => {
+        state.loading = false
         state.user = payload.user
         state.accessToken = payload.accessToken
         state.isAuthenticated = true
+        state.mfaPending = false
+        state.mfaToken   = null
       })
-      .addCase(login.rejected,  (state, { payload }) => { state.loading = false; state.error = payload })
+      .addCase(mfaVerify.rejected,  (state, { payload }) => { state.loading = false; state.error = payload })
 
     // Logout
       .addCase(logout.fulfilled, (state) => {
         state.user = null
         state.accessToken = null
         state.isAuthenticated = false
+        state.mfaPending = false
+        state.mfaToken   = null
       })
 
     // FetchMe
@@ -157,13 +195,15 @@ const authSlice = createSlice({
   },
 })
 
-export const { clearError, clearSuccess, setPendingEmail, setGoogleUser, updateUser } = authSlice.actions
+export const { clearError, clearSuccess, setPendingEmail, clearMfa, setGoogleUser, updateUser } = authSlice.actions
 
 // Selectors
-export const selectAuth          = (state) => state.auth
-export const selectUser          = (state) => state.auth.user
+export const selectAuth            = (state) => state.auth
+export const selectUser            = (state) => state.auth.user
 export const selectIsAuthenticated = (state) => state.auth.isAuthenticated
-export const selectAuthLoading   = (state) => state.auth.loading
-export const selectAuthError     = (state) => state.auth.error
+export const selectAuthLoading     = (state) => state.auth.loading
+export const selectAuthError       = (state) => state.auth.error
+export const selectMfaPending      = (state) => state.auth.mfaPending
+export const selectMfaToken        = (state) => state.auth.mfaToken
 
 export default authSlice.reducer

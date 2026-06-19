@@ -50,10 +50,12 @@ const setCsrfToken = (req, res, next) => {
   // Generate token if it doesn't exist yet in cookies
   if (!req.cookies?.csrfToken) {
     const token = crypto.randomBytes(24).toString('hex')
+    const isProd = process.env.NODE_ENV === 'production'
     res.cookie('csrfToken', token, {
       httpOnly: false, // Accessible by frontend JavaScript
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      secure: isProd,
+      // cross-domain (Vercel → Render) requires sameSite:'none' + secure:true
+      sameSite: isProd ? 'none' : 'lax',
       maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
     })
   }
