@@ -9,7 +9,12 @@ export default function DashboardLayout() {
   const location = useLocation()
 
   // Close sidebar on route change (mobile nav)
-  useEffect(() => { setSidebarOpen(false) }, [location.pathname])
+  useEffect(() => {
+    const handle = setTimeout(() => {
+      setSidebarOpen(false)
+    }, 0)
+    return () => clearTimeout(handle)
+  }, [location.pathname])
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--color-bg-primary)' }}>

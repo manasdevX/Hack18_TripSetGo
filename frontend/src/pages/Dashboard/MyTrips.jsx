@@ -39,8 +39,14 @@ export default function MyTrips() {
   }
 
   useEffect(() => {
+    let active = true
     if (activeTab === 'shared') {
-      fetchShared()
+      Promise.resolve().then(() => {
+        if (active) fetchShared()
+      })
+    }
+    return () => {
+      active = false
     }
   }, [activeTab])
 

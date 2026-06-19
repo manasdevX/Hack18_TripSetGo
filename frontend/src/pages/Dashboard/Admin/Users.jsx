@@ -7,7 +7,7 @@ import Loader from '@/components/common/Loader'
 
 export default function AdminUsers() {
   const dispatch = useDispatch()
-  const { users, usersPagination, loading, error, successMessage } = useSelector(selectAdmin)
+  const { users, usersPagination, loading, successMessage } = useSelector(selectAdmin)
 
   const [searchTerm, setSearchTerm] = useState('')
   const [roleFilter, setRoleFilter] = useState('')

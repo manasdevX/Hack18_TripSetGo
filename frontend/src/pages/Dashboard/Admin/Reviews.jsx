@@ -7,7 +7,7 @@ import Loader from '@/components/common/Loader'
 
 export default function AdminReviews() {
   const dispatch = useDispatch()
-  const { reviews, reviewsPagination, loading, error, successMessage } = useSelector(selectAdmin)
+  const { reviews, reviewsPagination, loading, successMessage } = useSelector(selectAdmin)
 
   const [reportedOnly, setReportedOnly] = useState(false)
   const [minRating, setMinRating] = useState(0)

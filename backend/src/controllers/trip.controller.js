@@ -12,6 +12,8 @@ const notifService = require('../services/notification.service')
 const { success, created, notFound, badRequest, forbidden, unauthorized } = require('../utils/response')
 const asyncHandler = require('../utils/asyncHandler')
 const logger       = require('../utils/logger')
+const { sanitizeComment } = require('../utils/sanitizer')
+const { withTransaction } = require('../utils/transaction')
 
 // ── POST /api/v1/trips — Generate AI trip plan ───────────────────────────
 
@@ -21,7 +23,7 @@ exports.createTrip = asyncHandler(async (req, res) => {
     return badRequest(res, 'source, destination, startDate, endDate and budget are required')
   }
 
-  // Enforce subscription search limit
+  // Enforce subscription search limit (check outside transaction)
   const subscription = await Subscription.findOne({ userId: req.user._id })
   if (subscription && !subscription.canSearch()) {
     return res.status(429).json({ success: false, message: `Daily limit reached (${subscription.getSearchLimit()} plans/day). Upgrade to Pro for unlimited plans.` })
@@ -45,26 +47,34 @@ exports.createTrip = asyncHandler(async (req, res) => {
     ...(preferences || []).slice(0, 3),
   ].filter(Boolean)
 
-  const trip = await Trip.create({
-    userId: req.user._id,
-    ...tripData,
-    planData,
-    tags,
-    isPublic: false,
-    usedFallback,
+  // Use transaction for multi-document consistency
+  const { trip, user: updatedUser } = await withTransaction(async (session) => {
+    const trip = await Trip.create([{
+      userId: req.user._id,
+      ...tripData,
+      planData,
+      tags,
+      isPublic: false,
+      usedFallback,
+    }], { session })
+
+    // Update subscription usage counter
+    if (subscription) {
+      subscription.checkAndResetDaily()
+      subscription.searchesToday += 1
+      subscription.lastSearchDate = new Date()
+      await subscription.save({ session })
+    }
+
+    // Increment user trip count
+    const user = await User.findByIdAndUpdate(
+      req.user._id,
+      { $inc: { tripsCount: 1 } },
+      { session, new: true }
+    )
+
+    return { trip: trip[0], user }
   })
-
-  // Update usage counter
-  if (subscription) {
-    subscription.checkAndResetDaily()
-    subscription.searchesToday += 1
-    subscription.lastSearchDate = new Date()
-    await subscription.save()
-  }
-
-  // Increment user trip count
-  req.user.tripsCount = (req.user.tripsCount || 0) + 1
-  await req.user.save()
 
   logger.info(`✅ Trip created: ${destination} (${usedFallback ? 'fallback' : 'Gemini'}) for user ${req.user._id}`)
 
@@ -224,7 +234,10 @@ exports.addComment = asyncHandler(async (req, res) => {
   const trip = await Trip.findById(req.params.id)
   if (!trip) return notFound(res, 'Trip not found')
 
-  const comment = { userId: req.user._id, user: { name: req.user.name, avatar: req.user.avatar }, text: text.trim(), createdAt: new Date() }
+  // Sanitize comment text to prevent XSS
+  const sanitizedText = sanitizeComment(text.trim())
+  
+  const comment = { userId: req.user._id, user: { name: req.user.name, avatar: req.user.avatar }, text: sanitizedText, createdAt: new Date() }
   trip.comments.push(comment)
   trip.commentsCount = trip.comments.length
   await trip.save()

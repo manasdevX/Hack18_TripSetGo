@@ -5,6 +5,7 @@ const Notification = require('../models/Notification.model')
 const { success, notFound, badRequest } = require('../utils/response')
 const asyncHandler = require('../utils/asyncHandler')
 const { uploadImageBuffer } = require('../services/cloudinary.service')
+const { sanitizeUserProfile } = require('../utils/sanitizer')
 
 exports.getMe = asyncHandler(async (req, res) => {
   success(res, req.user)
@@ -15,7 +16,10 @@ exports.updateMe = asyncHandler(async (req, res) => {
   const updates = {}
   allowed.forEach(f => { if (req.body[f] !== undefined) updates[f] = req.body[f] })
 
-  const user = await User.findByIdAndUpdate(req.user._id, updates, { new: true, runValidators: true })
+  // Sanitize user profile input to prevent XSS
+  const sanitized = sanitizeUserProfile(updates)
+
+  const user = await User.findByIdAndUpdate(req.user._id, sanitized, { new: true, runValidators: true })
   success(res, user, 'Profile updated')
 })
 

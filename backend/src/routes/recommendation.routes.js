@@ -1,9 +1,17 @@
 // server/src/routes/recommendation.routes.js
 // All routes under /api/v1/recommendations/
 const router  = require('express').Router()
+const rateLimit = require('express-rate-limit')
 const recCtrl = require('../controllers/recommendation.controller')
 const { authenticate, optionalAuth, authorize } = require('../middleware/auth.middleware')
 const cache   = require('../middleware/cache.middleware')
+
+// Rate limiting for view events to prevent artificial boosting
+const viewLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 500, // 500 views per hour per user
+  message: { success: false, message: 'Too many view events. Please try again later.' }
+})
 
 // ── Public / optional auth ────────────────────────────────────────────────────
 
@@ -32,7 +40,7 @@ router.get('/recently-viewed', authenticate, recCtrl.getRecentlyViewed)
 // POST /recommendations/view
 // Record a view event — writes to Redis + MongoDB UserActivity
 // Auth: required
-router.post('/view', authenticate, recCtrl.recordView)
+router.post('/view', authenticate, viewLimiter, recCtrl.recordView)
 
 // ── Admin only ────────────────────────────────────────────────────────────────
 

@@ -8,7 +8,7 @@ const auditLogSchema = new mongoose.Schema({
   ipAddress: { type: String, default: '' },
   userAgent: { type: String, default: '' },
   details:   { type: mongoose.Schema.Types.Mixed, default: {} },
-  timestamp: { type: Date, default: Date.now, index: true }
+  timestamp: { type: Date, default: Date.now }
 })
 
 // Auto-delete logs after 90 days (7776000 seconds) to conserve storage space

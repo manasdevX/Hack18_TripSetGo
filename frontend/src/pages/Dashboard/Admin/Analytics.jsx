@@ -2,8 +2,8 @@
 import { useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { fetchAnalytics, selectAdmin } from '@/features/admin/adminSlice'
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Cell, Legend } from 'recharts'
-import { Users, Compass, Star, CreditCard, ShieldAlert } from 'lucide-react'
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar, Cell, Legend } from 'recharts'
+import { Users, Compass, CreditCard, ShieldAlert } from 'lucide-react'
 import Loader from '@/components/common/Loader'
 
 const COLORS = ['#6366f1', '#06b6d4', '#10b981', '#f59e0b', '#8b5cf6']

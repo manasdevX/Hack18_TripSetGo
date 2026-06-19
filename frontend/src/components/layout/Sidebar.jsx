@@ -5,7 +5,7 @@ import { selectUser } from '@/features/auth/authSlice'
 import {
   LayoutDashboard, Map, Compass, Briefcase,
   Receipt, BarChart3, CreditCard, Bell, User, MapPin,
-  Users, MessageSquare, ShieldCheck, Terminal
+  Users, MessageSquare, Terminal
 } from 'lucide-react'
 
 const navItems = [

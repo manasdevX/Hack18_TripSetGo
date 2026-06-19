@@ -1,10 +1,10 @@
 // src/pages/TripDetail/index.jsx — Collaborative, real-time trip view & editor
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useSelector } from 'react-redux'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowLeft, Calendar, Users, DollarSign, Heart, Copy, Tag, UserPlus, Plus, Trash2, Edit2, Check, X, Globe, Lock, Clock } from 'lucide-react'
-import { selectUser, selectIsAuthenticated } from '@/features/auth/authSlice'
+import { ArrowLeft, Calendar, Users, DollarSign, Heart, Copy, UserPlus, Plus, Trash2, X, Globe, Lock, Clock } from 'lucide-react'
+import { selectUser } from '@/features/auth/authSlice'
 import { useTripCollaboration } from '@/hooks/useTripCollaboration'
 import api from '@/services/api'
 import Loader from '@/components/common/Loader'
@@ -21,7 +21,6 @@ function InfoChip({ icon, label }) {
 export default function TripDetail() {
   const { id }            = useParams()
   const currentUser       = useSelector(selectUser)
-  const isAuth            = useSelector(selectIsAuthenticated)
 
   const [trip, setTrip]   = useState(null)
   const [error, setError] = useState(null)
@@ -39,17 +38,17 @@ export default function TripDetail() {
   const [inviteRole, setInviteRole]   = useState('editor')
   const [inviting, setInviting]       = useState(false)
 
-  const fetchTripData = () => {
+  const fetchTripData = useCallback(() => {
     api.get(`/api/v1/trips/${id}`)
       .then(res => setTrip(res.data.data))
       .catch(err => setError(err.response?.data?.message || 'Trip not found or is private'))
       .finally(() => setLoading(false))
-  }
+  }, [id])
 
   // Load trip details
   useEffect(() => {
     fetchTripData()
-  }, [id])
+  }, [fetchTripData])
 
   // Real-time socket collaboration
   const { presence } = useTripCollaboration(id, fetchTripData)

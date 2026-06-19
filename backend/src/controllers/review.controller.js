@@ -9,6 +9,7 @@ const { uploadImageBuffer } = require('../services/cloudinary.service')
 const { logActivity } = require('../services/recommendation.service')
 const notifService = require('../services/notification.service')
 const logger = require('../utils/logger')
+const { sanitizeReview } = require('../utils/sanitizer')
 
 // Helper to recalculate average rating for a target
 const recalculateAverageRating = async (targetType, targetId) => {
@@ -33,14 +34,17 @@ const recalculateAverageRating = async (targetType, targetId) => {
 }
 
 exports.addReview = asyncHandler(async (req, res) => {
-  const { targetType, targetId, rating, title, text } = req.body
+  let { targetType, targetId, rating, title, text } = req.body
 
   // Check for existing review
   const existing = await Review.findOne({ userId: req.user._id, targetType, targetId })
   if (existing) return badRequest(res, 'You have already reviewed this place')
 
+  // Sanitize user input to prevent XSS
+  const sanitized = sanitizeReview({ title, text })
+  
   const review = await Review.create({
-    userId: req.user._id, targetType, targetId, rating, title, text
+    userId: req.user._id, targetType, targetId, rating, title: sanitized.title, text: sanitized.text
   })
 
   await recalculateAverageRating(targetType, targetId)
@@ -76,10 +80,14 @@ exports.addReview = asyncHandler(async (req, res) => {
 })
 
 exports.editReview = asyncHandler(async (req, res) => {
-  const { rating, title, text } = req.body
+  let { rating, title, text } = req.body
+  
+  // Sanitize user input to prevent XSS
+  const sanitized = sanitizeReview({ title, text })
+  
   const review = await Review.findOneAndUpdate(
     { _id: req.params.id, userId: req.user._id },
-    { rating, title, text },
+    { rating, title: sanitized.title, text: sanitized.text },
     { new: true, runValidators: true }
   )
 

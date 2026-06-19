@@ -2,12 +2,12 @@
 import { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { fetchDestinations, createDestination, updateDestination, deleteDestination, selectAdmin, clearAdminSuccess } from '@/features/admin/adminSlice'
-import { Search, Plus, Edit2, Trash2, CheckCircle, AlertCircle, X, MapPin } from 'lucide-react'
+import { Search, Plus, Edit2, Trash2, CheckCircle, AlertCircle, X } from 'lucide-react'
 import Loader from '@/components/common/Loader'
 
 export default function AdminDestinations() {
   const dispatch = useDispatch()
-  const { destinations, destinationsPagination, loading, error, successMessage } = useSelector(selectAdmin)
+  const { destinations, destinationsPagination, loading, successMessage } = useSelector(selectAdmin)
 
   const [searchTerm, setSearchTerm] = useState('')
   const [typeFilter, setTypeFilter] = useState('all')

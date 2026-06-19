@@ -55,7 +55,4 @@ userSchema.methods.toJSON = function () {
   return obj
 }
 
-userSchema.index({ email: 1 })
-userSchema.index({ googleId: 1 }, { sparse: true })
-
 module.exports = mongoose.model('User', userSchema)

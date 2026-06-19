@@ -8,6 +8,24 @@ const csrfProtection = (req, res, next) => {
     return next()
   }
 
+  // Exempt public authentication routes from CSRF checking
+  const exemptedPaths = [
+    '/api/v1/auth/signup',
+    '/api/v1/auth/verify-otp',
+    '/api/v1/auth/login',
+    '/api/v1/auth/refresh',
+    '/api/v1/auth/logout',
+    '/api/v1/auth/forgot-password',
+    '/api/v1/auth/reset-password',
+    '/api/v1/auth/google/token',
+    '/api/v1/auth/mfa/verify-login'
+  ]
+
+  const fullPath = req.originalUrl.split('?')[0]
+  if (exemptedPaths.some(path => fullPath.startsWith(path))) {
+    return next()
+  }
+
   const csrfCookie = req.cookies?.csrfToken
   const csrfHeader = req.headers['x-csrf-token']
 
