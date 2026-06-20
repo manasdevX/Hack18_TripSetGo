@@ -34,8 +34,9 @@ exports.getAnalytics = async (req, res) => {
     const activeSubscriptions = await Subscription.countDocuments({ isActive: true })
     const proUsers = await User.countDocuments({ plan: 'pro' })
 
-    // Revenue calculation (Mock base: 10/month per active subscription)
-    const estimatedMonthlyRevenue = activeSubscriptions * 10
+    // Estimated monthly revenue = active Pro subscribers × the Pro plan price (₹499/mo).
+    const PRO_MONTHLY_PRICE_INR = 499
+    const estimatedMonthlyRevenue = proUsers * PRO_MONTHLY_PRICE_INR
 
     // Recent activity trends (last 7 days)
     const sevenDaysAgo = new Date()

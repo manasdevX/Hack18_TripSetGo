@@ -81,4 +81,4 @@ registerSyncHooks(Restaurant.schema, INDICES.restaurants, shapeRestaurant)
 registerSyncHooks(Attraction.schema, INDICES.attractions, shapeAttraction)
 registerSyncHooks(Review.schema,     INDICES.reviews,     shapeReview)
 
-logger.info('[ES Sync] Mongoose ↔ Elasticsearch sync hooks registered for Hotels, Restaurants, Attractions, Reviews')
+logger.info('🔁 Search sync hooks registered')

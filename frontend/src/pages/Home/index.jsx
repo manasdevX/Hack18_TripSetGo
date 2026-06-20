@@ -13,11 +13,12 @@ const features = [
   { icon: <TrendingUp size={24} />, title: 'Smart Suggestions', desc: 'Get contextual AI tips — upgrade alerts, budget warnings, and adventure recommendations.' },
 ]
 
-const stats = [
-  { value: '50K+', label: 'Trips Planned' },
-  { value: '120+', label: 'Destinations' },
-  { value: '4.9★', label: 'User Rating' },
-  { value: '< 5s', label: 'AI Response' },
+// Honest product capabilities — no fabricated adoption or rating numbers.
+const highlights = [
+  { value: 'AI',   label: 'Multi-agent itineraries' },
+  { value: 'Live', label: 'Budget tracking' },
+  { value: 'Maps', label: 'Route visualization' },
+  { value: 'Free', label: 'To start planning' },
 ]
 
 export default function Home() {
@@ -71,7 +72,7 @@ export default function Home() {
           initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4, duration: 0.6 }}
           style={{ display: 'flex', gap: '3rem', marginTop: '5rem', flexWrap: 'wrap', justifyContent: 'center' }}
         >
-          {stats.map(s => (
+          {highlights.map(s => (
             <div key={s.label} style={{ textAlign: 'center' }}>
               <p style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: '2rem', fontWeight: 800 }} className="gradient-text">{s.value}</p>
               <p style={{ color: 'var(--color-text-muted)', fontSize: '0.875rem' }}>{s.label}</p>
@@ -125,7 +126,7 @@ export default function Home() {
             Ready to Plan Your Next <span className="gradient-text">Adventure?</span>
           </h2>
           <p style={{ color: 'var(--color-text-secondary)', marginBottom: '2rem' }}>
-            Join 50,000+ travellers who plan smarter with TripSetGo.
+            Create your first AI-powered itinerary in under a minute — no credit card needed.
           </p>
           <Link to="/auth/signup" className="btn btn-primary btn-lg">
             Get Started — It's Free <ArrowRight size={18} />

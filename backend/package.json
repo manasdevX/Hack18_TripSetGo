@@ -4,7 +4,7 @@
   "description": "TripSetGo API — Express 5 + MongoDB + Gemini AI",
   "main": "server.js",
   "scripts": {
-    "dev": "nodemon server.js",
+    "dev": "nodemon --quiet server.js",
     "start": "node server.js",
     "es:seed": "node src/scripts/esIndex.js"
   },
@@ -32,7 +32,7 @@
     "morgan": "^1.11.0",
     "multer": "^2.1.1",
     "node-cache": "^5.1.2",
-    "nodemailer": "^8.0.10",
+    "nodemailer": "^9.0.1",
     "razorpay": "^2.9.6",
     "socket.io": "^4.8.3",
     "streamifier": "^0.1.1",

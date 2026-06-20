@@ -4,6 +4,8 @@ const mongoose = require('mongoose')
 const messageSchema = new mongoose.Schema({
   conversationId: { type: mongoose.Schema.Types.ObjectId, ref: 'Conversation', required: true, index: true },
   senderId:       { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  // 'assistant' marks AI-copilot replies; defaults to 'user' so existing chat is unaffected.
+  role:           { type: String, enum: ['user', 'assistant'], default: 'user' },
   text:           { type: String, required: true },
   readBy:         [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }]
 }, { timestamps: true })

@@ -22,7 +22,71 @@ export const saveTrip = createAsyncThunk('planner/saveTrip', async ({ tripId, se
   }
 })
 
+// Regenerate a single day of the live plan. Sends the names already used on the
+// other days as `avoid` so the AI proposes fresh activities.
+export const regenerateDay = createAsyncThunk('planner/regenerateDay', async ({ dayIndex }, { getState, rejectWithValue }) => {
+  try {
+    const { plan, form } = getState().planner
+    if (!plan?.itinerary?.length) return rejectWithValue('No plan to regenerate')
+
+    const destination = plan.meta?.destination || form.destination
+    const totalDays   = plan.meta?.total_days || plan.itinerary.length
+    const budget      = Number(form.budget) || Number(plan.meta?.total_budget) || 0
+
+    const avoid = []
+    plan.itinerary.forEach((d, i) => {
+      if (i === dayIndex) return
+      ;['morning', 'afternoon', 'evening'].forEach((slot) => {
+        (d?.[slot]?.activities || []).forEach((a) => { if (a?.name) avoid.push(a.name) })
+      })
+    })
+
+    const res = await api.post('/api/v1/planner/regenerate-day', {
+      source:       form.source,
+      destination,
+      dayNumber:    dayIndex + 1,
+      totalDays,
+      budget,
+      numTravelers: Number(form.numTravelers) || 1,
+      groupType:    form.groupType || 'solo',
+      preferences:  form.preferences || [],
+      avoid:        avoid.slice(0, 60),
+    })
+    return { dayIndex, day: res.data.data.day, usedFallback: res.data.data.usedFallback }
+  } catch (err) {
+    return rejectWithValue(err.response?.data?.message || 'Failed to regenerate day')
+  }
+})
+
 // ── Slice ─────────────────────────────────────────────────────────────────
+
+// ── Drafts: named snapshots of the current selections (persisted on the trip) ──
+export const fetchDrafts = createAsyncThunk('planner/fetchDrafts', async (tripId, { rejectWithValue }) => {
+  try {
+    const res = await api.get(`/api/v1/trips/${tripId}/drafts`)
+    return res.data.data
+  } catch (err) {
+    return rejectWithValue(err.response?.data?.message || 'Failed to load drafts')
+  }
+})
+
+export const saveDraft = createAsyncThunk('planner/saveDraft', async ({ tripId, name, selections, liveBudget, lockedDays }, { rejectWithValue }) => {
+  try {
+    const res = await api.post(`/api/v1/trips/${tripId}/drafts`, { name, selections, liveBudget, lockedDays })
+    return res.data.data // { draft, drafts }
+  } catch (err) {
+    return rejectWithValue(err.response?.data?.message || 'Failed to save draft')
+  }
+})
+
+export const deleteDraft = createAsyncThunk('planner/deleteDraft', async ({ tripId, draftId }, { rejectWithValue }) => {
+  try {
+    const res = await api.delete(`/api/v1/trips/${tripId}/drafts/${draftId}`)
+    return res.data.data // { _id, drafts }
+  } catch (err) {
+    return rejectWithValue(err.response?.data?.message || 'Failed to delete draft')
+  }
+})
 
 const plannerSlice = createSlice({
   name: 'planner',
@@ -36,6 +100,7 @@ const plannerSlice = createSlice({
       budget: '',
       numTravelers: 1,
       groupType: 'solo',
+      pace: 'balanced',
       preferences: [],
     },
     // Generated plan from Gemini
@@ -55,6 +120,12 @@ const plannerSlice = createSlice({
     error: null,
     activeDay: 0,
     activeTab: 'transport', // transport | hotels | food | itinerary | suggestions
+    // Hero-planner state
+    lockedDays: [],          // day indexes the user has locked from regeneration
+    regeneratingDay: null,   // day index currently being regenerated (for spinners)
+    drafts: [],              // saved selection snapshots for the current trip
+    draftsLoading: false,
+    savingDraft: false,
   },
   reducers: {
     updateForm: (state, action) => {
@@ -63,7 +134,7 @@ const plannerSlice = createSlice({
     resetForm: (state) => {
       state.form = {
         source: '', destination: '', startDate: '', endDate: '',
-        budget: '', numTravelers: 1, groupType: 'solo', preferences: [],
+        budget: '', numTravelers: 1, groupType: 'solo', pace: 'balanced', preferences: [],
       }
     },
     setPlan: (state, action) => {
@@ -87,7 +158,28 @@ const plannerSlice = createSlice({
       state.selections = { transport: null, hotel: null, food: null, activities: [], favorites: [] }
       state.activeDay = 0
       state.activeTab = 'transport'
+      state.lockedDays = []
+      state.regeneratingDay = null
+      state.drafts = []
       state.error = null
+    },
+    loadDraft: (state, action) => {
+      const d = action.payload || {}
+      const s = d.selections || {}
+      state.selections = {
+        transport:  s.transport || null,
+        hotel:      s.hotel || null,
+        food:       s.food || null,
+        activities: Array.isArray(s.activities) ? s.activities : [],
+        favorites:  Array.isArray(s.favorites) ? s.favorites : [],
+      }
+      state.lockedDays = Array.isArray(d.lockedDays) ? d.lockedDays : []
+    },
+    toggleDayLock: (state, action) => {
+      const dayIndex = action.payload
+      const i = state.lockedDays.indexOf(dayIndex)
+      if (i >= 0) state.lockedDays.splice(i, 1)
+      else state.lockedDays.push(dayIndex)
     },
     selectTransport: (state, action) => {
       state.selections.transport = action.payload
@@ -140,13 +232,46 @@ const plannerSlice = createSlice({
       .addCase(saveTrip.pending,   (state) => { state.saving = true })
       .addCase(saveTrip.fulfilled, (state) => { state.saving = false })
       .addCase(saveTrip.rejected,  (state, { payload }) => { state.saving = false; state.error = payload })
+
+      .addCase(regenerateDay.pending, (state, { meta }) => {
+        state.regeneratingDay = meta.arg.dayIndex
+        state.error = null
+      })
+      .addCase(regenerateDay.fulfilled, (state, { payload }) => {
+        state.regeneratingDay = null
+        const slot = state.plan?.itinerary?.[payload.dayIndex]
+        if (slot) {
+          // Keep the original day number/date; swap in the new activities.
+          state.plan.itinerary[payload.dayIndex] = {
+            ...payload.day,
+            day:  slot.day ?? payload.day.day,
+            date: slot.date,
+          }
+          // Drop now-stale activity selections for this day so the live budget stays correct.
+          state.selections.activities = state.selections.activities.filter((a) => a.day !== payload.dayIndex)
+        }
+      })
+      .addCase(regenerateDay.rejected, (state, { payload }) => {
+        state.regeneratingDay = null
+        state.error = payload
+      })
+
+      .addCase(fetchDrafts.pending,   (state) => { state.draftsLoading = true })
+      .addCase(fetchDrafts.fulfilled, (state, { payload }) => { state.draftsLoading = false; state.drafts = payload || [] })
+      .addCase(fetchDrafts.rejected,  (state) => { state.draftsLoading = false })
+
+      .addCase(saveDraft.pending,   (state) => { state.savingDraft = true; state.error = null })
+      .addCase(saveDraft.fulfilled, (state, { payload }) => { state.savingDraft = false; state.drafts = payload.drafts || [] })
+      .addCase(saveDraft.rejected,  (state, { payload }) => { state.savingDraft = false; state.error = payload })
+
+      .addCase(deleteDraft.fulfilled, (state, { payload }) => { state.drafts = payload.drafts || [] })
   },
 })
 
 export const {
   updateForm, resetForm, setPlan, resetPlan,
   selectTransport, selectHotel, selectFood,
-  toggleActivity, toggleFavorite,
+  toggleActivity, toggleFavorite, toggleDayLock, loadDraft,
   setActiveDay, setActiveTab, clearError,
 } = plannerSlice.actions
 

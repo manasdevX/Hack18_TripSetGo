@@ -131,6 +131,20 @@ function generatePlan({ source, destination, startDate, endDate, budget, numTrav
     food_plans,
     itinerary,
     ai_suggestions,
+    weather: {
+      best_season: 'October to March',
+      temp_range: info.theme === 'mountains' ? '5-22°C' : '20-32°C',
+      note: `Expect ${info.theme === 'mountains' ? 'cool evenings — carry warm layers' : info.theme === 'beach' ? 'sun and humidity — stay hydrated' : 'pleasant but variable weather'} in ${destination}.`,
+    },
+    packing_list: [
+      'Comfortable walking shoes',
+      'Weather-appropriate clothing',
+      'Power bank + phone charger',
+      'Reusable water bottle',
+      'Valid ID / travel documents',
+      'Basic first-aid & medication',
+      ...(info.theme === 'beach' ? ['Sunscreen SPF 50+', 'Swimwear'] : info.theme === 'mountains' ? ['Warm jacket', 'Rain layer'] : ['Sunglasses', 'Light jacket']),
+    ],
     budget_breakdown_estimate: {
       transport:  transport_base,
       stay:       hotel_base,
@@ -245,4 +259,40 @@ function generateDetailedFallback({ destination, budget, days, interests = [] })
   }
 }
 
-module.exports = { generatePlan, generateDetailedFallback }
+/**
+ * Deterministic single-day regeneration for the Planner's "regenerate day"
+ * action. Returns one day in the same shape generateTripPlan() produces
+ * (morning/afternoon/evening → activities[]). Prefers places not already used
+ * (`avoid`) and rotates randomly so repeated regenerations differ.
+ */
+function regenerateDayFallback({ destination, dayNumber, budget, avoid = [] }) {
+  const info = getDestinationInfo(destination)
+  const budgetNum = Number(budget) || 0
+  const slots = ['morning', 'afternoon', 'evening']
+
+  const avoidSet = new Set((avoid || []).map((s) => String(s).toLowerCase()))
+  let pool = info.places.filter((p) => !avoidSet.has(p.toLowerCase()))
+  if (pool.length === 0) pool = info.places // everything was avoided — reuse the full list
+  // (with a small place list the pool cycles, but still avoids used places where possible)
+
+  const offset = Math.floor(Math.random() * pool.length)
+
+  const day = { day: Number(dayNumber), theme: `Day ${dayNumber} — ${destination} (refreshed)` }
+  slots.forEach((slot, sIdx) => {
+    const activities = [0, 1, 2].map((j) => {
+      const idx = offset + sIdx * 3 + j
+      const place = cyclicPick(pool, idx)
+      return {
+        name: place,
+        type: ['sightseeing', 'adventure', 'culture', 'food', 'leisure'][idx % 5],
+        duration: `${1 + (j % 3)}h`,
+        cost: Math.round(budgetNum * 0.004),
+        description: `Explore ${place} — a fresh pick for day ${dayNumber} in ${destination}.`,
+      }
+    })
+    day[slot] = { activities }
+  })
+  return day
+}
+
+module.exports = { generatePlan, generateDetailedFallback, regenerateDayFallback }

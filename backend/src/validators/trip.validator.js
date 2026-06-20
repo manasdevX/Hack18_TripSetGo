@@ -14,6 +14,7 @@ const createTripSchema = {
     budget:       Joi.number().positive().required(),
     numTravelers: Joi.number().integer().min(1).max(50).default(1),
     groupType:    Joi.string().valid('solo', 'couple', 'family', 'friends', 'business').default('solo'),
+    pace:         Joi.string().valid('relaxed', 'balanced', 'packed').default('balanced'),
     preferences:  Joi.array().items(Joi.string().trim()).max(10).default([]),
   })
 }
@@ -58,4 +59,18 @@ const itineraryDaySchema = {
   })
 }
 
-module.exports = { createTripSchema, saveItinerarySchema, itineraryDaySchema }
+/**
+ * Schema for saving a planner draft (a snapshot of the user's selections).
+ * `selections` is intentionally loose (Mixed in the model), so unknown keys
+ * are allowed through.
+ */
+const saveDraftSchema = {
+  body: Joi.object({
+    name:       Joi.string().trim().max(80).optional().allow(''),
+    selections: Joi.object().unknown(true).default({}),
+    liveBudget: Joi.number().min(0).default(0),
+    lockedDays: Joi.array().items(Joi.number().integer().min(0)).default([]),
+  })
+}
+
+module.exports = { createTripSchema, saveItinerarySchema, itineraryDaySchema, saveDraftSchema }

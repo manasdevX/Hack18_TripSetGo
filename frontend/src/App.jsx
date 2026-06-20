@@ -7,6 +7,7 @@ import { fetchMe } from '@/features/auth/authSlice'
 import { useSocket } from '@/hooks/useSocket'
 import { ToastContainer } from '@/components/common/Toast'
 import Loader from '@/components/common/Loader'
+import ErrorBoundary from '@/components/common/ErrorBoundary'
 import { GoogleOAuthProvider } from '@react-oauth/google'
 
 // Global toast state — lifted here so any component can trigger toasts
@@ -45,10 +46,10 @@ function AppContent() {
   if (booting) return <Loader fullScreen text="Loading TripSetGo..." />
 
   return (
-    <>
+    <ErrorBoundary>
       <RouterProvider router={router} />
       <ToastContainer toasts={toasts} onDismiss={dismissToast} />
-    </>
+    </ErrorBoundary>
   )
 }
 

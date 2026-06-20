@@ -18,12 +18,12 @@ export function MapPopup({ map, entity, onClose }) {
 
     const html = `
       <div style="min-width:180px; font-family: 'Inter', sans-serif;">
-        <div style="font-size:11px; color:#6366f1; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:4px;">
+        <div style="font-size:11px; color:#a5b4fc; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:4px;">
           ${STAR_MAP[_entityType] || _entityType}
         </div>
-        <div style="font-size:15px; font-weight:700; color:#1e293b; margin-bottom:4px;">${name}</div>
-        <div style="font-size:13px; color:#64748b; margin-bottom:6px;">${city || ''}</div>
-        ${averageRating ? `<div style="font-size:13px; color:#f59e0b; font-weight:600;">★ ${averageRating.toFixed(1)}</div>` : ''}
+        <div style="font-size:15px; font-weight:700; color:#ffffff; margin-bottom:4px;">${name}</div>
+        <div style="font-size:13px; color:#94a3b8; margin-bottom:6px;">${city || ''}</div>
+        ${averageRating ? `<div style="font-size:13px; color:#fbbf24; font-weight:600;">★ ${averageRating.toFixed(1)}</div>` : ''}
       </div>
     `
 

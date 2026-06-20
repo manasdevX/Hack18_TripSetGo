@@ -4,10 +4,10 @@ const logger   = require('../utils/logger')
 
 const connectDB = async () => {
   try {
-    const conn = await mongoose.connect(process.env.MONGODB_URI, {
+    await mongoose.connect(process.env.MONGODB_URI, {
       dbName: 'tripsetgo',
     })
-    logger.info(`✅ MongoDB connected: ${conn.connection.host}`)
+    logger.info('✅ Database connected')
   } catch (err) {
     logger.error(`❌ MongoDB connection error: ${err.message}`)
     process.exit(1)

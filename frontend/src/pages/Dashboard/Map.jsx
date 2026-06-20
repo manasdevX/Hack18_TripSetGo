@@ -82,14 +82,10 @@ export default function MapPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800">Explore Map</h1>
-          <p className="text-sm text-slate-500">Discover hotels, restaurants and attractions near you</p>
+          <h1 style={{ fontSize: '1.875rem', fontWeight: 800 }}>Explore <span className="gradient-text">Map</span></h1>
+          <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.9rem' }}>Discover hotels, restaurants and attractions near you</p>
         </div>
-        <button
-          id="btn-locate-me"
-          onClick={requestLocation}
-          className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors"
-        >
+        <button id="btn-locate-me" onClick={requestLocation} className="btn btn-primary btn-sm">
           📍 Locate Me
         </button>
       </div>
@@ -100,44 +96,53 @@ export default function MapPage() {
         <motion.aside
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
-          className="w-56 flex-shrink-0 bg-white rounded-xl border border-slate-200 p-4 shadow-sm flex flex-col gap-4"
+          className="glass"
+          style={{ width: 224, flexShrink: 0, padding: '1.25rem', borderRadius: 'var(--radius-lg)', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}
         >
-          <h2 className="text-sm font-semibold text-slate-700 uppercase tracking-wide">Layers</h2>
+          <h2 style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--color-text-muted)' }}>Layers</h2>
 
           {[
-            { key: 'Hotel',      emoji: '🏨', label: 'Hotels',      color: 'bg-indigo-500' },
-            { key: 'Restaurant', emoji: '🍽️', label: 'Restaurants', color: 'bg-amber-500'  },
-            { key: 'Attraction', emoji: '🗺️', label: 'Attractions', color: 'bg-emerald-500'},
-          ].map(({ key, emoji, label, color }) => (
-            <button
-              key={key}
-              id={`toggle-${key.toLowerCase()}`}
-              onClick={() => toggleLayer(key)}
-              className={`flex items-center gap-3 p-2 rounded-lg border-2 transition-all text-sm font-medium ${
-                activeLayers[key]
-                  ? `border-transparent ${color} text-white shadow-md`
-                  : 'border-slate-200 text-slate-500 bg-white'
-              }`}
-            >
-              <span>{emoji}</span> {label}
-            </button>
-          ))}
+            { key: 'Hotel',      emoji: '🏨', label: 'Hotels',      color: '#818cf8' },
+            { key: 'Restaurant', emoji: '🍽️', label: 'Restaurants', color: '#fbbf24' },
+            { key: 'Attraction', emoji: '🗺️', label: 'Attractions', color: '#34d399' },
+          ].map(({ key, emoji, label, color }) => {
+            const active = activeLayers[key]
+            return (
+              <button
+                key={key}
+                id={`toggle-${key.toLowerCase()}`}
+                onClick={() => toggleLayer(key)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '0.75rem',
+                  padding: '0.5rem 0.75rem', borderRadius: 'var(--radius-md)',
+                  fontSize: '0.875rem', fontWeight: 600, cursor: 'pointer',
+                  border: active ? '1px solid transparent' : '1px solid var(--color-border)',
+                  background: active ? color : 'transparent',
+                  color: active ? '#0b1020' : 'var(--color-text-secondary)',
+                  transition: 'all var(--transition-fast)',
+                }}
+              >
+                <span>{emoji}</span> {label}
+              </button>
+            )
+          })}
 
-          <hr className="border-slate-100" />
+          <div className="divider" style={{ margin: 0 }} />
 
           <div>
-            <label className="text-xs text-slate-500 font-medium">Radius: {radius} km</label>
+            <label style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', fontWeight: 500 }}>Radius: {radius} km</label>
             <input
               id="range-radius"
               type="range" min="5" max="100" step="5"
               value={radius}
               onChange={e => setRadius(Number(e.target.value))}
-              className="w-full mt-1 accent-indigo-600"
+              className="w-full mt-1"
+              style={{ accentColor: 'var(--color-accent-primary)' }}
             />
           </div>
 
-          <hr className="border-slate-100" />
-          <div className="text-xs text-slate-400">
+          <div className="divider" style={{ margin: 0 }} />
+          <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', lineHeight: 1.8 }}>
             {loading ? '⏳ Loading...' : (
               <>
                 {entities.hotels?.length || 0} Hotels<br />
@@ -149,8 +154,8 @@ export default function MapPage() {
         </motion.aside>
 
         {/* Map — use `map` (state) not mapRef.current, safe during render */}
-        <div className="flex-1 min-h-0">
-          <MapContainer ref={mapContainerRef} className="h-full shadow-lg border border-slate-200">
+        <div className="flex-1 min-h-0" style={{ borderRadius: 'var(--radius-lg)', overflow: 'hidden', border: '1px solid var(--color-border)' }}>
+          <MapContainer ref={mapContainerRef} className="h-full">
 
             {/* Entity markers — only rendered when map state is set */}
             {map && mapLoaded && allMarkers.map((entity) => {

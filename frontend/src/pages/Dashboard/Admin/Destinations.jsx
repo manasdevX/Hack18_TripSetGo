@@ -118,7 +118,7 @@ export default function AdminDestinations() {
           <h1 style={{ fontSize: '1.875rem', fontWeight: 800, marginBottom: '0.25rem' }}>Manage <span className="gradient-text">Destinations</span></h1>
           <p style={{ color: 'var(--color-text-secondary)' }}>Add, edit, or remove Hotels, Restaurants, and Attractions</p>
         </div>
-        <button className="btn-primary" onClick={handleOpenAddModal} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <button className="btn btn-primary" onClick={handleOpenAddModal} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <Plus size={16} /> Add Destination
         </button>
       </div>
@@ -223,13 +223,13 @@ export default function AdminDestinations() {
       {/* Pagination */}
       {destinationsPagination && destinationsPagination.totalPages > 1 && (
         <div style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem', marginTop: '1rem' }}>
-          <button className="btn-secondary" disabled={page === 1} onClick={() => setPage(page - 1)}>
+          <button className="btn btn-secondary" disabled={page === 1} onClick={() => setPage(page - 1)}>
             Previous
           </button>
           <span style={{ display: 'flex', alignItems: 'center', padding: '0 1rem', fontSize: '0.875rem', fontWeight: 600 }}>
             Page {page} of {destinationsPagination.totalPages}
           </span>
-          <button className="btn-secondary" disabled={page === destinationsPagination.totalPages} onClick={() => setPage(page + 1)}>
+          <button className="btn btn-secondary" disabled={page === destinationsPagination.totalPages} onClick={() => setPage(page + 1)}>
             Next
           </button>
         </div>
@@ -445,10 +445,10 @@ export default function AdminDestinations() {
 
               {/* Action Buttons */}
               <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
-                <button type="submit" className="btn-primary" style={{ flex: 1 }}>
+                <button type="submit" className="btn btn-primary" style={{ flex: 1 }}>
                   {editingId ? 'Save Changes' : 'Create'}
                 </button>
-                <button type="button" className="btn-secondary" style={{ flex: 1 }} onClick={() => setIsModalOpen(false)}>
+                <button type="button" className="btn btn-secondary" style={{ flex: 1 }} onClick={() => setIsModalOpen(false)}>
                   Cancel
                 </button>
               </div>

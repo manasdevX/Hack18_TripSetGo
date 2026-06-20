@@ -7,6 +7,7 @@ import discoverReducer     from '@/features/discover/discoverSlice'
 import notificationsReducer from '@/features/notifications/notificationsSlice'
 import subscriptionReducer from '@/features/subscription/subscriptionSlice'
 import adminReducer        from '@/features/admin/adminSlice'
+import expensesReducer     from '@/features/expenses/expensesSlice'
 
 const store = configureStore({
   reducer: {
@@ -17,6 +18,7 @@ const store = configureStore({
     notifications: notificationsReducer,
     subscription:  subscriptionReducer,
     admin:         adminReducer,
+    expenses:      expensesReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

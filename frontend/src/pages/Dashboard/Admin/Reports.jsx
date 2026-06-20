@@ -90,13 +90,13 @@ export default function AdminReports() {
       {/* Pagination */}
       {reportsPagination && reportsPagination.totalPages > 1 && (
         <div style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem', marginTop: '1rem' }}>
-          <button className="btn-secondary" disabled={page === 1} onClick={() => setPage(page - 1)}>
+          <button className="btn btn-secondary" disabled={page === 1} onClick={() => setPage(page - 1)}>
             Previous
           </button>
           <span style={{ display: 'flex', alignItems: 'center', padding: '0 1rem', fontSize: '0.875rem', fontWeight: 600 }}>
             Page {page} of {reportsPagination.totalPages}
           </span>
-          <button className="btn-secondary" disabled={page === reportsPagination.totalPages} onClick={() => setPage(page + 1)}>
+          <button className="btn btn-secondary" disabled={page === reportsPagination.totalPages} onClick={() => setPage(page + 1)}>
             Next
           </button>
         </div>

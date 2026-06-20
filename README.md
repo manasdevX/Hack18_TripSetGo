@@ -24,19 +24,18 @@ TripSetGo/
 │       ├── app/       # Redux store
 │       ├── components/  common/, layout/, map/
 │       ├── features/  # Redux slices — auth, trips, planner, discover, ...
-│       ├── hooks/     # useAuth, useSocket, useMapbox, useDebounce
-│       ├── pages/     # Auth/, Dashboard/, Home/, TripDetail/
+│       ├── hooks/     # useSocket, useMapbox, useDebounce, useTripCollaboration
+│       ├── pages/     # Auth/, Dashboard/ (incl. Copilot), Home/, TripDetail/
 │       ├── router/    # React Router v7 routes + guards
 │       └── services/  # Axios instance with JWT refresh interceptor
 └── backend/           # Express 5 API (runs on :5000)
     └── src/
-        ├── agents/    # Multi-agent AI (Orchestrator + 7 agents)
-        ├── config/    # MongoDB connection
+        ├── config/    # MongoDB, Redis (optional), Elasticsearch (optional)
         ├── controllers/
-        ├── middleware/ # auth, validate, errorHandler, cache
+        ├── middleware/ # auth, validate, errorHandler, cache, csrf
         ├── models/    # 14 Mongoose models
         ├── planning/  # Deterministic fallback planner
-        ├── routes/    # 10 route groups
+        ├── routes/    # 14 route groups
         ├── services/  # Gemini AI, Cloudinary, Nodemailer
         ├── utils/     # jwt, response, logger, asyncHandler
         └── validators/ # Joi schemas
@@ -120,23 +119,27 @@ npm run build        # builds frontend to frontend/dist/
 | GET | `/api/v1/trips/my-trips` | Paginated user trips |
 | GET | `/api/v1/trips/:id` | Public trip detail (optionalAuth) |
 | POST | `/api/v1/trips/:id/share` | Make public + return share URL |
-| POST | `/api/v1/trips/:id/like` | Toggle like |
-| POST | `/api/v1/trips/:id/comment` | Add persisted comment |
 | POST | `/api/v1/trips/:id/clone` | Clone public trip |
+| GET/POST/DELETE | `/api/v1/trips/:id/drafts` | Save / list / delete planner drafts |
 | GET | `/api/v1/discover` | Public trip feed |
 | POST | `/api/v1/planner/generate` | Detailed AI plan (standalone) |
+| POST | `/api/v1/planner/regenerate-day` | Regenerate one itinerary day |
+| POST | `/api/v1/copilot/chat` | Streaming (SSE) AI copilot reply |
+| GET | `/api/v1/copilot/conversations` | List copilot conversations |
+| GET/POST/DELETE | `/api/v1/groups` | Expense groups + members + expenses |
 | GET | `/api/v1/health` | Health check |
 
 ## Key Features
 
-- **AI Trip Planning** — Gemini 2.0 Flash generates transport options, hotel tiers, food plans, and day-by-day itineraries. Falls back to a deterministic engine when Gemini is unavailable.
+- **AI Trip Planning** — Gemini 2.0 Flash generates transport options, hotel tiers, food plans, day-by-day itineraries, weather notes, and a packing list. Inputs include pace (relaxed/balanced/packed) and interests. Falls back to a deterministic engine when Gemini is unavailable.
+- **Hero Planner controls** — regenerate any single day with AI (avoids repeating other days), lock days to preserve them, and save/compare multiple selection drafts side-by-side.
+- **AI Copilot** — a context-aware travel assistant with streaming (SSE) replies, grounded in the user's current trip, budget, and recent destinations; conversations are persisted.
 - **Live Budget Tracker** — Redux selector recomputes the live spend as you select transport, hotel, food, and activities.
 - **Social Discovery** — Public trip feed with like, save, clone, and share-link features.
-- **Interactive Map** — Mapbox GL renders trip routes with source/destination markers.
-- **Multi-Agent System** — Orchestrator delegates to 7 specialised agents (Flight, Hotel, Weather, Restaurant, Attraction, Itinerary, Budget).
-- **Real-time Notifications** — Socket.io broadcasts like/comment notifications to the trip owner.
+- **Interactive Map** — Mapbox GL renders trip routes and nearby hotels/restaurants/attractions, themed to match the app.
+- **Real-time Notifications** — Socket.io broadcasts like/comment/collaboration notifications to the trip owner.
 - **Subscriptions** — Razorpay-backed Free/Pro tiers with daily search limits.
-- **Group Expenses** — Splitwise-style expense tracking per trip.
+- **Group Expenses** — Splitwise-style expense groups with per-person splits and minimal-transaction settlements.
 
 ## Security Hardening
 

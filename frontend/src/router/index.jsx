@@ -24,6 +24,7 @@ const Subscription = lazy(() => import('@/pages/Dashboard/Subscription'))
 const Notifications = lazy(() => import('@/pages/Dashboard/Notifications'))
 const Profile      = lazy(() => import('@/pages/Dashboard/Profile'))
 const MapPage      = lazy(() => import('@/pages/Dashboard/Map'))
+const Copilot      = lazy(() => import('@/pages/Dashboard/Copilot'))
 const TripDetail   = lazy(() => import('@/pages/TripDetail'))
 const NotFound     = lazy(() => import('@/pages/NotFound'))
 
@@ -71,6 +72,7 @@ export const router = createBrowserRouter([
     children: [
       { index: true,                 element: <Wrap element={<Dashboard />} /> },
       { path: 'planner',             element: <Wrap element={<Planner />} /> },
+      { path: 'copilot',             element: <Wrap element={<Copilot />} /> },
       { path: 'discover',            element: <Wrap element={<Discover />} /> },
       { path: 'trips',               element: <Wrap element={<MyTrips />} /> },
       { path: 'expenses',            element: <Wrap element={<Expenses />} /> },

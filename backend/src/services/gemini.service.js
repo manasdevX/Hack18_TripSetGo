@@ -4,14 +4,14 @@ const logger = require('../utils/logger')
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
 
-const MODEL = process.env.GEMINI_MODEL || 'gemini-2.0-flash'
+const MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash'
 
 /**
  * Generate a structured travel plan using Gemini AI.
  * Returns a JSON object matching the TripSetGo plan schema.
  * Falls back to null on failure — caller should use fallbackPlanner.
  */
-async function generateTripPlan({ source, destination, startDate, endDate, budget, numTravelers, groupType, preferences = [] }) {
+async function generateTripPlan({ source, destination, startDate, endDate, budget, numTravelers, groupType, preferences = [], pace = 'balanced' }) {
   const model = genAI.getGenerativeModel({ model: MODEL })
 
   const days = Math.ceil((new Date(endDate) - new Date(startDate)) / (1000 * 60 * 60 * 24)) || 1
@@ -28,6 +28,7 @@ Trip Details:
 - Total Budget: ₹${budget} INR
 - Travelers: ${numTravelers} (${groupType})
 - Preferences: ${preferences.join(', ') || 'general travel'}
+- Pace: ${pace} (relaxed = fewer, unhurried activities per day; packed = more, back-to-back)
 
 Return ONLY valid JSON (no markdown, no explanation) with this exact schema:
 {
@@ -58,6 +59,8 @@ Return ONLY valid JSON (no markdown, no explanation) with this exact schema:
   "ai_suggestions": [
     {"type": "<tip|warning|upgrade|adventure>", "icon": "<emoji>", "title": "<title>", "description": "<desc>"}
   ],
+  "weather": {"best_season": "<season>", "temp_range": "<e.g. 22-31°C>", "note": "<1-line weather tip for the travel dates>"},
+  "packing_list": ["<item1>", "<item2>", "<item3>", "<item4>", "<item5>", "<item6>"],
   "budget_breakdown_estimate": {
     "transport": <number>, "stay": <number>, "food": <number>, "activities": <number>, "misc": <number>
   },
@@ -66,7 +69,8 @@ Return ONLY valid JSON (no markdown, no explanation) with this exact schema:
 
 Rules:
 - Provide 3-5 transport options, 4-5 hotel options, 3 food plans
-- Each day/slot should have exactly 3 activities
+- Each day/slot should have exactly 3 activities (scale density to the requested pace)
+- packing_list: 6-8 concise, destination- and weather-appropriate items
 - All costs must be realistic for India in INR
 - Budget breakdown must sum to approximately ₹${budget}
 - Output ONLY the JSON object, nothing else
@@ -241,4 +245,125 @@ Rules:
   }
 }
 
-module.exports = { generateTripPlan, generateDetailedPlan }
+/**
+ * Regenerate a SINGLE day of an existing itinerary, keeping the same schema
+ * the Planner UI renders (morning/afternoon/evening → activities[]).
+ * Input: { source, destination, dayNumber, totalDays, budget, numTravelers,
+ *          groupType, preferences, avoid }
+ *   - `avoid` is a list of place/activity names already used on other days,
+ *     so the model doesn't repeat them.
+ * Returns a single day object, or null on failure (caller uses the fallback).
+ */
+async function regenerateItineraryDay({
+  source, destination, dayNumber, totalDays,
+  budget, numTravelers = 1, groupType = 'solo', preferences = [], avoid = [],
+}) {
+  const model = genAI.getGenerativeModel({ model: MODEL })
+
+  const perDayBudget = Math.round(Number(budget) / Math.max(Number(totalDays) || 1, 1))
+
+  const prompt = `
+You are an expert travel planner AI. Regenerate ONLY day ${dayNumber} of a ${totalDays}-day trip to ${destination}${source ? ` (travelling from ${source})` : ''}.
+Travelers: ${numTravelers} (${groupType}). Spend roughly ₹${perDayBudget} INR on this day's activities.
+Preferences: ${preferences.join(', ') || 'general travel'}.
+${avoid.length ? `Do NOT repeat any of these places already planned on other days: ${avoid.slice(0, 40).join(', ')}.` : ''}
+
+Return ONLY valid JSON (no markdown, no explanation) with EXACTLY this schema:
+{
+  "day": ${dayNumber},
+  "morning":   {"activities": [{"name": "<act>", "type": "<sightseeing|adventure|food|culture|leisure>", "duration": "<Xh>", "cost": <number>, "description": "<one-line desc>"}]},
+  "afternoon": {"activities": [{"name": "<act>", "type": "<...>", "duration": "<Xh>", "cost": <number>, "description": "<...>"}]},
+  "evening":   {"activities": [{"name": "<act>", "type": "<...>", "duration": "<Xh>", "cost": <number>, "description": "<...>"}]}
+}
+
+Rules:
+- Each slot (morning, afternoon, evening) must contain exactly 3 distinct activities.
+- Suggest fresh, varied activities that differ from typical day-1 picks.
+- All costs must be realistic for India in INR.
+- Output ONLY the JSON object, nothing else.
+`
+
+  let attempt = 0
+  const maxRetries = 3
+  const delays = [800, 1600, 3200]
+
+  while (attempt < maxRetries) {
+    try {
+      const result = await model.generateContent(prompt)
+      const text   = result.response.text().trim()
+
+      const jsonMatch = text.match(/\{[\s\S]*\}/)
+      if (!jsonMatch) throw new Error('No JSON object found in response')
+
+      const day = JSON.parse(jsonMatch[0])
+      // Basic shape guard — every slot must carry an activities array.
+      const slotsOk = ['morning', 'afternoon', 'evening'].every(
+        (s) => day[s] && Array.isArray(day[s].activities) && day[s].activities.length > 0
+      )
+      if (!slotsOk) throw new Error('Regenerated day is missing slot activities')
+
+      day.day = Number(dayNumber)
+      logger.info(`✅ Gemini regenerated day ${dayNumber} for ${destination} (attempt ${attempt + 1})`)
+      return day
+    } catch (err) {
+      attempt++
+      if (attempt < maxRetries) {
+        logger.warn(`⚠️ Gemini regenerate-day attempt ${attempt} failed: ${err.message} — retrying in ${delays[attempt - 1]}ms`)
+        await new Promise((r) => setTimeout(r, delays[attempt - 1]))
+      } else {
+        logger.error(`❌ Gemini regenerate-day failed after ${maxRetries} attempts: ${err.message}`)
+        return null
+      }
+    }
+  }
+}
+
+// ── Travel Copilot (conversational) ─────────────────────────────────────────
+// Grounded chat: a system instruction carries trip/user context, `history` is
+// the running conversation ([{ role: 'user'|'assistant', text }]).
+
+function buildCopilotModel(system) {
+  return genAI.getGenerativeModel({ model: MODEL, systemInstruction: system })
+}
+
+function toGeminiContents(history) {
+  return (history || []).map((m) => ({
+    role: m.role === 'assistant' ? 'model' : 'user',
+    parts: [{ text: String(m.text || '') }],
+  }))
+}
+
+// Async generator yielding reply text chunks as they arrive.
+async function* copilotReplyStream({ system, history }) {
+  const model = buildCopilotModel(system)
+  const result = await model.generateContentStream({ contents: toGeminiContents(history) })
+  for await (const chunk of result.stream) {
+    const t = typeof chunk.text === 'function' ? chunk.text() : ''
+    if (t) yield t
+  }
+}
+
+// Non-streaming fallback — returns the full reply text (with a short retry).
+async function copilotReply({ system, history }) {
+  const model = buildCopilotModel(system)
+  let attempt = 0
+  const delays = [800, 1600]
+  while (true) {
+    try {
+      const result = await model.generateContent({ contents: toGeminiContents(history) })
+      return result.response.text()
+    } catch (err) {
+      if (attempt >= delays.length) throw err
+      await new Promise((r) => setTimeout(r, delays[attempt]))
+      attempt++
+    }
+  }
+}
+
+module.exports = {
+  generateTripPlan,
+  generateDetailedPlan,
+  regenerateItineraryDay,
+  copilotReplyStream,
+  copilotReply,
+}

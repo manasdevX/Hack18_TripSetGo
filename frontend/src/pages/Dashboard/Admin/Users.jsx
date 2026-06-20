@@ -60,7 +60,7 @@ export default function AdminUsers() {
           <h1 style={{ fontSize: '1.875rem', fontWeight: 800, marginBottom: '0.25rem' }}>Manage <span className="gradient-text">Users</span></h1>
           <p style={{ color: 'var(--color-text-secondary)' }}>Review, update roles, toggle account statuses, and soft-delete users</p>
         </div>
-        <button className="btn-secondary" onClick={handleExportCSV} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <button className="btn btn-secondary" onClick={handleExportCSV} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <Download size={16} /> Export CSV
         </button>
       </div>
@@ -80,6 +80,7 @@ export default function AdminUsers() {
           <Search size={18} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-muted)' }} />
           <input
             type="text"
+            className="input"
             placeholder="Search by name or email..."
             value={searchTerm}
             onChange={(e) => { setSearchTerm(e.target.value); setPage(1) }}
@@ -89,6 +90,7 @@ export default function AdminUsers() {
 
         {/* Role Filter */}
         <select
+          className="input"
           value={roleFilter}
           onChange={(e) => { setRoleFilter(e.target.value); setPage(1) }}
           style={{ width: 'auto' }}
@@ -100,6 +102,7 @@ export default function AdminUsers() {
 
         {/* Status Filter */}
         <select
+          className="input"
           value={statusFilter}
           onChange={(e) => { setStatusFilter(e.target.value); setPage(1) }}
           style={{ width: 'auto' }}
@@ -210,7 +213,7 @@ export default function AdminUsers() {
       {usersPagination && usersPagination.totalPages > 1 && (
         <div style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem', marginTop: '1rem' }}>
           <button
-            className="btn-secondary"
+            className="btn btn-secondary"
             disabled={page === 1}
             onClick={() => setPage(page - 1)}
           >
@@ -220,7 +223,7 @@ export default function AdminUsers() {
             Page {page} of {usersPagination.totalPages}
           </span>
           <button
-            className="btn-secondary"
+            className="btn btn-secondary"
             disabled={page === usersPagination.totalPages}
             onClick={() => setPage(page + 1)}
           >

@@ -4,7 +4,7 @@ const rateLimit = require('express-rate-limit')
 const tripCtrl  = require('../controllers/trip.controller')
 const { authenticate, optionalAuth } = require('../middleware/auth.middleware')
 const validate  = require('../middleware/validate.middleware')
-const { createTripSchema, saveItinerarySchema, itineraryDaySchema } = require('../validators/trip.validator')
+const { createTripSchema, saveItinerarySchema, itineraryDaySchema, saveDraftSchema } = require('../validators/trip.validator')
 
 const tripCreationLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
@@ -40,6 +40,11 @@ router.post('/:id/clone',     authenticate, socialLimiter, tripCtrl.cloneTrip)
 
 // Share trip (generate public URL)
 router.post('/:id/share',     authenticate, tripCtrl.shareTrip)
+
+// Planner drafts (named snapshots of selections)
+router.get('/:id/drafts',             authenticate, tripCtrl.getDrafts)
+router.post('/:id/drafts',            authenticate, validate(saveDraftSchema), tripCtrl.saveDraft)
+router.delete('/:id/drafts/:draftId', authenticate, tripCtrl.deleteDraft)
 
 // Itinerary management
 router.put('/:id/itinerary',            authenticate, validate(saveItinerarySchema), tripCtrl.saveItinerary)

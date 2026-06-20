@@ -62,6 +62,7 @@ export default function AdminReviews() {
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-text-secondary)' }}>Filter by rating:</span>
           <select
+            className="input"
             value={minRating}
             onChange={(e) => { setMinRating(Number(e.target.value)); setPage(1) }}
             style={{ width: 'auto', padding: '0.25rem 0.5rem' }}
@@ -128,7 +129,7 @@ export default function AdminReviews() {
                       </span>
                     )}
                     <button
-                      className="btn-danger"
+                      className="btn btn-danger"
                       onClick={() => handleDeleteReview(review._id)}
                       style={{ padding: '0.5rem', borderRadius: 'var(--radius-md)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                     >
@@ -161,7 +162,7 @@ export default function AdminReviews() {
       {reviewsPagination && reviewsPagination.totalPages > 1 && (
         <div style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem', marginTop: '1rem' }}>
           <button
-            className="btn-secondary"
+            className="btn btn-secondary"
             disabled={page === 1}
             onClick={() => setPage(page - 1)}
           >
@@ -171,7 +172,7 @@ export default function AdminReviews() {
             Page {page} of {reviewsPagination.totalPages}
           </span>
           <button
-            className="btn-secondary"
+            className="btn btn-secondary"
             disabled={page === reviewsPagination.totalPages}
             onClick={() => setPage(page + 1)}
           >

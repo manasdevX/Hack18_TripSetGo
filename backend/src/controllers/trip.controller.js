@@ -18,7 +18,7 @@ const { withTransaction } = require('../utils/transaction')
 // ── POST /api/v1/trips — Generate AI trip plan ───────────────────────────
 
 exports.createTrip = asyncHandler(async (req, res) => {
-  const { source, destination, startDate, endDate, budget, numTravelers, groupType, preferences } = req.body
+  const { source, destination, startDate, endDate, budget, numTravelers, groupType, pace, preferences } = req.body
   if (!source || !destination || !startDate || !endDate || !budget) {
     return badRequest(res, 'source, destination, startDate, endDate and budget are required')
   }
@@ -29,7 +29,7 @@ exports.createTrip = asyncHandler(async (req, res) => {
     return res.status(429).json({ success: false, message: `Daily limit reached (${subscription.getSearchLimit()} plans/day). Upgrade to Pro for unlimited plans.` })
   }
 
-  const tripData = { source, destination, startDate, endDate, budget: Number(budget), numTravelers: Number(numTravelers) || 1, groupType: groupType || 'solo', preferences: preferences || [] }
+  const tripData = { source, destination, startDate, endDate, budget: Number(budget), numTravelers: Number(numTravelers) || 1, groupType: groupType || 'solo', pace: pace || 'balanced', preferences: preferences || [] }
 
   // Try Gemini first, fallback to deterministic engine
   let planData = await generateTripPlan(tripData)
@@ -347,6 +347,64 @@ exports.saveItinerary = asyncHandler(async (req, res) => {
   }).catch((err) => logger.warn(`[Notif] itinerary_updated dispatch error: ${err.message}`))
 
   success(res, trip, 'Itinerary saved successfully')
+})
+
+// ── Planner drafts ──────────────────────────────────────────────────────
+const MAX_DRAFTS = 12
+
+// GET /api/v1/trips/:id/drafts — list saved drafts (owner + collaborators)
+exports.getDrafts = asyncHandler(async (req, res) => {
+  const trip = await Trip.findById(req.params.id).select('drafts userId collaborators')
+  if (!trip) return notFound(res, 'Trip not found')
+
+  const isOwner  = trip.userId.equals(req.user._id)
+  const isCollab = trip.collaborators.some(c => c.userId.equals(req.user._id) && c.status === 'accepted')
+  if (!isOwner && !isCollab) return forbidden(res, 'You do not have access to this trip')
+
+  success(res, trip.drafts, 'Drafts fetched')
+})
+
+// POST /api/v1/trips/:id/drafts — save the current selections as a draft
+exports.saveDraft = asyncHandler(async (req, res) => {
+  const trip = await Trip.findById(req.params.id)
+  if (!trip) return notFound(res, 'Trip not found')
+
+  const isOwner  = trip.userId.equals(req.user._id)
+  const isEditor = trip.collaborators.some(c => c.userId.equals(req.user._id) && c.status === 'accepted' && c.role === 'editor')
+  if (!isOwner && !isEditor) return forbidden(res, 'You do not have permission to edit this trip')
+
+  if (trip.drafts.length >= MAX_DRAFTS) {
+    return badRequest(res, `You can keep up to ${MAX_DRAFTS} drafts per trip. Delete one to save a new draft.`)
+  }
+
+  const { name, selections, liveBudget, lockedDays } = req.body
+  trip.drafts.push({
+    name:       (name && name.trim()) || `Draft ${trip.drafts.length + 1}`,
+    selections: selections || {},
+    liveBudget: Number(liveBudget) || 0,
+    lockedDays: Array.isArray(lockedDays) ? lockedDays : [],
+  })
+  await trip.save()
+
+  const draft = trip.drafts[trip.drafts.length - 1]
+  created(res, { draft, drafts: trip.drafts }, 'Draft saved')
+})
+
+// DELETE /api/v1/trips/:id/drafts/:draftId — remove a draft
+exports.deleteDraft = asyncHandler(async (req, res) => {
+  const trip = await Trip.findById(req.params.id)
+  if (!trip) return notFound(res, 'Trip not found')
+
+  const isOwner  = trip.userId.equals(req.user._id)
+  const isEditor = trip.collaborators.some(c => c.userId.equals(req.user._id) && c.status === 'accepted' && c.role === 'editor')
+  if (!isOwner && !isEditor) return forbidden(res, 'You do not have permission to edit this trip')
+
+  const before = trip.drafts.length
+  trip.drafts = trip.drafts.filter(d => !d._id.equals(req.params.draftId))
+  if (trip.drafts.length === before) return notFound(res, 'Draft not found')
+
+  await trip.save()
+  success(res, { _id: req.params.draftId, drafts: trip.drafts }, 'Draft deleted')
 })
 
 // ── POST /api/v1/trips/:id/itinerary/day — Add a day to itinerary ───────

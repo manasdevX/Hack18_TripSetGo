@@ -1,5 +1,5 @@
 // server/src/controllers/planner.controller.js
-const { generateDetailedPlan }  = require('../services/gemini.service')
+const { generateDetailedPlan, regenerateItineraryDay } = require('../services/gemini.service')
 const fallback                   = require('../planning/fallbackPlanner')
 const Subscription               = require('../models/Subscription.model')
 const cacheService               = require('../services/cache.service')
@@ -102,4 +102,39 @@ exports.generatePlan = asyncHandler(async (req, res) => {
   }
 
   created(res, { plan, usedFallback, destination: input.destination, days: input.days, budget: input.budget }, 'Travel plan generated successfully')
+})
+
+/**
+ * POST /api/v1/planner/regenerate-day
+ * Regenerate a single day of an itinerary during live planning.
+ *
+ * Body: { source?, destination, dayNumber, totalDays, budget,
+ *         numTravelers?, groupType?, preferences?, avoid? }
+ *
+ * Returns: { day, usedFallback } where `day` matches the itinerary day schema
+ *          (morning/afternoon/evening → activities[]).
+ *
+ * Note: regeneration is a refinement of an existing plan, so it is intentionally
+ * NOT counted against the daily plan-generation limit.
+ */
+exports.regenerateDay = asyncHandler(async (req, res) => {
+  const {
+    source, destination, dayNumber, totalDays, budget,
+    numTravelers, groupType, preferences, avoid,
+  } = req.body
+
+  let day = await regenerateItineraryDay({
+    source, destination, dayNumber, totalDays, budget,
+    numTravelers, groupType, preferences, avoid,
+  })
+  let usedFallback = false
+
+  if (!day) {
+    logger.warn(`⚠️ Gemini regenerate-day failed — using fallback for ${destination} day ${dayNumber}`)
+    day = fallback.regenerateDayFallback({ destination, dayNumber, budget, avoid })
+    usedFallback = true
+  }
+
+  logger.info(`✅ Planner: regenerated day ${dayNumber} for "${destination}" (${usedFallback ? 'fallback' : 'Gemini'})`)
+  created(res, { day, usedFallback }, 'Day regenerated successfully')
 })

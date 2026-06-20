@@ -76,6 +76,7 @@ export default function VerifyOTP() {
                 onKeyDown={e => handleKeyDown(i, e)}
                 style={{
                   width: 48, height: 56,
+                  padding: 0,
                   textAlign: 'center',
                   fontSize: '1.5rem', fontWeight: 700,
                   background: 'rgba(255,255,255,0.05)',

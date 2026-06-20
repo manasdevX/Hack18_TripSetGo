@@ -95,7 +95,7 @@ export default function AdminAnalytics() {
             <CreditCard size={24} />
           </div>
           <div>
-            <p style={{ fontSize: '1.75rem', fontWeight: 800 }}>${stats.subscriptions.estimatedMonthlyRevenue}</p>
+            <p style={{ fontSize: '1.75rem', fontWeight: 800 }}>₹{Number(stats.subscriptions.estimatedMonthlyRevenue || 0).toLocaleString('en-IN')}</p>
             <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.8125rem' }}>Est. Monthly Revenue ({stats.subscriptions.active} Pros)</p>
           </div>
         </div>

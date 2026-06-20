@@ -1,5 +1,5 @@
 // server/server.js
-require('dotenv').config()
+require('dotenv').config({ quiet: true })
 
 // ── Fail fast on missing critical configuration ────────────────────────────
 // Secrets that the app cannot run safely without. Surfacing these at boot beats
@@ -58,7 +58,7 @@ connectDB().then(async () => {
   })
 
   server.listen(PORT, () => {
-    logger.info(`🚀 TripSetGo Server running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`)
+    logger.info(`🚀 TripSetGo API ready  ·  http://localhost:${PORT}  ·  ${process.env.NODE_ENV || 'development'}`)
   })
 
   // ── Recommendation Engine — Trending Cron (30 min) ─────────────────────

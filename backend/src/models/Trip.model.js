@@ -10,6 +10,7 @@ const tripSchema = new mongoose.Schema({
   budget:       { type: Number, required: true },
   numTravelers: { type: Number, required: true, min: 1, max: 50 },
   groupType:    { type: String, enum: ['solo', 'couple', 'family', 'friends', 'business'], default: 'solo' },
+  pace:         { type: String, enum: ['relaxed', 'balanced', 'packed'], default: 'balanced' },
   preferences:  [{ type: String }],
   tags:         [{ type: String }],
 
@@ -43,6 +44,17 @@ const tripSchema = new mongoose.Schema({
     user:      { name: String, avatar: String },
     text:      { type: String, required: true, maxlength: 1000 },
     createdAt: { type: Date, default: Date.now },
+  }],
+
+  // Saved planner drafts — named snapshots of the user's selections so they can
+  // try different combinations, compare them, and restore one later.
+  drafts: [{
+    _id:        { type: mongoose.Schema.Types.ObjectId, default: () => new mongoose.Types.ObjectId() },
+    name:       { type: String, required: true, maxlength: 80 },
+    selections: { type: mongoose.Schema.Types.Mixed, default: {} },
+    liveBudget: { type: Number, default: 0 },
+    lockedDays: [{ type: Number }],
+    createdAt:  { type: Date, default: Date.now },
   }],
 
   isPublic:      { type: Boolean, default: false, index: true },

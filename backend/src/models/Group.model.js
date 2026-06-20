@@ -10,4 +10,9 @@ const groupSchema = new mongoose.Schema({
   isActive:  { type: Boolean, default: true },
 }, { timestamps: true })
 
+// getMyGroups filters by `$or: [{ ownerId }, { members }]` — index both so the
+// expense-group list stays fast as the collection grows.
+groupSchema.index({ ownerId: 1 })
+groupSchema.index({ members: 1 })
+
 module.exports = mongoose.model('Group', groupSchema)

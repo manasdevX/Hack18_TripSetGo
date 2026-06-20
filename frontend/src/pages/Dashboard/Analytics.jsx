@@ -1,12 +1,21 @@
 // src/pages/Dashboard/Analytics.jsx
-import { useSelector } from 'react-redux'
-import { selectTrips } from '@/features/trips/tripsSlice'
+import { useEffect } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
+import { fetchMyTrips, selectTrips, selectTripsLoading } from '@/features/trips/tripsSlice'
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts'
+import Loader from '@/components/common/Loader'
 
 const COLORS = ['#6366f1', '#06b6d4', '#10b981', '#f59e0b', '#8b5cf6']
 
 export default function Analytics() {
-  const trips = useSelector(selectTrips)
+  const dispatch = useDispatch()
+  const trips    = useSelector(selectTrips)
+  const loading  = useSelector(selectTripsLoading)
+
+  // Self-fetch so the page works on a direct load / refresh, not only when
+  // trips were already loaded by MyTrips/Dashboard. Pull a larger window so
+  // the charts reflect the full history, not just the first page.
+  useEffect(() => { dispatch(fetchMyTrips({ page: 1, limit: 100 })) }, [dispatch])
 
   // Destination frequency
   const destFreq = {}
@@ -35,6 +44,10 @@ export default function Analytics() {
         <p style={{ color: '#a5b4fc' }}>{payload[0].name}: <strong>{payload[0].value}</strong></p>
       </div>
     )
+  }
+
+  if (loading && trips.length === 0) {
+    return <div className="page-enter"><Loader text="Loading your analytics..." /></div>
   }
 
   return (

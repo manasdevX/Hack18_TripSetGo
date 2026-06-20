@@ -160,8 +160,34 @@ body {
   background: rgba(239,68,68,0.25);
 }
 
+/* Subtle red-on-hover for bare icon buttons (e.g. delete actions) */
+.btn-hover-red { transition: color var(--transition-fast); }
+.btn-hover-red:hover { color: var(--color-accent-red) !important; }
+
 .btn-sm { padding: 0.375rem 0.875rem; font-size: 0.8125rem; }
 .btn-lg { padding: 0.875rem 1.75rem; font-size: 1rem; border-radius: var(--radius-lg); }
+
+/* ── Icon button (admin row actions) ──
+   Scoped to <button> so the icon-wrapper <span class="btn-icon"> inside Button.jsx
+   is unaffected (that span only needs the inline-flex centering below). */
+.btn-icon { display: inline-flex; align-items: center; justify-content: center; }
+button.btn-icon {
+  padding: 0.4rem;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+button.btn-icon:hover:not(:disabled) { background: rgba(255,255,255,0.06); border-color: var(--color-border-hover); }
+button.btn-icon:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ── Data table (admin) ── */
+.table { width: 100%; border-collapse: collapse; }
+.table th { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--color-text-muted); font-weight: 600; }
+.table tbody tr { transition: background var(--transition-fast); }
+.table tbody tr:hover { background: rgba(255,255,255,0.02); }
 
 /* ── Input base ── */
 .input {
@@ -183,6 +209,37 @@ body {
 }
 .input:disabled { opacity: 0.5; cursor: not-allowed; }
 .input-error { border-color: var(--color-accent-red) !important; }
+
+/* ── Baseline dark styling for bare form controls (no .input class) ──
+   Bare element selectors keep specificity (0,0,1) BELOW the .input class
+   (0,1,0), so the .input component always wins where it is applied. */
+input, select, textarea {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text-primary);
+  font-family: 'Inter', sans-serif;
+  font-size: 0.9375rem;
+  padding: 0.6rem 0.875rem;
+  outline: none;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+input::placeholder, textarea::placeholder { color: var(--color-text-muted); }
+input:focus, select:focus, textarea:focus {
+  border-color: var(--color-accent-primary);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+select option { background: var(--color-bg-card); color: var(--color-text-primary); }
+/* Don't restyle toggles / sliders / pickers — the type attribute gives these
+   a higher specificity (0,1,1) than the bare reset, so this wins. */
+input[type="checkbox"], input[type="radio"], input[type="range"],
+input[type="file"], input[type="color"] {
+  background: none; border: none; border-radius: 0; padding: 0; box-shadow: none;
+}
+/* Bare labels (e.g. admin destination modal). Inline-styled labels override this. */
+label { display: block; font-size: 0.875rem; font-weight: 500; color: var(--color-text-secondary); margin-bottom: 0.375rem; }
+/* The Input component already spaces its label via the .input-group flex gap. */
+.input-group label { margin-bottom: 0; }
 
 /* ── Card ── */
 .card {
@@ -217,6 +274,12 @@ body {
 .badge-amber   { background: rgba(245,158,11,0.15); color: #fbbf24; border: 1px solid rgba(245,158,11,0.3); }
 .badge-red     { background: rgba(239,68,68,0.15);  color: #f87171; border: 1px solid rgba(239,68,68,0.3); }
 .badge-cyan    { background: rgba(6,182,212,0.15);  color: #22d3ee; border: 1px solid rgba(6,182,212,0.3); }
+/* Semantic aliases used by the admin pages */
+.badge-success   { background: rgba(16,185,129,0.15); color: #34d399; border: 1px solid rgba(16,185,129,0.3); }
+.badge-danger    { background: rgba(239,68,68,0.15);  color: #f87171; border: 1px solid rgba(239,68,68,0.3); }
+.badge-warning   { background: rgba(245,158,11,0.15); color: #fbbf24; border: 1px solid rgba(245,158,11,0.3); }
+.badge-secondary { background: rgba(148,163,184,0.15); color: #cbd5e1; border: 1px solid rgba(148,163,184,0.3); }
+.badge-pro       { background: rgba(6,182,212,0.15);  color: #22d3ee; border: 1px solid rgba(6,182,212,0.3); }
 
 /* ── Skeleton ── */
 @keyframes shimmer {
@@ -341,3 +404,19 @@ select.input option {
   .hamburger-btn { display: none !important; }
   .sidebar-backdrop { display: none !important; }
 }
+
+/* ── Mapbox popups — match the dark theme ── */
+.mapboxgl-popup-content {
+  background: var(--color-bg-card) !important;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  color: var(--color-text-primary);
+  padding: 0.875rem 1rem;
+}
+.mapboxgl-popup-close-button { color: var(--color-text-muted); font-size: 1.1rem; padding-right: 0.35rem; }
+.mapboxgl-popup-close-button:hover { background: transparent; color: var(--color-text-primary); }
+.mapboxgl-popup-anchor-top    .mapboxgl-popup-tip { border-bottom-color: var(--color-bg-card) !important; }
+.mapboxgl-popup-anchor-bottom .mapboxgl-popup-tip { border-top-color:    var(--color-bg-card) !important; }
+.mapboxgl-popup-anchor-left   .mapboxgl-popup-tip { border-right-color:  var(--color-bg-card) !important; }
+.mapboxgl-popup-anchor-right  .mapboxgl-popup-tip { border-left-color:   var(--color-bg-card) !important; }
