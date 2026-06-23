@@ -9,17 +9,28 @@ import subscriptionReducer from '@/features/subscription/subscriptionSlice'
 import adminReducer        from '@/features/admin/adminSlice'
 import expensesReducer     from '@/features/expenses/expensesSlice'
 
+import { combineReducers } from '@reduxjs/toolkit'
+
+const appReducer = combineReducers({
+  auth:          authReducer,
+  planner:       plannerReducer,
+  trips:         tripsReducer,
+  discover:      discoverReducer,
+  notifications: notificationsReducer,
+  subscription:  subscriptionReducer,
+  admin:         adminReducer,
+  expenses:      expensesReducer,
+})
+
+const rootReducer = (state, action) => {
+  if (action.type === 'auth/logout/fulfilled' || action.type === 'auth/logout') {
+    state = undefined
+  }
+  return appReducer(state, action)
+}
+
 const store = configureStore({
-  reducer: {
-    auth:          authReducer,
-    planner:       plannerReducer,
-    trips:         tripsReducer,
-    discover:      discoverReducer,
-    notifications: notificationsReducer,
-    subscription:  subscriptionReducer,
-    admin:         adminReducer,
-    expenses:      expensesReducer,
-  },
+  reducer: rootReducer,
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
       serializableCheck: {

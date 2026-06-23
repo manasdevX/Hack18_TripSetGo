@@ -37,6 +37,11 @@ const TTL = {
   // Weather (OWM free tier: 60 req/min; data changes every 10–60 min)
   'weather:current':       600,   // 10 min  ← current conditions (changes quickly)
   'weather:forecast':      3600,  // 60 min  ← 5-day forecast (stable for 1h)
+  // Flights (Amadeus — static airport/airline data; volatile pricing)
+  'flights:airports':      86400, // 24 h    ← airport autocomplete (static IATA data)
+  'flights:search':        600,   // 10 min  ← flight offers (prices shift frequently)
+  'flights:airlines':      86400, // 24 h    ← airline name/details (static data)
+
   // Search
   'search:city':           900,   // 15 min
   'search:nearby':         600,   // 10 min

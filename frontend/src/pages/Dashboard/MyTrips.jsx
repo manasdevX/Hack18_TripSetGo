@@ -9,7 +9,7 @@ import { selectUser } from '@/features/auth/authSlice'
 import api from '@/services/api'
 import { SkeletonCard } from '@/components/common/Loader'
 import Button from '@/components/common/Button'
-import { getDestinationImage } from './Discover'
+import { getDestinationImage } from '@/utils/imageUtils'
 
 export default function MyTrips() {
   const dispatch       = useDispatch()

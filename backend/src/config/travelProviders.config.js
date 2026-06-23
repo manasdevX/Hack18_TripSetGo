@@ -86,11 +86,11 @@ const cfg = {
       windowMs: 1000,
     },
     // Amadeus uses OAuth2 client credentials — not a simple API key
-    clientId: process.env.AMADEUS_CLIENT_ID,
+    clientId:     process.env.AMADEUS_CLIENT_ID,
     clientSecret: process.env.AMADEUS_CLIENT_SECRET,
     // keys array is unused for Amadeus (OAuth2 flow), kept empty for BaseProvider compat
-    // Amadeus is disabled/removed for now per user request
-    enabled: false,
+    keys: [],
+    enabled: !!(process.env.AMADEUS_CLIENT_ID && process.env.AMADEUS_CLIENT_SECRET),
   },
 
   nominatim: {

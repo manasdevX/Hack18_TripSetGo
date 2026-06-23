@@ -3,7 +3,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useSelector } from 'react-redux'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowLeft, Calendar, Users, DollarSign, Heart, Copy, UserPlus, Plus, Trash2, X, Globe, Lock, Clock } from 'lucide-react'
+import { ArrowLeft, Calendar, Users, DollarSign, Heart, Copy, UserPlus, Plus, Trash2, X, Globe, Lock, Clock, MapPin, CloudRain, Hotel, Navigation } from 'lucide-react'
 import { selectUser } from '@/features/auth/authSlice'
 import { useTripCollaboration } from '@/hooks/useTripCollaboration'
 import api from '@/services/api'
@@ -470,6 +470,71 @@ export default function TripDetail() {
                   <div>
                     <p style={{ fontWeight: 700, fontSize: '0.875rem', marginBottom: '0.25rem' }}>{s.title}</p>
                     <p style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)' }}>{s.description}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+
+        {/* Live Weather Forecast */}
+        {plan.weather?.available && plan.weather.forecast?.length > 0 && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.35 }} style={{ marginTop: '2rem' }}>
+            <h2 style={{ fontWeight: 700, fontSize: '1.1rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <CloudRain size={18} color="#F59E0B" /> Trip Weather Forecast
+            </h2>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '0.75rem' }}>
+              {plan.weather.forecast.slice(0, 5).map((w, i) => (
+                <div key={i} className="bg-bg-card border border-border shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]" style={{ borderRadius: 'var(--radius-md)', padding: '1rem', textAlign: 'center' }}>
+                  <p style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)', marginBottom: '0.5rem', fontWeight: 600 }}>{new Date(w.date).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}</p>
+                  <div style={{ fontSize: '1.75rem', margin: '0.5rem 0' }}>{w.conditionIcon || '🌤️'}</div>
+                  <p style={{ fontWeight: 800, fontSize: '1rem' }}>{Math.round(w.tempMaxC)}° <span style={{ color: 'var(--color-text-muted)', fontWeight: 500 }}>{Math.round(w.tempMinC)}°</span></p>
+                  <p style={{ fontSize: '0.7rem', color: 'var(--color-accent-blue)', marginTop: '0.25rem' }}>💧 {Math.round(w.rainProbability)}%</p>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+
+        {/* Live Hotel Options */}
+        {plan.hotelResult?.options?.length > 0 && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }} style={{ marginTop: '2rem' }}>
+            <h2 style={{ fontWeight: 700, fontSize: '1.1rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <Hotel size={18} color="#0EA5E9" /> Available Stays
+            </h2>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1rem' }}>
+              {plan.hotelResult.options.slice(0, 4).map((h, i) => (
+                <div key={i} className="bg-bg-glass backdrop-blur-[20px] border border-border shadow-[inset_0_0_20px_rgba(255,255,255,0.02)]" style={{ borderRadius: 'var(--radius-md)', padding: '1rem', display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                  <div style={{ width: 60, height: 60, borderRadius: 8, background: h.photo ? `url(${h.photo}) center/cover` : 'rgba(14,165,233,0.1)', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    {!h.photo && <Hotel size={24} color="#0EA5E9" />}
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <p style={{ fontWeight: 700, fontSize: '0.9rem', marginBottom: '0.25rem' }} className="line-clamp-1" title={h.name}>{h.name}</p>
+                    <p style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', marginBottom: '0.25rem' }}>★ {h.rating || 'N/A'}</p>
+                    {h.price && <p style={{ fontSize: '0.85rem', color: '#10B981', fontWeight: 700 }}>₹{Math.round(h.price).toLocaleString()} <span style={{ fontSize: '0.65rem', color: 'var(--color-text-muted)', fontWeight: 400 }}>total</span></p>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+
+        {/* Top Attractions */}
+        {plan.attractions?.length > 0 && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.45 }} style={{ marginTop: '2rem' }}>
+            <h2 style={{ fontWeight: 700, fontSize: '1.1rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <MapPin size={18} color="#8B5CF6" /> Top Attractions
+            </h2>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1rem' }}>
+              {plan.attractions.slice(0, 6).map((a, i) => (
+                <div key={i} className="bg-bg-glass backdrop-blur-[20px] border border-border shadow-[inset_0_0_20px_rgba(255,255,255,0.02)]" style={{ borderRadius: 'var(--radius-md)', padding: '1rem', display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                  <div style={{ width: 60, height: 60, borderRadius: 8, background: a.photo ? `url(${a.photo}) center/cover` : 'rgba(139,92,246,0.1)', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    {!a.photo && <Navigation size={24} color="#8B5CF6" />}
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <p style={{ fontWeight: 700, fontSize: '0.9rem', marginBottom: '0.25rem' }} className="line-clamp-1" title={a.name}>{a.name}</p>
+                    <p style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', textTransform: 'capitalize' }} className="line-clamp-1">{a.category || a.kinds?.replace(/,/g, ', ')}</p>
+                    {a.rating > 0 && <p style={{ fontSize: '0.75rem', color: '#FCD34D', fontWeight: 600, marginTop: '0.2rem' }}>★ {a.rating}</p>}
                   </div>
                 </div>
               ))}
