@@ -25,7 +25,10 @@ const TTL = {
   'destinations:feed':     300,   // 5 min
   'hotels':                1800,  // 30 min
   'restaurants':           1800,  // 30 min
-  'attractions':           1800,  // 30 min
+  'attractions':           1800,  // 30 min  ← generic namespace (backward compat)
+  'attractions:city':      900,   // 15 min  ← OTM city search results
+  'attractions:nearby':    600,   // 10 min  ← OTM nearby search results
+  'attractions:detail':    1800,  // 30 min  ← OTM full detail (with images + description)
   'search:city':           900,   // 15 min
   'search:nearby':         600,   // 10 min
   'search:es':             300,   // 5 min  ← Elasticsearch results

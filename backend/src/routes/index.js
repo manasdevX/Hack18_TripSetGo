@@ -16,6 +16,7 @@ const adminRoutes           = require('./admin.routes')
 const expenseRoutes         = require('./expense.routes')
 const copilotRoutes         = require('./copilot.routes')
 const travelRoutes          = require('./travel.routes')
+const attractionsRoutes     = require('./attractions.routes')
 
 router.use('/auth',            authRoutes)
 router.use('/trips',           tripRoutes)
@@ -32,6 +33,7 @@ router.use('/admin',           adminRoutes)
 router.use('/groups',          expenseRoutes)
 router.use('/copilot',         copilotRoutes)
 router.use('/travel',          travelRoutes)
+router.use('/attractions',     attractionsRoutes)
 
 // Health check
 router.get('/health', (req, res) => {

@@ -107,6 +107,28 @@ const cfg = {
     keys: [], // no key required
     enabled: true,
   },
+
+  // ── OpenTripMap ─────────────────────────────────────────────────────────
+  // Attractions discovery provider: city search, nearby search, detail fetch.
+  // Free tier: ~5 req/s, 5000 req/day
+  // Docs: https://opentripmap.io/docs
+  // Get a free key at: https://opentripmap.io/product
+  openTripMap: {
+    name: 'OpenTripMap',
+    baseUrl: 'https://api.opentripmap.com/0.1/en/places',
+    timeout: parseInt(process.env.TRAVEL_API_TIMEOUT_MS, 10) || 8000,
+    maxRetries: parseInt(process.env.TRAVEL_API_MAX_RETRIES, 10) || 3,
+    rateLimit: {
+      strategy: 'token-bucket',
+      maxRequests: 5,    // Stay under free-tier 5 req/s
+      windowMs: 1000,
+    },
+    keys: [
+      process.env.OPENTRIPMAP_API_KEY,
+      process.env.OPENTRIPMAP_API_KEY_2, // optional second key for rotation
+    ].filter(Boolean),
+    enabled: !!process.env.OPENTRIPMAP_API_KEY,
+  },
 }
 
 // ── Validation at startup ──────────────────────────────────────────────────
