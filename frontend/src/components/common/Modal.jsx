@@ -43,6 +43,9 @@ export default function Modal({ isOpen, onClose, title, children, size = 'md', h
             exit={{ scale: 0.95,    opacity: 0, y: 20 }}
             transition={{ type: 'spring', damping: 28, stiffness: 300 }}
             className="bg-bg-glass backdrop-blur-[20px] border border-border shadow-[inset_0_0_20px_rgba(255,255,255,0.02)]"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={title ? "modal-title" : undefined}
             style={{
               width: '100%',
               maxWidth: maxWidths[size] || 560,
@@ -55,7 +58,7 @@ export default function Modal({ isOpen, onClose, title, children, size = 'md', h
           >
             {(title || !hideClose) && (
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
-                {title && <h2 style={{ fontSize: '1.25rem', fontWeight: 700 }}>{title}</h2>}
+                {title && <h2 id="modal-title" style={{ fontSize: '1.25rem', fontWeight: 700 }}>{title}</h2>}
                 {!hideClose && (
                   <button
                     onClick={onClose}

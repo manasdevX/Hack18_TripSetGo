@@ -33,4 +33,29 @@ const startWorkers = () => {
   }
 };
 
-module.exports = { startWorkers, activeWorkers };
+/**
+ * Gracefully close all active workers.
+ * Called on SIGTERM / SIGINT so in-flight jobs can complete
+ * before the process exits — prevents abandoned or duplicated jobs.
+ */
+const stopWorkers = async () => {
+  if (!activeWorkers.length) return;
+  logger.info(`🛑 Stopping ${activeWorkers.length} BullMQ workers gracefully...`);
+  await Promise.allSettled(activeWorkers.map((w) => w.close()));
+  logger.info('✅ All workers stopped');
+};
+
+// Register signal handlers once (idempotent — re-requires are no-ops due to module cache)
+process.once('SIGTERM', async () => {
+  logger.info('SIGTERM received — shutting down workers');
+  await stopWorkers();
+  process.exit(0);
+});
+
+process.once('SIGINT', async () => {
+  logger.info('SIGINT received — shutting down workers');
+  await stopWorkers();
+  process.exit(0);
+});
+
+module.exports = { startWorkers, stopWorkers, activeWorkers };

@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "nodemon --quiet server.js",
     "start": "node server.js",
+    "test": "cross-env NODE_ENV=test jest --runInBand",
     "es:seed": "node src/scripts/esIndex.js"
   },
   "keywords": [],
@@ -25,6 +26,7 @@
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
+    "express-mongo-sanitize": "^2.2.0",
     "express-rate-limit": "^8.5.2",
     "google-auth-library": "^10.7.0",
     "helmet": "^8.2.0",
@@ -45,6 +47,10 @@
     "xss": "^1.0.14"
   },
   "devDependencies": {
-    "nodemon": "^3.1.14"
+    "cross-env": "^10.1.0",
+    "jest": "^30.4.2",
+    "mongodb-memory-server": "^11.2.0",
+    "nodemon": "^3.1.14",
+    "supertest": "^7.2.2"
   }
 }

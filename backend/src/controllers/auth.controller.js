@@ -331,14 +331,17 @@ exports.enableMFA = asyncHandler(async (req, res) => {
   const isValid = totp.verifyTOTP(code, user.mfaSecret)
   if (!isValid) return badRequest(res, 'Invalid verification code')
 
-  // Generate backup codes
+  // Generate backup codes — store hashed, return plaintext once
   const backupCodes = []
+  const backupCodeHashes = []
   for (let i = 0; i < 5; i++) {
-    backupCodes.push(crypto.randomBytes(4).toString('hex')) // 8 hex digits
+    const code = crypto.randomBytes(4).toString('hex') // 8 hex digits
+    backupCodes.push(code)
+    backupCodeHashes.push(await bcrypt.hash(code, 10))
   }
 
   user.isMfaEnabled = true
-  user.mfaBackupCodes = backupCodes
+  user.mfaBackupCodes = backupCodeHashes  // store hashed values only
   await user.save()
 
   success(res, { backupCodes }, 'MFA enabled successfully')
@@ -388,12 +391,16 @@ exports.verifyMfaLogin = asyncHandler(async (req, res) => {
   let usedBackup = false
 
   if (!isValid) {
-    // Check backup codes
-    const backupIdx = user.mfaBackupCodes.indexOf(code)
+    // Check backup codes \u2014 compare plaintext input against stored hashes
+    let backupIdx = -1
+    for (let i = 0; i < user.mfaBackupCodes.length; i++) {
+      const match = await bcrypt.compare(code, user.mfaBackupCodes[i])
+      if (match) { backupIdx = i; break }
+    }
     if (backupIdx !== -1) {
       isValid = true
       usedBackup = true
-      user.mfaBackupCodes.splice(backupIdx, 1) // burn code
+      user.mfaBackupCodes.splice(backupIdx, 1) // burn used code
       await user.save()
     }
   }

@@ -25,7 +25,8 @@ export function useSocket() {
     socketRef.current = socketInstance
 
     socketInstance.on('connect', () => {
-      socketInstance.emit('join', { user_id: user._id })
+      const token = localStorage.getItem('accessToken')
+      socketInstance.emit('join', { user_id: user._id, token })
     })
 
     socketInstance.on('notification', (data) => {

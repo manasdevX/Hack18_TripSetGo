@@ -66,7 +66,8 @@ const connectRedis = async () => {
       useMemoryFallback = true
     })
 
-    useMemoryFallback = false
+    // NOTE: useMemoryFallback is set to false only inside the 'ready' handler above.
+    // Do NOT set it here — lazyConnect means the connection hasn't been verified yet.
   } catch (err) {
     logger.warn(`⚠️  Redis init failed — using in-memory cache: ${err.message}`)
     useMemoryFallback = true

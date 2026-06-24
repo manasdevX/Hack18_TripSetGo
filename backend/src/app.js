@@ -12,6 +12,7 @@ const rateLimit    = require('express-rate-limit')
 const routes       = require('./routes')
 const errorHandler = require('./middleware/errorHandler.middleware')
 const logger       = require('./utils/logger')
+const mongoSanitize = require('express-mongo-sanitize')
 
 const app = express()
 const server = http.createServer(app)
@@ -56,8 +57,19 @@ global.__activeUsers = activeUsers
 const tripRooms = new Map()
 
 io.on('connection', (socket) => {
-  socket.on('join', ({ user_id }) => {
-    if (user_id) activeUsers.set(user_id, socket.id)
+  socket.on('join', ({ user_id, token }) => {
+    // Verify token before registering socket — prevents unauthenticated session hijacking
+    if (user_id && token) {
+      try {
+        const jwt = require('jsonwebtoken')
+        const decoded = jwt.verify(token, process.env.JWT_SECRET)
+        if (decoded.userId && decoded.userId.toString() === user_id.toString()) {
+          activeUsers.set(user_id, socket.id)
+        }
+      } catch {
+        // Invalid/expired token — silently reject socket registration
+      }
+    }
   })
 
   // Collaborative Room Join
@@ -126,6 +138,22 @@ app.use(setCsrfToken)
 
 app.use(express.json({ limit: '10mb' }))
 app.use(express.urlencoded({ extended: true, limit: '10mb' }))
+
+// Sanitize request data against NoSQL query injection.
+// Custom middleware wrapper because express-mongo-sanitize's default middleware
+// attempts to re-assign req.query (e.g. req.query = sanitizedObject),
+// which crashes in Express 5 where req.query is a read-only getter.
+// Using the .sanitize() method directly mutates the object in-place safely.
+app.use((req, res, next) => {
+  ['body', 'params', 'headers', 'query'].forEach(key => {
+    if (req[key]) {
+      mongoSanitize.sanitize(req[key], { replaceWith: '_' })
+    }
+  })
+  next()
+})
+
+
 app.use('/api', csrfProtection)
 
 // Global Rate Limiting for all /api routes

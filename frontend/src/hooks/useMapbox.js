@@ -58,7 +58,7 @@ export function useMapbox(options = {}) {
           mapRef.current.flyTo({ center: loc, zoom: 13, speed: 1.5 })
         }
       },
-      () => console.warn('Geolocation permission denied or unavailable')
+      () => {} // Geolocation denied — silently ignore
     )
   }, [])
 
