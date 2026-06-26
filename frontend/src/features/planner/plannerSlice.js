@@ -132,6 +132,8 @@ const plannerSlice = createSlice({
       }
     },
     setPlan: (state, action) => {
+      state.loading = false
+      state.error = null
       state.plan = action.payload.plan
       state.tripId = action.payload.tripId
       // Auto-select recommended transport + hotel
@@ -145,6 +147,10 @@ const plannerSlice = createSlice({
       if (action.payload.plan?.food_plans) {
         state.selections.food = action.payload.plan.food_plans[0]
       }
+    },
+    generateFailed: (state, action) => {
+      state.loading = false
+      state.error = action.payload
     },
     resetPlan: (state) => {
       state.plan = null
@@ -214,17 +220,10 @@ const plannerSlice = createSlice({
         state.plan = null
       })
       .addCase(generatePlan.fulfilled, (state, { payload }) => {
-        state.loading = false
+        // Note: loading remains true. The background worker will emit a socket event
+        // 'itinerary:completed' when generation finishes, which will trigger setPlan.
         const data = payload.data || payload
-        state.plan = data.plan
         state.tripId = data.tripId || data._id
-        // Auto-select recommended options
-        if (data.plan?.transport_options?.length) {
-          const rec = data.plan.transport_options.find(t => t.recommended) || data.plan.transport_options[0]
-          state.selections.transport = rec
-        }
-        if (data.plan?.hotel_options?.length)  state.selections.hotel = data.plan.hotel_options[0]
-        if (data.plan?.food_plans?.length)      state.selections.food  = data.plan.food_plans[0]
       })
       .addCase(generatePlan.rejected, (state, { payload }) => {
         state.loading = false
@@ -300,7 +299,7 @@ export const {
   updateForm, resetForm, setPlan, resetPlan,
   selectTransport, selectHotel, selectFood,
   toggleActivity, toggleFavorite, toggleDayLock, loadDraft,
-  setActiveDay, setActiveTab, clearError,
+  setActiveDay, setActiveTab, clearError, generateFailed,
 } = plannerSlice.actions
 
 export const selectPlanner      = (state) => state.planner

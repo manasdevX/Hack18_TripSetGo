@@ -10,8 +10,8 @@
  * 
  * @example
  * await withTransaction(async (session) => {
- *   const user = await User.findByIdAndUpdate(userId, { tripsCount: tripsCount + 1 }, { session, new: true })
- *   const subscription = await Subscription.findByIdAndUpdate(subId, { searchesToday: searchesToday + 1 }, { session, new: true })
+ *   const user = await User.findByIdAndUpdate(userId, { tripsCount: tripsCount + 1 }, { session, returnDocument: 'after' })
+ *   const subscription = await Subscription.findByIdAndUpdate(subId, { searchesToday: searchesToday + 1 }, { session, returnDocument: 'after' })
  *   return { user, subscription }
  * })
  */

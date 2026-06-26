@@ -4,7 +4,7 @@ const logger = require('../utils/logger')
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
 
-const MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash'
+const MODEL = process.env.GEMINI_MODEL || 'gemini-1.5-flash'
 
 /**
  * Generate a structured travel plan using Gemini AI.
@@ -68,9 +68,9 @@ Return ONLY valid JSON (no markdown, no explanation) with this exact schema:
 }
 
 Rules:
-- Provide 3-5 transport options, 4-5 hotel options, 3 food plans
-- Each day/slot should have exactly 3 activities (scale density to the requested pace)
-- packing_list: 6-8 concise, destination- and weather-appropriate items
+- Provide 2-3 transport options, 2-3 hotel options, 2 food plans
+- Each day/slot should have 1-2 activities depending on the requested pace
+- packing_list: 4-5 concise, destination- and weather-appropriate items
 - All costs must be realistic for India in INR
 - Budget breakdown must sum to approximately ₹${budget}
 - Output ONLY the JSON object, nothing else
@@ -221,8 +221,8 @@ Return ONLY a valid JSON object (no markdown, no code fences, no explanation) wi
 
 Rules:
 - Generate exactly ${days} day objects in the itinerary array
-- Include exactly 5 recommended attractions
-- Include exactly 5 recommended restaurants covering different meal types
+- Include exactly 3 recommended attractions
+- Include exactly 3 recommended restaurants covering different meal types
 - All costs must be realistic for India in INR
 - estimated_cost.total must be close to ₹${budget}
 - Output ONLY the JSON object, nothing else
@@ -288,7 +288,7 @@ Return ONLY valid JSON (no markdown, no explanation) with EXACTLY this schema:
 }
 
 Rules:
-- Each slot (morning, afternoon, evening) must contain exactly 3 distinct activities.
+- Each slot (morning, afternoon, evening) must contain 1-2 distinct activities.
 - Suggest fresh, varied activities that differ from typical day-1 picks.
 - All costs must be realistic for India in INR.
 - Output ONLY the JSON object, nothing else.

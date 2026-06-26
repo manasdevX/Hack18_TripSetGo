@@ -19,7 +19,7 @@ exports.updateMe = asyncHandler(async (req, res) => {
   // Sanitize user profile input to prevent XSS
   const sanitized = sanitizeUserProfile(updates)
 
-  const user = await User.findByIdAndUpdate(req.user._id, sanitized, { new: true, runValidators: true })
+  const user = await User.findByIdAndUpdate(req.user._id, sanitized, { returnDocument: 'after', runValidators: true })
   success(res, user, 'Profile updated')
 })
 
@@ -28,7 +28,7 @@ exports.uploadAvatar = asyncHandler(async (req, res) => {
 
   try {
     const avatarUrl = await uploadImageBuffer(req.file.buffer)
-    const user = await User.findByIdAndUpdate(req.user._id, { avatar: avatarUrl }, { new: true })
+    const user = await User.findByIdAndUpdate(req.user._id, { avatar: avatarUrl }, { returnDocument: 'after' })
     success(res, user, 'Avatar uploaded successfully')
   } catch (error) {
     badRequest(res, 'Failed to upload image to Cloudinary')

@@ -94,7 +94,7 @@ async function persistCurrentWeather(locationKey, normalised) {
           expiresAt:      new Date(Date.now() + 10 * 60 * 1000),
         },
       },
-      { upsert: true, new: true }
+      { upsert: true, returnDocument: 'after' }
     )
   } catch (err) {
     logger.warn(`[WeatherService] DB persist current failed: ${err.message}`)
@@ -119,7 +119,7 @@ async function persistForecast(locationKey, normalised) {
           expiresAt:      new Date(Date.now() + 60 * 60 * 1000),
         },
       },
-      { upsert: true, new: true }
+      { upsert: true, returnDocument: 'after' }
     )
   } catch (err) {
     logger.warn(`[WeatherService] DB persist forecast failed: ${err.message}`)

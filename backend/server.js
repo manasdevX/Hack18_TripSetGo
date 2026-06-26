@@ -87,13 +87,13 @@ connectDB().then(async () => {
 
       // 2. Cache warming (repeat every 25m, run once on boot after 15s)
       if (queueService.refreshQueue) {
-        await queueService.addJob('refresh', 'warm-all', {}, {
+        await queueService.addJob('refresh', 'warm-all', { action: 'warm-all' }, {
           repeat: { every: 25 * 60 * 1000 }
         })
         // Stagger boot run
         setTimeout(async () => {
           try {
-            await queueService.addJob('refresh', 'warm-all', {})
+            await queueService.addJob('refresh', 'warm-all', { action: 'warm-all' })
           } catch (err) {
             logger.error(`[Scheduler] Cache warming boot run failed: ${err.message}`)
           }
