@@ -46,9 +46,9 @@ export const travelApiSlice = apiSlice.injectEndpoints({
       }),
     }),
     searchAttractionsByCity: builder.query({
-      query: ({ city, limit = 20, radius = 10000, kinds } = {}) => ({
-        url: '/api/v1/attractions/city',
-        params: { city, limit, radius, kinds },
+      query: ({ city, limit = 20, radius = 10000 } = {}) => ({
+        url: '/api/v1/travel/attractions',
+        params: { destination: city, limit, radius },
       }),
     }),
     searchAttractionsByCategory: builder.query({
@@ -137,8 +137,8 @@ export const travelApi = {
   getWeatherForecast: (city, lat, lon) =>
     api.get(`/api/v1/weather/forecast`, { params: { city, lat, lon } }),
 
-  searchAttractionsByCity: (city, limit = 20, radius = 10000, kinds) =>
-    api.get(`/api/v1/attractions/city`, { params: { city, limit, radius, kinds } }),
+  searchAttractionsByCity: (city, limit = 20, radius = 10000) =>
+    api.get(`/api/v1/travel/attractions`, { params: { destination: city, limit, radius } }),
   searchAttractionsByCategory: (city, category, limit = 20, radius = 12000) =>
     api.get(`/api/v1/attractions/category`, { params: { city, category, limit, radius } }),
   searchAttractionsNearby: (lat, lon, limit = 20, radius = 5000, kinds) =>

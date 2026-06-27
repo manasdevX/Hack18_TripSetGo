@@ -112,7 +112,6 @@ function _tryEndpoint(query, endpointUrl, timeoutMs) {
         'Content-Length': Buffer.byteLength(body),
         'User-Agent':     'TripSetGo/1.0 (travel-planning-app; contact=admin@tripsetgo.app)',
         'Accept':         'application/json',
-        'Accept-Encoding':'gzip, deflate',
       },
       timeout: timeoutMs,
     }

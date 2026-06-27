@@ -201,6 +201,7 @@ function normalise(element) {
     distanceM:   null, // populated by the provider if needed
     coordinates,
     image:       tags.image || tags['wikimedia_commons'] || null,
+    photo:       tags.image || tags['wikimedia_commons'] || null,
     description,
     entryFee:    extractEntryFee(tags),
     bestTime:    category === 'Viewpoint' ? 'morning' : 'morning',

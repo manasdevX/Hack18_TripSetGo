@@ -167,15 +167,28 @@ class AviationStackProvider extends BaseProvider {
     travelLogger.info(this.name, `Searching flights ${depIata}→${arrIata} on ${date}`)
 
     try {
+      // Free tier doesn't support flight_date filter. Omit it to avoid function_access_restricted error.
       const raw = await this.request('/flights', {
         dep_iata:    depIata.toUpperCase(),
         arr_iata:    arrIata.toUpperCase(),
-        flight_date: date,
-        flight_status: 'scheduled,active,landed',
         limit:       Math.min(limit, 100),
       })
 
-      const flights = adapter.normaliseFlights(raw?.data || [])
+      if (raw?.error) {
+        travelLogger.error(this.name, `AviationStack API error: ${raw.error.message}`, raw.error)
+        return []
+      }
+
+      let flights = adapter.normaliseFlights(raw?.data || [])
+
+      // Filter in-memory by date if requested
+      if (flightDate) {
+        const filtered = flights.filter(f => f.flightDate === flightDate)
+        if (filtered.length > 0) {
+          flights = filtered
+        }
+      }
+
       cacheService.set('flights:search', cacheKey, flights, TTL.schedules).catch(() => {})
       travelLogger.info(this.name, `✅ Found ${flights.length} flights ${depIata}→${arrIata}`)
       return flights
