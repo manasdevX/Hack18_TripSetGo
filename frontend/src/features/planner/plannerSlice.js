@@ -153,6 +153,10 @@ const plannerSlice = createSlice({
       state.loading = false
       state.error = action.payload
     },
+    generateFailed: (state, action) => {
+      state.loading = false
+      state.error = action.payload
+    },
     resetPlan: (state) => {
       state.plan = null
       state.tripId = null
@@ -313,7 +317,7 @@ const plannerSlice = createSlice({
 })
 
 export const {
-  updateForm, resetForm, setPlan, resetPlan, setGenerationFailed,
+  updateForm, resetForm, setPlan, resetPlan, setGenerationFailed, generateFailed,
   selectTransport, selectHotel, selectFood,
   toggleActivity, toggleFavorite, toggleDayLock, loadDraft,
   setActiveDay, setActiveTab, setCopilotConversationId, clearError,

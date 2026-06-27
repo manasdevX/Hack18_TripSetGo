@@ -205,7 +205,7 @@ exports.verifyPayment = asyncHandler(async (req, res) => {
           // We intentionally do NOT store the raw signature in the sub document
           // The Payment record serves as the source of truth
         },
-        { new: true, upsert: true, session }
+        { returnDocument: 'after', upsert: true, session }
       )
 
       // 2. Update user plan field
@@ -333,7 +333,7 @@ exports.handleWebhook = asyncHandler(async (req, res) => {
         await Subscription.findOneAndUpdate(
           { userId },
           { plan: 'pro', isActive: true, startDate: new Date(), endDate, razorpayOrderId: orderId, razorpayPaymentId: paymentId },
-          { new: true, upsert: true, session }
+          { returnDocument: 'after', upsert: true, session }
         )
         await User.findByIdAndUpdate(userId, { plan: 'pro' }, { session })
         await Payment.findOneAndUpdate(

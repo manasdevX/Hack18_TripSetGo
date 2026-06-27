@@ -88,7 +88,7 @@ exports.editReview = asyncHandler(async (req, res) => {
   const review = await Review.findOneAndUpdate(
     { _id: req.params.id, userId: req.user._id },
     { rating, title: sanitized.title, text: sanitized.text },
-    { new: true, runValidators: true }
+    { returnDocument: 'after', runValidators: true }
   )
 
   if (!review) return notFound(res, 'Review not found or unauthorized')

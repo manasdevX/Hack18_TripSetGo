@@ -59,7 +59,7 @@ exports.createTrip = asyncHandler(async (req, res) => {
     const user = await User.findByIdAndUpdate(
       req.user._id,
       { $inc: { tripsCount: 1 } },
-      { session, new: true }
+      { session, returnDocument: 'after' }
     )
 
     return { trip: trip[0], user }

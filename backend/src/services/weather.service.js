@@ -28,7 +28,7 @@
 //   weather:forecast            3600s   Redis (L1) + MongoDB (L2/TTL)
 //   weather:intelligence        600s    Redis (L1 — full combined payload)
 // ─────────────────────────────────────────────────────────────────────────────
-const owmProvider        = require('./travel/providers/openweather.provider')
+const owmProvider        = require('./travel/providers/openWeather.provider')
 const cacheService       = require('./cache.service')
 const { WeatherCurrent, WeatherForecast } = require('../models/WeatherCache.model')
 const logger             = require('../utils/logger')
@@ -94,7 +94,7 @@ async function persistCurrentWeather(locationKey, normalised) {
           expiresAt:      new Date(Date.now() + 10 * 60 * 1000),
         },
       },
-      { upsert: true, new: true }
+      { upsert: true, returnDocument: 'after' }
     )
   } catch (err) {
     logger.warn(`[WeatherService] DB persist current failed: ${err.message}`)
@@ -119,7 +119,7 @@ async function persistForecast(locationKey, normalised) {
           expiresAt:      new Date(Date.now() + 60 * 60 * 1000),
         },
       },
-      { upsert: true, new: true }
+      { upsert: true, returnDocument: 'after' }
     )
   } catch (err) {
     logger.warn(`[WeatherService] DB persist forecast failed: ${err.message}`)

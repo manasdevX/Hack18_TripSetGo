@@ -33,8 +33,18 @@ export function useSocket() {
       dispatch(addSocketNotification(data))
     })
 
+    socketInstance.on('itinerary:completed', (data) => {
+      dispatch({ type: 'planner/setPlan', payload: { plan: data.planData, tripId: data.tripId } })
+    })
+
+    socketInstance.on('itinerary:failed', (data) => {
+      dispatch({ type: 'planner/generateFailed', payload: data.error })
+    })
+
     return () => {
       socketInstance?.off('notification')
+      socketInstance?.off('itinerary:completed')
+      socketInstance?.off('itinerary:failed')
     }
   }, [isAuth, user?._id, dispatch])
 
