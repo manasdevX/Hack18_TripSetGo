@@ -43,7 +43,7 @@ export default function Navbar({ onMenuClick }) {
 
       {/* Logo */}
       <Link to="/" className="flex items-center gap-2 no-underline">
-        <div className="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center text-base">✈️</div>
+        <img src="/favicon.svg" className="w-8 h-8 object-contain" alt="TripSetGo Logo" />
         <span className="font-['Plus_Jakarta_Sans',sans-serif] font-extrabold text-xl tracking-tighter">
           Trip<span className="bg-gradient-primary bg-clip-text text-transparent">SetGo</span>
         </span>

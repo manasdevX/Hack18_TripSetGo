@@ -170,6 +170,40 @@ function getCoordinates(element) {
 
 // ── Main Normaliser ───────────────────────────────────────────────────────
 
+function getPopularityScore(element, tags) {
+  let score = 0
+  if (tags.wikipedia) score += 40
+  if (tags.wikidata)  score += 30
+  if (element.type === 'relation') score += 15
+  if (element.type === 'way')      score += 10
+  if (tags.heritage) score += 20
+  if (tags.historic === 'castle' || tags.historic === 'fort' || tags.historic === 'monument') {
+    score += 15
+  }
+  const name = (tags.name || '').toLowerCase()
+  const majorKeywords = [
+    'minar', 'fort', 'tomb', 'taj mahal', 'gate', 'palace', 'temple', 'cathedral', 'basilica', 'church',
+    'museum', 'national', 'memorial', 'garden', 'zoo', 'park', 'baoli', 'qutb', 'red fort', 'hawa mahal',
+    'lotus temple', 'akshardham', 'qila'
+  ]
+  for (const kw of majorKeywords) {
+    if (name.includes(kw)) {
+      score += 10
+    }
+  }
+  return score
+}
+
+function isValidImageUrl(url) {
+  if (!url || typeof url !== 'string') return false
+  if (!url.startsWith('http://') && !url.startsWith('https://')) return false
+  const lowerUrl = url.toLowerCase()
+  if (lowerUrl.includes('wikimedia.org') || lowerUrl.includes('unsplash.com') || lowerUrl.includes('wikipedia.org')) {
+    return true
+  }
+  return /\.(jpg|jpeg|png|webp|svg|gif)(\?.*)?$/i.test(lowerUrl)
+}
+
 /**
  * Normalise a single Overpass element into a NormalisedAttraction.
  *
@@ -183,12 +217,25 @@ function normalise(element) {
   // Skip elements with no name — they're not useful for itinerary display
   if (!name) return null
 
+  // Filter out generic, low-quality, or unrelated results
+  const lowerName = name.toLowerCase()
+  const lowQualityKeywords = [
+    'toilet', 'restroom', 'bench', 'bin', 'waste basket', 'parking', 'atm', 'information board', 'signpost', 'plaque', 'stub', 'pavement'
+  ]
+  if (lowQualityKeywords.some(kw => lowerName.includes(kw))) {
+    return null
+  }
+
   const coordinates = getCoordinates(element)
   if (!coordinates) return null
 
   const category    = resolveCategory(tags)
   const description = buildDescription(tags, category)
   const durationHrs = estimateDuration(category)
+
+  let image = null
+  if (isValidImageUrl(tags.image)) image = tags.image
+  else if (isValidImageUrl(tags.wikimedia_commons)) image = tags.wikimedia_commons
 
   return {
     id:          `osm:${element.type}:${element.id}`,
@@ -200,12 +247,14 @@ function normalise(element) {
     rating:      null, // OSM does not carry ratings
     distanceM:   null, // populated by the provider if needed
     coordinates,
-    image:       tags.image || tags['wikimedia_commons'] || null,
+    image,
+    photo:       image,
     description,
     entryFee:    extractEntryFee(tags),
     bestTime:    category === 'Viewpoint' ? 'morning' : 'morning',
     durationHrs,
     mustSee:     isMustSee(tags),
+    popularityScore: getPopularityScore(element, tags),
     tags:        collectTags(tags),
     address:     buildAddress(tags),
     website:     tags.website || tags['contact:website'] || null,

@@ -56,7 +56,7 @@ export default function Login() {
       >
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
           <Link to="/" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem' }}>
-            <span style={{ fontSize: 28 }}>✈️</span>
+            <img src="/favicon.svg" style={{ width: 28, height: 28, objectFit: 'contain' }} alt="TripSetGo Logo" />
             <span style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 800, fontSize: '1.3rem' }}>
               Trip<span className="bg-gradient-primary bg-clip-text text-transparent">SetGo</span>
             </span>

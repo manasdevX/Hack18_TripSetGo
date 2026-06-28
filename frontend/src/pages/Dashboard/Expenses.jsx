@@ -1,4 +1,4 @@
-﻿// src/pages/Dashboard/Expenses.jsx
+// src/pages/Dashboard/Expenses.jsx
 import { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { motion } from 'framer-motion'
@@ -38,6 +38,7 @@ export default function Expenses() {
   const [createOpen, setCreateOpen]   = useState(false)
   const [memberOpen, setMemberOpen]   = useState(false)
   const [expenseOpen, setExpenseOpen] = useState(false)
+  const [isDeleting, setIsDeleting]   = useState(false)
 
   const [groupName, setGroupName]   = useState('')
   const [groupEmails, setGroupEmails] = useState('')
@@ -126,12 +127,17 @@ export default function Expenses() {
   }
 
   const onDeleteGroup = async () => {
-    if (!window.confirm('Delete this group and all of its expenses? This cannot be undone.')) return
+    if (isDeleting) return
+    setIsDeleting(true)
     try {
       await dispatch(deleteGroup(selectedId)).unwrap()
       setPickedId(null)
       toast('success', 'Group deleted')
-    } catch (err) { toast('error', err) }
+    } catch (err) {
+      toast('error', err)
+    } finally {
+      setIsDeleting(false)
+    }
   }
 
   const toggleSplit = (id) => setExp((p) => ({
@@ -207,7 +213,12 @@ export default function Expenses() {
                   {isOwner && <Button variant="secondary" size="sm" icon={<UserPlus size={15} />} onClick={() => setMemberOpen(true)}>Add member</Button>}
                   <Button size="sm" icon={<Plus size={15} />} onClick={openAddExpense}>Add expense</Button>
                   {isOwner && (
-                    <button onClick={onDeleteGroup} className="inline-flex items-center justify-center p-2 rounded-lg text-xs font-semibold bg-transparent text-red-500 cursor-pointer hover:bg-white/5 hover:text-red-600 transition-all" title="Delete group">
+                    <button 
+                      onClick={onDeleteGroup} 
+                      disabled={isDeleting}
+                      className={`inline-flex items-center justify-center p-2 rounded-lg text-xs font-semibold bg-transparent text-red-500 transition-all ${isDeleting ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-white/5 hover:text-red-600'}`} 
+                      title="Delete group"
+                    >
                       <Trash2 size={15} />
                     </button>
                   )}

@@ -26,7 +26,7 @@ const cfg = {
   overpass: {
     name: 'Overpass',
     baseUrl: 'https://overpass-api.de',
-    timeout: parseInt(process.env.TRAVEL_API_TIMEOUT_MS, 10) || 25000,
+    timeout: 25000,
     maxRetries: 2,
     rateLimit: {
       strategy: 'token-bucket',

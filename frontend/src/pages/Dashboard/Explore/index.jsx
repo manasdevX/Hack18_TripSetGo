@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plane, CloudRain, MapPin, Utensils, Search, Calendar, Users, Briefcase } from 'lucide-react';
+import { Plane, CloudRain, MapPin, Utensils, Search } from 'lucide-react';
 import { travelApi } from '@/services/travelApi';
 import Input from '@/components/common/Input';
 import Button from '@/components/common/Button';
@@ -72,23 +72,92 @@ function hexToRgb(hex) {
 }
 
 // ── FLIGHTS TAB ─────────────────────────────────────────────────────────────
+
+// Static city-to-IATA lookup for instant resolution (no API calls needed)
+const CITY_IATA_MAP = {
+  // India
+  'delhi': 'DEL', 'new delhi': 'DEL', 'mumbai': 'BOM', 'bombay': 'BOM',
+  'bangalore': 'BLR', 'bengaluru': 'BLR', 'hyderabad': 'HYD',
+  'chennai': 'MAA', 'madras': 'MAA', 'kolkata': 'CCU', 'calcutta': 'CCU',
+  'ahmedabad': 'AMD', 'pune': 'PNQ', 'jaipur': 'JAI', 'lucknow': 'LKO',
+  'goa': 'GOI', 'kochi': 'COK', 'cochin': 'COK', 'thiruvananthapuram': 'TRV',
+  'trivandrum': 'TRV', 'guwahati': 'GAU', 'patna': 'PAT', 'bhopal': 'BHO',
+  'indore': 'IDR', 'nagpur': 'NAG', 'varanasi': 'VNS', 'chandigarh': 'IXC',
+  'coimbatore': 'CJB', 'vizag': 'VTZ', 'visakhapatnam': 'VTZ',
+  'srinagar': 'SXR', 'amritsar': 'ATQ', 'ranchi': 'IXR', 'raipur': 'RPR',
+  'mangalore': 'IXE', 'udaipur': 'UDR', 'dehradun': 'DED', 'imphal': 'IMF',
+  'agartala': 'IXA', 'bhubaneswar': 'BBI', 'jammu': 'IXJ', 'leh': 'IXL',
+  'madurai': 'IXM', 'bagdogra': 'IXB', 'darjeeling': 'IXB', 'siliguri': 'IXB',
+  'port blair': 'IXZ', 'andaman': 'IXZ',
+  // International
+  'london': 'LHR', 'paris': 'CDG', 'new york': 'JFK', 'los angeles': 'LAX',
+  'tokyo': 'NRT', 'singapore': 'SIN', 'dubai': 'DXB', 'bangkok': 'BKK',
+  'hong kong': 'HKG', 'sydney': 'SYD', 'san francisco': 'SFO',
+  'chicago': 'ORD', 'toronto': 'YYZ', 'kuala lumpur': 'KUL', 'seoul': 'ICN',
+  'istanbul': 'IST', 'rome': 'FCO', 'amsterdam': 'AMS', 'frankfurt': 'FRA',
+  'barcelona': 'BCN', 'madrid': 'MAD', 'berlin': 'BER', 'zurich': 'ZRH',
+  'doha': 'DOH', 'abu dhabi': 'AUH', 'kathmandu': 'KTM', 'colombo': 'CMB',
+  'dhaka': 'DAC', 'male': 'MLE', 'maldives': 'MLE', 'beijing': 'PEK',
+  'shanghai': 'PVG', 'moscow': 'SVO', 'cairo': 'CAI', 'nairobi': 'NBO',
+  'johannesburg': 'JNB', 'cape town': 'CPT', 'melbourne': 'MEL',
+  'auckland': 'AKL', 'bali': 'DPS', 'jakarta': 'CGK', 'manila': 'MNL',
+  'hanoi': 'HAN', 'ho chi minh': 'SGN', 'saigon': 'SGN',
+  'taipei': 'TPE', 'osaka': 'KIX', 'lisbon': 'LIS', 'vienna': 'VIE',
+  'munich': 'MUC', 'dublin': 'DUB', 'athens': 'ATH',
+};
+
 function FlightsTab() {
   const [form, setForm] = useState({ origin: '', destination: '', date: '', adults: 1, travelClass: 'ECONOMY' });
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState(null);
   const [error, setError] = useState(null);
+  const [resolvedCodes, setResolvedCodes] = useState({ origin: null, destination: null });
+
+  // Resolve a city name or IATA code to an IATA code
+  const resolveToIata = async (input) => {
+    const trimmed = input.trim();
+    // If already a 3-letter IATA code, use it directly
+    if (/^[A-Za-z]{3}$/.test(trimmed)) {
+      const upper = trimmed.toUpperCase();
+      // Check if it's a known city name with 3 letters (e.g., "Goa")
+      const mapped = CITY_IATA_MAP[trimmed.toLowerCase()];
+      if (mapped) return mapped;
+      // Otherwise assume it's an IATA code
+      return upper;
+    }
+    // Static lookup first (instant, no API quota burned)
+    const mapped = CITY_IATA_MAP[trimmed.toLowerCase()];
+    if (mapped) return mapped;
+    // Fallback: API search for unknown cities
+    try {
+      const res = await travelApi.searchAirportsByCity(trimmed, 5);
+      const airports = res.data?.data?.airports;
+      if (airports && airports.length > 0) {
+        // Find the best match — prefer major airports (with IATA code)
+        const best = airports.find(a => a.iataCode && a.iataCode.length === 3) || airports[0];
+        if (best?.iataCode) return best.iataCode;
+      }
+    } catch { /* ignore API errors, return null */ }
+    return null;
+  };
 
   const handleSearch = async (e) => {
     e.preventDefault();
     if (!form.origin || !form.destination || !form.date) return;
-    setLoading(true); setError(null); setResults(null);
+    setLoading(true); setError(null); setResults(null); setResolvedCodes({ origin: null, destination: null });
     try {
-      // First, lookup IATA codes. Assuming the user types IATA codes directly for now.
-      // In a real app, we'd use travelApi.searchAirports first to get the IATA code.
-      // For simplicity, we just pass the input directly.
+      // Resolve city names to IATA codes
+      const [depIata, arrIata] = await Promise.all([
+        resolveToIata(form.origin),
+        resolveToIata(form.destination),
+      ]);
+      if (!depIata) { setError(`Could not find an airport for "${form.origin}". Try a different city name or enter the 3-letter IATA code directly.`); setLoading(false); return; }
+      if (!arrIata) { setError(`Could not find an airport for "${form.destination}". Try a different city name or enter the 3-letter IATA code directly.`); setLoading(false); return; }
+      setResolvedCodes({ origin: depIata, destination: arrIata });
+
       const res = await travelApi.searchFlights({
-        depIata: form.origin.toUpperCase(),
-        arrIata: form.destination.toUpperCase(),
+        depIata,
+        arrIata,
         flightDate: form.date,
         limit: 10
       });
@@ -104,12 +173,14 @@ function FlightsTab() {
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
       <form onSubmit={handleSearch} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
         <div>
-          <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--color-text-secondary)', marginBottom: '0.4rem' }}>Origin (IATA)</label>
-          <Input placeholder="DEL" value={form.origin} onChange={e => setForm({...form, origin: e.target.value})} maxLength={3} required />
+          <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--color-text-secondary)', marginBottom: '0.4rem' }}>Origin</label>
+          <Input placeholder="Delhi, DEL, Mumbai..." value={form.origin} onChange={e => setForm({...form, origin: e.target.value})} required />
+          {resolvedCodes.origin && <span style={{ fontSize: '0.7rem', color: 'var(--color-accent-blue)', marginTop: '0.25rem', display: 'block' }}>✓ Resolved: {resolvedCodes.origin}</span>}
         </div>
         <div>
-          <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--color-text-secondary)', marginBottom: '0.4rem' }}>Destination (IATA)</label>
-          <Input placeholder="BOM" value={form.destination} onChange={e => setForm({...form, destination: e.target.value})} maxLength={3} required />
+          <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--color-text-secondary)', marginBottom: '0.4rem' }}>Destination</label>
+          <Input placeholder="Hyderabad, BOM, Goa..." value={form.destination} onChange={e => setForm({...form, destination: e.target.value})} required />
+          {resolvedCodes.destination && <span style={{ fontSize: '0.7rem', color: 'var(--color-accent-blue)', marginTop: '0.25rem', display: 'block' }}>✓ Resolved: {resolvedCodes.destination}</span>}
         </div>
         <div>
           <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--color-text-secondary)', marginBottom: '0.4rem' }}>Date</label>
@@ -144,16 +215,16 @@ function FlightsTab() {
                   ✈️
                 </div>
                 <div>
-                  <h4 style={{ fontWeight: 700, fontSize: '1.1rem', marginBottom: '0.2rem' }}>{flight.airlineName} <span style={{fontSize:'0.8rem', color:'var(--color-text-muted)'}}>({flight.flightIata})</span></h4>
+                  <h4 style={{ fontWeight: 700, fontSize: '1.1rem', marginBottom: '0.2rem' }}>{flight.airline?.name || 'Unknown Airline'} <span style={{fontSize:'0.8rem', color:'var(--color-text-muted)'}}>({flight.flightIata})</span></h4>
                   <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.85rem', display: 'flex', gap: '1rem' }}>
-                    <span>{flight.depAirport} → {flight.arrAirport}</span>
-                    <span>⏱ {flight.depTime ? new Date(flight.depTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 'Scheduled'}</span>
+                    <span>{flight.departureAirport?.name || flight.departureAirport?.iataCode} → {flight.arrivalAirport?.name || flight.arrivalAirport?.iataCode}</span>
+                    <span>⏱ {flight.departureTime ? new Date(flight.departureTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 'Scheduled'}</span>
                   </p>
                 </div>
               </div>
               <div style={{ textAlign: 'right' }}>
                 <p style={{ fontSize: '1.2rem', fontWeight: 800, color: flight.status === 'active' ? '#10B981' : '#0EA5E9', textTransform: 'capitalize' }}>{flight.status || 'Scheduled'}</p>
-                {flight.arrTime && <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>Arrives {new Date(flight.arrTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>}
+                {flight.arrivalTime && <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>Arrives {new Date(flight.arrivalTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>}
               </div>
             </div>
           ))}
@@ -177,7 +248,7 @@ function WeatherTab() {
     try {
       const current = await travelApi.getCurrentWeather(city);
       const forecast = await travelApi.getWeatherForecast(city);
-      setWeather({ current: current.data.data, forecast: forecast.data.data });
+      setWeather({ current: current.data.data.current, forecast: forecast.data.data.forecast });
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to fetch weather');
     } finally {
@@ -204,7 +275,7 @@ function WeatherTab() {
             <div>
               <h2 style={{ fontSize: '2rem', fontWeight: 800, marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                 <span style={{ fontSize: '2.5rem' }}>{weather.current.conditionIcon || '🌤️'}</span>
-                {weather.current.city}
+                {weather.current.cityName}
               </h2>
               <p style={{ color: 'var(--color-text-secondary)', fontSize: '1.1rem' }}>{weather.current.conditionGroup} • {weather.current.conditionDesc}</p>
             </div>
@@ -216,7 +287,7 @@ function WeatherTab() {
 
           <h3 style={{ fontSize: '1.2rem', fontWeight: 700, marginBottom: '1rem' }}>5-Day Forecast</h3>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '1rem' }}>
-            {weather.forecast?.daily?.slice(0, 5).map((day, i) => (
+            {weather.forecast?.slice(0, 5).map((day, i) => (
               <div key={i} style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--color-border)', borderRadius: 16, padding: '1.25rem', textAlign: 'center' }}>
                 <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.85rem', marginBottom: '0.5rem', fontWeight: 600 }}>{new Date(day.date).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}</p>
                 <div style={{ fontSize: '2rem', margin: '0.5rem 0' }}>{day.conditionIcon || '🌤️'}</div>

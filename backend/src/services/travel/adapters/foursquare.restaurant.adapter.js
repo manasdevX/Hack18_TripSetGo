@@ -241,15 +241,18 @@ function normalise(place) {
 
     // Price
     priceLevel:     place.price || null,
+    priceTier:      place.price || 0,
     priceInfo,
 
     // Media
     photos,
     image:          photos[0] || null,
+    photo:          photos[0] || null,
 
     // Hours
     openingHours,
     isOpenNow:      place.hours?.open_now ?? null,
+    isOpen:         place.hours?.open_now ?? null,
 
     // Contact
     phone:          place.tel || null,
@@ -265,6 +268,7 @@ function normalise(place) {
 
     // Meta
     verified:       place.verified || false,
+    category:       cuisines.join(', ') || 'Restaurant',
     categories:     (place.categories || []).map(c => ({
       id:         c.id,
       name:       c.name,

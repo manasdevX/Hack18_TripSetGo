@@ -42,7 +42,6 @@ function providerDisabledResponse(res) {
  *   maxPrice  {number}  optional — 1–4
  */
 exports.searchByCity = asyncHandler(async (req, res) => {
-  if (!restaurantsService.isProviderEnabled()) return providerDisabledResponse(res)
 
   const { city, limit, radius, cuisine, openNow, minPrice, maxPrice } = req.query
 
@@ -72,7 +71,7 @@ exports.searchByCity = asyncHandler(async (req, res) => {
         openNow:  openNow === true || openNow === 'true',
         minPrice: minPrice ? parseInt(minPrice, 10) : null,
         maxPrice: maxPrice ? parseInt(maxPrice, 10) : null,
-        provider: 'Foursquare',
+        provider: result.provider || 'OpenStreetMap',
       },
     },
     result.total > 0
@@ -98,7 +97,6 @@ exports.searchByCity = asyncHandler(async (req, res) => {
  *   sort      {string}  optional — RATING | DISTANCE | POPULARITY
  */
 exports.searchNearby = asyncHandler(async (req, res) => {
-  if (!restaurantsService.isProviderEnabled()) return providerDisabledResponse(res)
 
   const { lat, lon, radius, limit, query, openNow, minPrice, maxPrice, sort } = req.query
 
@@ -130,7 +128,7 @@ exports.searchNearby = asyncHandler(async (req, res) => {
         query:    query || null,
         openNow:  openNow === true || openNow === 'true',
         sort:     sort || 'RATING',
-        provider: 'Foursquare',
+        provider: result.provider || 'OpenStreetMap',
       },
     },
     result.total > 0

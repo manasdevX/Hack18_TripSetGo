@@ -30,6 +30,7 @@ const BaseProvider  = require('./BaseProvider')
 const adapter       = require('../adapters/overpass.adapter')
 const travelLogger  = require('../utils/travelLogger')
 const providersCfg  = require('../../../config/travelProviders.config')
+const { fetchWikiImage } = require('../utils/wikipediaImage')
 
 // Primary and failover endpoints
 const ENDPOINTS = [
@@ -59,20 +60,23 @@ function buildQuery(lat, lon, radiusM, limit) {
   return `
 [out:json][timeout:25];
 (
-  node["tourism"~"^(attraction|museum|viewpoint|gallery|zoo|aquarium|theme_park|artwork)$"]${around};
-  way["tourism"~"^(attraction|museum|viewpoint|gallery|zoo|aquarium|theme_park|artwork)$"]${around};
-  relation["tourism"~"^(attraction|museum|viewpoint|gallery|zoo|aquarium|theme_park|artwork)$"]${around};
+  node["tourism"~"^(attraction|museum|viewpoint|gallery|zoo|aquarium|theme_park)$"]${around};
+  way["tourism"~"^(attraction|museum|viewpoint|gallery|zoo|aquarium|theme_park)$"]${around};
 
   node["leisure"~"^(park|nature_reserve|garden)$"]${around};
   way["leisure"~"^(park|nature_reserve|garden)$"]${around};
-  relation["leisure"~"^(park|nature_reserve|garden)$"]${around};
 
   node["historic"~"^(monument|castle|fort|ruins|archaeological_site|memorial|building|manor|mosque|church|temple)$"]${around};
   way["historic"~"^(monument|castle|fort|ruins|archaeological_site|memorial|building|manor|mosque|church|temple)$"]${around};
-  relation["historic"~"^(monument|castle|fort|ruins|archaeological_site|memorial|building|manor|mosque|church|temple)$"]${around};
 
   node["natural"~"^(peak|waterfall|beach|hot_spring|cave_entrance)$"]${around};
   way["natural"~"^(peak|waterfall|beach|hot_spring|cave_entrance)$"]${around};
+)->.all;
+(
+  node.all["wikipedia"];
+  node.all["wikidata"];
+  way.all["wikipedia"];
+  way.all["wikidata"];
 );
 out center tags ${limit};
 `.trim()
@@ -112,7 +116,6 @@ function _tryEndpoint(query, endpointUrl, timeoutMs) {
         'Content-Length': Buffer.byteLength(body),
         'User-Agent':     'TripSetGo/1.0 (travel-planning-app; contact=admin@tripsetgo.app)',
         'Accept':         'application/json',
-        'Accept-Encoding':'gzip, deflate',
       },
       timeout: timeoutMs,
     }
@@ -182,7 +185,9 @@ class OverpassProvider extends BaseProvider {
     return this.fetchWithCache('travel:attractions', cacheRaw, async () => {
       travelLogger.info(this.name, `Querying OSM attractions near (${lat}, ${lon}) r=${clampedRadius}m`)
 
-      const query = buildQuery(lat, lon, clampedRadius, limit)
+      // Query more elements (min 100) to get a rich landmark set to filter/sort
+      const dbLimit = Math.max(limit, 100)
+      const query = buildQuery(lat, lon, clampedRadius, dbLimit)
       let elements
 
       try {
@@ -205,16 +210,45 @@ class OverpassProvider extends BaseProvider {
 
       const normalised = adapter.normaliseMany(elements)
 
-      // Sort: mustSee first, then by category priority, then name length (shorter = more famous)
-      const sorted = _sortAttractions(normalised)
+      // Sort: mustSee first, then popularityScore, then category priority, name length
+      const deduplicated = deduplicateAttractions(normalised)
+      const sorted = _sortAttractions(deduplicated)
 
-      travelLogger.info(this.name, `✅ Returning ${sorted.length} attractions`, {
-        rawElements:  elements.length,
-        named:        normalised.length,
-        returned:     sorted.length,
+      // Slice to the actual requested limit
+      const sliced = sorted.slice(0, limit)
+
+      // Fetch Wikipedia images in parallel only for the sliced attractions (performance saving!)
+      const imagePromises = sliced.map(async (a) => {
+        if (!a.photo || !a.photo.startsWith('http')) {
+          try {
+            const wikiImg = await fetchWikiImage(a.name, a.wikipedia)
+            if (wikiImg) {
+              a.photo = wikiImg
+              a.image = wikiImg
+            }
+          } catch (err) {
+            // Ignore individual image failures
+          }
+        }
+      })
+      await Promise.allSettled(imagePromises)
+
+      // Apply Unsplash fallback for anything that still doesn't have an image
+      sliced.forEach(a => {
+        if (!a.photo || !a.photo.startsWith('http')) {
+          const fallback = getFallbackAttractionImage(a.category)
+          a.photo = fallback
+          a.image = fallback
+        }
       })
 
-      return sorted
+      travelLogger.info(this.name, `✅ Returning ${sliced.length} attractions`, {
+        rawElements:  elements.length,
+        named:        normalised.length,
+        returned:     sliced.length,
+      })
+
+      return sliced
     })
   }
 
@@ -223,6 +257,19 @@ class OverpassProvider extends BaseProvider {
 
   async fetchHotels()  { return [] }
   async fetchWeather() { return null }
+}
+
+const ATTR_IMAGE_MAP = {
+  Heritage: 'https://images.unsplash.com/photo-1564507592333-c60657eea523?w=600&auto=format&fit=crop&q=80',
+  Culture: 'https://images.unsplash.com/photo-1569003339405-ea396a5a8a90?w=600&auto=format&fit=crop&q=80',
+  Nature: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=600&auto=format&fit=crop&q=80',
+  Viewpoint: 'https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=600&auto=format&fit=crop&q=80',
+  Spiritual: 'https://images.unsplash.com/photo-1609137144813-1d0728c79213?w=600&auto=format&fit=crop&q=80',
+  Entertainment: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?w=600&auto=format&fit=crop&q=80',
+}
+
+function getFallbackAttractionImage(category) {
+  return ATTR_IMAGE_MAP[category] || 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=600&auto=format&fit=crop&q=80'
 }
 
 // ── Sorting ───────────────────────────────────────────────────────────────
@@ -243,6 +290,10 @@ function _sortAttractions(attractions) {
     if (a.mustSee && !b.mustSee) return -1
     if (!a.mustSee && b.mustSee)  return 1
 
+    // Then by popularityScore descending
+    const scoreDiff = (b.popularityScore || 0) - (a.popularityScore || 0)
+    if (scoreDiff !== 0) return scoreDiff
+
     // Then by category priority
     const pa = CATEGORY_PRIORITY[a.category] || 0
     const pb = CATEGORY_PRIORITY[b.category] || 0
@@ -251,6 +302,49 @@ function _sortAttractions(attractions) {
     // Then shorter names (famous places tend to have concise names)
     return (a.name?.length || 999) - (b.name?.length || 999)
   })
+}
+
+function distanceM(from, to) {
+  if (!from || !to) return Infinity
+  const R  = 6371000
+  const φ1 = (from.lat * Math.PI) / 180
+  const φ2 = (to.lat  * Math.PI) / 180
+  const Δφ = ((to.lat  - from.lat) * Math.PI) / 180
+  const Δλ = ((to.lon  - from.lon) * Math.PI) / 180
+  const a  = Math.sin(Δφ / 2) ** 2 + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) ** 2
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+}
+
+function deduplicateAttractions(attractions) {
+  const result = []
+  for (const a of attractions) {
+    let isDuplicate = false
+    for (const existing of result) {
+      const name1 = a.name.toLowerCase().trim()
+      const name2 = existing.name.toLowerCase().trim()
+      if (name1 === name2) {
+        const dist = distanceM(a.coordinates, existing.coordinates)
+        if (dist < 300) {
+          isDuplicate = true
+          if (a.popularityScore > existing.popularityScore || (a.mustSee && !existing.mustSee)) {
+            existing.id = a.id
+            existing.osmId = a.osmId
+            existing.coordinates = a.coordinates
+            existing.address = a.address || existing.address
+            existing.popularityScore = a.popularityScore
+            existing.photo = a.photo || existing.photo
+            existing.image = a.image || existing.image
+            existing.mustSee = a.mustSee || existing.mustSee
+          }
+          break
+        }
+      }
+    }
+    if (!isDuplicate) {
+      result.push(a)
+    }
+  }
+  return result
 }
 
 module.exports = new OverpassProvider()
