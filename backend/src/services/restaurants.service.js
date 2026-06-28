@@ -29,7 +29,8 @@
 //   - DB errors are swallowed — never block API response
 // ─────────────────────────────────────────────────────────────────────────────
 const fsqProvider   = require('./travel/providers/foursquare.restaurant.provider')
-const otmProvider   = require('./travel/providers/opentripmap.provider')
+const osmRestaurantProvider = require('./travel/providers/overpass.restaurant.provider')
+const travelApiService = require('./travel/travelApi.service')
 const cacheService  = require('./cache.service')
 const Restaurant    = require('../models/Restaurant.model')
 const logger        = require('../utils/logger')
@@ -89,8 +90,22 @@ function sortRestaurants(restaurants, userCoords) {
 // ── Distance enrichment ───────────────────────────────────────────────────────
 
 /**
+ * Haversine distance in meters between two coordinate pairs.
+ */
+function _haversineM(from, to) {
+  if (!from || !to) return Infinity
+  const R  = 6371000
+  const φ1 = (from.lat * Math.PI) / 180
+  const φ2 = (to.lat  * Math.PI) / 180
+  const Δφ = ((to.lat  - from.lat) * Math.PI) / 180
+  const Δλ = ((to.lon  - from.lon) * Math.PI) / 180
+  const a  = Math.sin(Δφ / 2) ** 2 + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) ** 2
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+}
+
+/**
  * Enrich restaurants with calculated distance from user coordinates.
- * Only applies when FSQ doesn't return distance (city-level search).
+ * Only applies when the provider doesn't return distance (city-level search).
  *
  * @param {NormalisedRestaurant[]} restaurants
  * @param {{ lat: number, lon: number }} userCoords
@@ -100,9 +115,9 @@ function enrichWithDistance(restaurants, userCoords) {
   if (!userCoords?.lat || !userCoords?.lon) return restaurants
 
   return restaurants.map(r => {
-    if (r.distanceM != null) return r // already has FSQ distance
+    if (r.distanceM != null) return r // already has distance
 
-    const d = fsqProvider.constructor.distanceM(userCoords, r.coordinates)
+    const d = _haversineM(userCoords, r.coordinates)
     const distanceM = isFinite(d) ? Math.round(d) : null
     const distanceLabel = distanceM != null
       ? (distanceM < 1000 ? `${distanceM}m` : `${(distanceM / 1000).toFixed(1)}km`)
@@ -227,33 +242,60 @@ async function searchByCity(city, opts = {}) {
     return { ...cached, cached: true }
   }
 
-  logger.info(`[RestaurantsService] CACHE MISS city="${city}" — fetching from FSQ`)
+  logger.info(`[RestaurantsService] CACHE MISS city="${city}" — fetching from FSQ/OSM`)
 
   // ── Geocode city ──────────────────────────────────────────────────────────
-  const geo = await otmProvider.geocodeCity(city)
+  const geo = await travelApiService.geocodeDestination(city)
   if (!geo) {
     logger.warn(`[RestaurantsService] Cannot geocode city "${city}"`)
     return { restaurants: [], geo: null, total: 0, cached: false }
   }
 
-  // ── FSQ Fetch ─────────────────────────────────────────────────────────────
-  const raw = await fsqProvider.searchByCity({
-    lat:      geo.lat,
-    lon:      geo.lon,
-    city,
-    radiusM:  radius,
-    limit,
-    cuisine,
-    openNow,
-    minPrice,
-    maxPrice,
-  })
+  // ── Dining Fetch with Fallback ────────────────────────────────────────────
+  let raw = []
+  let providerUsed = 'Foursquare'
+
+  const cbState = fsqProvider.circuitBreaker ? await fsqProvider.circuitBreaker.canRequest() : null
+  const cbAllowed = cbState ? cbState.allowed : true
+
+  if (fsqProvider.config?.enabled && cbAllowed) {
+    try {
+      raw = await fsqProvider.searchByCity({
+        lat:      geo.lat,
+        lon:      geo.lon,
+        city,
+        radiusM:  radius,
+        limit,
+        cuisine,
+        openNow,
+        minPrice,
+        maxPrice,
+      })
+    } catch (err) {
+      logger.warn(`[RestaurantsService] Foursquare searchByCity failed, falling back to Overpass: ${err.message}`)
+    }
+  }
+
+  if (!raw || raw.length === 0) {
+    logger.info(`[RestaurantsService] Using keyless Overpass fallback for city="${city}"`)
+    providerUsed = 'OpenStreetMap'
+    try {
+      raw = await osmRestaurantProvider.searchByCity({
+        lat:     geo.lat,
+        lon:     geo.lon,
+        radiusM: radius,
+        limit,
+      })
+    } catch (err) {
+      logger.error(`[RestaurantsService] Overpass fallback failed: ${err.message}`)
+    }
+  }
 
   const userCoords = { lat: geo.lat, lon: geo.lon }
   const enriched   = enrichWithDistance(raw, userCoords)
   const restaurants = sortRestaurants(enriched, userCoords)
 
-  const result = { restaurants, geo, total: restaurants.length, cached: false }
+  const result = { restaurants, geo, total: restaurants.length, cached: false, provider: providerUsed }
 
   // ── Cache store ───────────────────────────────────────────────────────────
   cacheService.set('restaurants:city', cacheRaw, result, TTL.city).catch(err =>
@@ -313,25 +355,52 @@ async function searchNearby(lat, lon, opts = {}) {
     return { ...cached, cached: true }
   }
 
-  logger.info(`[RestaurantsService] CACHE MISS nearby=(${rLat},${rLon}) — fetching from FSQ`)
+  logger.info(`[RestaurantsService] CACHE MISS nearby=(${rLat},${rLon}) — fetching from FSQ/OSM`)
 
-  // ── FSQ Fetch ─────────────────────────────────────────────────────────────
-  const raw = await fsqProvider.searchRestaurants({
-    lat:      rLat,
-    lon:      rLon,
-    radiusM:  radius,
-    limit,
-    query,
-    openNow,
-    minPrice,
-    maxPrice,
-    sort,
-  })
+  // ── Dining Fetch with Fallback ────────────────────────────────────────────
+  let raw = []
+  let providerUsed = 'Foursquare'
+
+  const cbState = fsqProvider.circuitBreaker ? await fsqProvider.circuitBreaker.canRequest() : null
+  const cbAllowed = cbState ? cbState.allowed : true
+
+  if (fsqProvider.config?.enabled && cbAllowed) {
+    try {
+      raw = await fsqProvider.searchRestaurants({
+        lat:      rLat,
+        lon:      rLon,
+        radiusM:  radius,
+        limit,
+        query,
+        openNow,
+        minPrice,
+        maxPrice,
+        sort,
+      })
+    } catch (err) {
+      logger.warn(`[RestaurantsService] Foursquare searchNearby failed, falling back to Overpass: ${err.message}`)
+    }
+  }
+
+  if (!raw || raw.length === 0) {
+    logger.info(`[RestaurantsService] Using keyless Overpass fallback for nearby=(${rLat}, ${rLon})`)
+    providerUsed = 'OpenStreetMap'
+    try {
+      raw = await osmRestaurantProvider.searchRestaurants({
+        lat:     rLat,
+        lon:     rLon,
+        radiusM: radius,
+        limit,
+      })
+    } catch (err) {
+      logger.error(`[RestaurantsService] Overpass fallback failed: ${err.message}`)
+    }
+  }
 
   const userCoords  = { lat: rLat, lon: rLon }
   const restaurants = sortRestaurants(raw, userCoords)
 
-  const result = { restaurants, total: restaurants.length, cached: false }
+  const result = { restaurants, total: restaurants.length, cached: false, provider: providerUsed }
 
   // ── Cache store ───────────────────────────────────────────────────────────
   cacheService.set('restaurants:nearby', cacheRaw, result, TTL.nearby).catch(err =>
@@ -454,7 +523,7 @@ async function getProviderHealth() {
 }
 
 function isProviderEnabled() {
-  return !!fsqProvider.config?.enabled
+  return true // Overpass keyless fallback is always enabled
 }
 
 module.exports = {

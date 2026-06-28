@@ -91,7 +91,7 @@ exports.getAttractions = asyncHandler(async (req, res) => {
   }
 
   // ── Parameter parsing ─────────────────────────────────────────────────
-  const radiusM = Math.min(parseInt(radiusStr, 10) || 5000, 15000)
+  const radiusM = Math.min(parseInt(radiusStr, 10) || 12000, 15000)
   const limit   = Math.min(parseInt(limitStr, 10) || 20, 40)
   const categories = parseCategories(categoriesStr)
 

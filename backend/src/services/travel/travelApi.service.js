@@ -40,6 +40,7 @@ const { enrich }    = require('./planEnricher')
 patchTravelTTLs()
 
 const mapboxProvider = require('./providers/mapbox.provider')
+const nominatimProvider = require('./providers/nominatim.provider')
 
 // ── Mapbox Geocoder ───────────────────────────────────────────────────────
 // Used to convert destination name → lat/lon for proximity-based API calls.
@@ -52,7 +53,7 @@ const mapboxProvider = require('./providers/mapbox.provider')
  * @returns {Promise<{ lat: number, lon: number, name: string } | null>}
  */
 async function geocodeDestination(destination) {
-  const cacheRaw = `nominatim:${destination.trim().toLowerCase()}`
+  const cacheRaw = `nominatim:v2:${destination.trim().toLowerCase()}`
   const cached   = await cacheService.getByNs('travel:geocode', cacheRaw)
 
   if (cached) {
@@ -60,20 +61,36 @@ async function geocodeDestination(destination) {
     return cached
   }
 
-  travelLogger.info('Mapbox', `Geocoding "${destination}"`)
-
-  try {
-    const result = await mapboxProvider.geocode(destination)
-    if (result) {
-      await cacheService.set('travel:geocode', cacheRaw, result.coordinates)
-      travelLogger.info('Mapbox', `✅ Geocoded "${destination}" → (${result.coordinates.lat}, ${result.coordinates.lon})`)
-      return { lat: result.coordinates.lat, lon: result.coordinates.lon, name: result.name, country: result.country }
+  // 1. Try Mapbox if enabled
+  if (mapboxProvider.config?.enabled) {
+    travelLogger.info('Mapbox', `Geocoding "${destination}"`)
+    try {
+      const result = await mapboxProvider.geocode(destination)
+      if (result) {
+        const coords = { lat: result.coordinates.lat, lon: result.coordinates.lon, name: result.name, country: result.country }
+        await cacheService.set('travel:geocode', cacheRaw, coords)
+        travelLogger.info('Mapbox', `✅ Geocoded "${destination}" → (${result.coordinates.lat}, ${result.coordinates.lon})`)
+        return coords
+      }
+    } catch (err) {
+      travelLogger.warn('Mapbox', `Geocoding failed for "${destination}": ${err.message}`)
     }
-    return null
-  } catch (err) {
-    travelLogger.warn('Mapbox', `Geocoding failed for "${destination}": ${err.message}`)
-    return null
   }
+
+  // 2. Fallback to Nominatim (always enabled)
+  travelLogger.info('Nominatim', `Geocoding fallback for "${destination}"`)
+  try {
+    const result = await nominatimProvider.geocode(destination)
+    if (result) {
+      const coords = { lat: result.lat, lon: result.lon, name: result.name, country: result.country }
+      await cacheService.set('travel:geocode', cacheRaw, coords)
+      return coords
+    }
+  } catch (err) {
+    travelLogger.warn('Nominatim', `Geocoding failed for "${destination}": ${err.message}`)
+  }
+
+  return null
 }
 
 // Removed _nominatimSearch
