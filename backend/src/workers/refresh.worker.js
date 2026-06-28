@@ -9,6 +9,10 @@ const processor = async (job) => {
   logger.info(`[Refresh Worker] Processing job ${job.id} - Action: ${action}`);
 
   if (action === 'warm-all') {
+    if (process.env.ENABLE_CACHE_WARMING !== 'true') {
+      logger.info(`[Refresh Worker] Cache warming is disabled via environment variable. Skipping.`);
+      return;
+    }
     await cacheWarmer.warmAll();
   } else {
     throw new Error(`Unsupported action: ${action}`);

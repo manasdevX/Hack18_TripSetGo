@@ -46,14 +46,24 @@ const PREFERENCES = [
   { value: 'history',     label: '🏰 History' },
 ]
 
+const POPULAR_CITIES = [
+  // India
+  'Delhi', 'Mumbai', 'Bengaluru', 'Goa', 'Jaipur', 'Hyderabad',
+  'Srinagar', 'Kochi', 'Varanasi', 'Chennai', 'Kolkata', 'Pune',
+  'Ahmedabad', 'Udaipur', 'Agra', 'Amritsar', 'Dehradun', 'Shimla',
+  // Asia & Middle East
+  'Dubai', 'Singapore', 'Bangkok', 'Tokyo', 'Bali', 'Maldives',
+  'Kuala Lumpur', 'Hong Kong', 'Kathmandu', 'Colombo',
+  // Europe & Americas
+  'London', 'Paris', 'New York', 'Rome', 'Amsterdam', 'Barcelona',
+  'Sydney', 'Melbourne', 'Toronto', 'Los Angeles', 'San Francisco'
+];
+
 function CityAutocomplete({ value, onChange, placeholder, icon: Icon }) {
   const [query, setQuery] = useState(value || '');
   const [prevValue, setPrevValue] = useState(value);
-  const [suggestions, setSuggestions] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
   const wrapperRef = useRef(null);
-  const ignoreNextFetch = useRef(false);
 
   if (value !== prevValue) {
     setPrevValue(value);
@@ -70,38 +80,12 @@ function CityAutocomplete({ value, onChange, placeholder, icon: Icon }) {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  useEffect(() => {
-    if (!query || query.length < 2) {
-      return;
-    }
-    if (ignoreNextFetch.current) {
-      ignoreNextFetch.current = false;
-      return;
-    }
-    const timer = setTimeout(async () => {
-      setLoading(true);
-      try {
-        const token = import.meta.env.VITE_MAPBOX_TOKEN;
-        if (!token) return;
-        const res = await fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?types=place,locality,neighborhood&access_token=${token}&limit=5`);
-        const data = await res.json();
-        if (data.features) {
-          setSuggestions(data.features);
-          setIsOpen(true);
-        }
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    }, 400);
-    return () => clearTimeout(timer);
-  }, [query, value]);
-
-  const showSuggestions = isOpen && suggestions.length > 0 && query && query.length >= 2;
+  const filtered = POPULAR_CITIES.filter(c =>
+    c.toLowerCase().includes((query || '').toLowerCase())
+  );
 
   return (
-    <div ref={wrapperRef} style={{ position: 'relative' }}>
+    <div ref={wrapperRef} style={{ position: 'relative', width: '100%' }}>
       <Icon size={14} className={plannerInputIconClass} />
       <input
         className={plannerInputClass}
@@ -112,50 +96,47 @@ function CityAutocomplete({ value, onChange, placeholder, icon: Icon }) {
           const val = e.target.value;
           setQuery(val);
           onChange(val);
-          if (!val || val.length < 2) {
-             setSuggestions([]);
-             setIsOpen(false);
-          }
         }}
-        onFocus={() => { if (suggestions.length > 0) setIsOpen(true); }}
+        onFocus={() => setIsOpen(true)}
+        onBlur={() => setTimeout(() => setIsOpen(false), 150)}
       />
-      {loading && (
-        <div style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)' }}>
-          <div style={{ width: 14, height: 14, border: '2px solid rgba(255,255,255,0.2)', borderTopColor: '#0EA5E9', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
-        </div>
-      )}
-      {showSuggestions && (
+      {isOpen && filtered.length > 0 && (
         <div style={{
-          position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50, marginTop: 4,
-          background: 'rgba(26,31,47,0.95)', backdropFilter: 'blur(10px)',
-          border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, overflow: 'hidden',
-          boxShadow: '0 10px 30px rgba(0,0,0,0.5)'
+          position: 'absolute',
+          top: '100%',
+          left: 0,
+          right: 0,
+          marginTop: '0.4rem',
+          background: '#0F172A',
+          border: '1px solid rgba(255,255,255,0.08)',
+          borderRadius: '12px',
+          boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.5)',
+          zIndex: 999,
+          maxHeight: '300px',
+          overflowY: 'auto'
         }}>
-          {suggestions.map((s, i) => {
-            const mainText = s.text;
-            let subText = s.place_name.replace(mainText, '').trim();
-            if (subText.startsWith(',')) subText = subText.substring(1).trim();
-            return (
-              <div
-                key={s.id || i}
-                onClick={() => {
-                  ignoreNextFetch.current = true;
-                  onChange(mainText);
-                  setQuery(mainText);
-                  setIsOpen(false);
-                }}
-                style={{
-                  padding: '10px 16px', fontSize: '0.85rem', color: 'rgba(255,255,255,0.8)', cursor: 'pointer',
-                  borderBottom: i < suggestions.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none',
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
-                onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
-              >
-                <div style={{ fontWeight: 600, color: 'white' }}>{mainText}</div>
-                {subText && <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: 2 }}>{subText}</div>}
-              </div>
-            )
-          })}
+          {filtered.map(c => (
+            <div
+              key={c}
+              onMouseDown={() => {
+                setQuery(c);
+                onChange(c);
+                setIsOpen(false);
+              }}
+              style={{
+                padding: '0.625rem 1rem',
+                fontSize: '0.85rem',
+                color: 'var(--color-text-primary)',
+                cursor: 'pointer',
+                borderBottom: '1px solid rgba(255,255,255,0.02)',
+                transition: 'background 0.15s'
+              }}
+              onMouseEnter={e => e.target.style.background = 'rgba(255,255,255,0.05)'}
+              onMouseLeave={e => e.target.style.background = 'transparent'}
+            >
+              📍 {c}
+            </div>
+          ))}
         </div>
       )}
     </div>
@@ -226,18 +207,60 @@ export default function TripForm({ form, onSubmit, onChange, loading }) {
               <CityAutocomplete
                 value={form.source}
                 onChange={(val) => onChange({ source: val })}
-                placeholder="e.g. Mumbai"
+                placeholder="Origin"
                 icon={MapPin}
               />
+              <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap', marginTop: '0.4rem' }}>
+                {['Delhi', 'Mumbai', 'Bengaluru'].map(c => (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => onChange({ source: c })}
+                    style={{
+                      fontSize: '0.7rem',
+                      background: 'rgba(255,255,255,0.03)',
+                      border: '1px solid var(--color-border)',
+                      borderRadius: '99px',
+                      padding: '0.15rem 0.45rem',
+                      color: 'var(--color-text-secondary)',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s'
+                    }}
+                  >
+                    {c}
+                  </button>
+                ))}
+              </div>
             </div>
             <div className={plannerInputGroupClass}>
               <label>Destination To</label>
               <CityAutocomplete
                 value={form.destination}
                 onChange={(val) => onChange({ destination: val })}
-                placeholder="e.g. Goa"
+                placeholder="Destination"
                 icon={Plane}
               />
+              <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap', marginTop: '0.4rem' }}>
+                {['Goa', 'Jaipur', 'Hyderabad'].map(c => (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => onChange({ destination: c })}
+                    style={{
+                      fontSize: '0.7rem',
+                      background: 'rgba(255,255,255,0.03)',
+                      border: '1px solid var(--color-border)',
+                      borderRadius: '99px',
+                      padding: '0.15rem 0.45rem',
+                      color: 'var(--color-text-secondary)',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s'
+                    }}
+                  >
+                    {c}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>

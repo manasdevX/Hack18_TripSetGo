@@ -130,6 +130,37 @@ class FoursquareAttractionProvider extends BaseProvider {
     })
   }
 
+  async getAttractionDetail(fsqId) {
+    if (!this.config.enabled) return null
+    if (!fsqId?.trim()) return null
+
+    const cacheRaw = `fsq:attr:detail:${fsqId}`
+
+    return this.fetchWithCache('attractions:detail', cacheRaw, async () => {
+      travelLogger.info(this.name, `Fetching detail for attraction fsqId="${fsqId}"`)
+
+      try {
+        const detail = await this.request(`/places/${encodeURIComponent(fsqId)}`, {
+          fields: FSQ_LIST_FIELDS,
+        })
+
+        if (!detail?.fsq_id) {
+          travelLogger.warn(this.name, `Empty detail response for fsqId="${fsqId}"`)
+          return null
+        }
+
+        const normalised = adapter.normalise(detail)
+        await this.circuitBreaker.recordSuccess()
+        travelLogger.info(this.name, `✅ Attraction detail fetched for "${normalised?.name || fsqId}"`)
+        return normalised
+      } catch (err) {
+        travelLogger.warn(this.name, `getAttractionDetail failed for "${fsqId}": ${err.message}`)
+        await this.circuitBreaker.recordFailure(err)
+        return null
+      }
+    })
+  }
+
   // ── BaseProvider abstract stubs ────────────────────────────────────────────
   async fetchHotels()  { return [] }
   async fetchWeather() { return null }

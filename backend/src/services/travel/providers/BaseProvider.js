@@ -61,6 +61,12 @@ class BaseProvider {
    * @returns {Promise<Object>} — Parsed JSON response
    */
   async request(path, params = {}, headers = {}) {
+    // 0. API keys check (skip if all keys are suspended)
+    if (this.keyRotator.keys.length > 0 && !this.keyRotator.hasAvailableKeys()) {
+      travelLogger.warn(this.name, `All API keys are suspended — skipping request`, { path })
+      throw new Error(`${this.name}: All API keys are suspended`)
+    }
+
     // 1. Circuit Breaker check
     const { allowed, state } = await this.circuitBreaker.canRequest()
     if (!allowed) {

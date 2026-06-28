@@ -1,10 +1,14 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plane, CloudRain, MapPin, Utensils, Search } from 'lucide-react';
 import { travelApi } from '@/services/travelApi';
 import Input from '@/components/common/Input';
 import Button from '@/components/common/Button';
 import Loader from '@/components/common/Loader';
+import { useMapbox } from '@/hooks/useMapbox';
+import MapContainer from '@/components/map/MapContainer';
+import MapMarker from '@/components/map/MapMarker';
+import MapPopup from '@/components/map/MapPopup';
 
 const TABS = [
   { id: 'flights', label: 'Flights', icon: Plane, color: '#0EA5E9' },
@@ -12,6 +16,12 @@ const TABS = [
   { id: 'places', label: 'Attractions', icon: MapPin, color: '#8B5CF6' },
   { id: 'dining', label: 'Dining', icon: Utensils, color: '#10B981' },
 ];
+
+const DEFAULT_IMAGES = {
+  Hotel: 'https://placehold.co/400x400/111827/94a3b8?text=Hotel',
+  Restaurant: 'https://placehold.co/400x400/111827/94a3b8?text=Restaurant',
+  Attraction: 'https://placehold.co/400x400/111827/94a3b8?text=Attraction'
+};
 
 export default function Explore() {
   const [activeTab, setActiveTab] = useState('flights');
@@ -106,12 +116,71 @@ const CITY_IATA_MAP = {
   'munich': 'MUC', 'dublin': 'DUB', 'athens': 'ATH',
 };
 
+const RECOMMEND_CITIES = [
+  // India
+  'Delhi', 'Mumbai', 'Bengaluru', 'Goa', 'Jaipur', 'Hyderabad',
+  'Srinagar', 'Kochi', 'Varanasi', 'Chennai', 'Kolkata', 'Pune',
+  'Ahmedabad', 'Udaipur', 'Agra', 'Amritsar', 'Dehradun', 'Shimla',
+  // Asia & Middle East
+  'Dubai', 'Singapore', 'Bangkok', 'Tokyo', 'Bali', 'Maldives',
+  'Kuala Lumpur', 'Hong Kong', 'Kathmandu', 'Colombo',
+  // Europe & Americas
+  'London', 'Paris', 'New York', 'Rome', 'Amsterdam', 'Barcelona',
+  'Sydney', 'Melbourne', 'Toronto', 'Los Angeles', 'San Francisco'
+];
+
+function SuggestionsDropdown({ query, onSelect }) {
+  const filtered = RECOMMEND_CITIES.filter(c =>
+    c.toLowerCase().includes((query || '').toLowerCase())
+  );
+
+  if (filtered.length === 0) return null;
+
+  return (
+    <div style={{
+      position: 'absolute',
+      top: '100%',
+      left: 0,
+      right: 0,
+      marginTop: '0.4rem',
+      background: '#0F172A',
+      border: '1px solid rgba(255,255,255,0.08)',
+      borderRadius: '12px',
+      boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.5)',
+      zIndex: 999,
+      maxHeight: '300px',
+      overflowY: 'auto'
+    }}>
+      {filtered.map(c => (
+        <div
+          key={c}
+          onMouseDown={() => onSelect(c)}
+          style={{
+            padding: '0.625rem 1rem',
+            fontSize: '0.85rem',
+            color: 'var(--color-text-primary)',
+            cursor: 'pointer',
+            borderBottom: '1px solid rgba(255,255,255,0.02)',
+            transition: 'background 0.15s'
+          }}
+          onMouseEnter={e => e.target.style.background = 'rgba(255,255,255,0.05)'}
+          onMouseLeave={e => e.target.style.background = 'transparent'}
+        >
+          📍 {c}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function FlightsTab() {
   const [form, setForm] = useState({ origin: '', destination: '', date: '', adults: 1, travelClass: 'ECONOMY' });
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState(null);
   const [error, setError] = useState(null);
   const [resolvedCodes, setResolvedCodes] = useState({ origin: null, destination: null });
+  const [showOriginSuggest, setShowOriginSuggest] = useState(false);
+  const [showDestSuggest, setShowDestSuggest] = useState(false);
 
   // Resolve a city name or IATA code to an IATA code
   const resolveToIata = async (input) => {
@@ -174,12 +243,48 @@ function FlightsTab() {
       <form onSubmit={handleSearch} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
         <div>
           <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--color-text-secondary)', marginBottom: '0.4rem' }}>Origin</label>
-          <Input placeholder="Delhi, DEL, Mumbai..." value={form.origin} onChange={e => setForm({...form, origin: e.target.value})} required />
+          <div style={{ position: 'relative' }}>
+            <Input
+              placeholder="Origin"
+              value={form.origin}
+              onChange={e => setForm({...form, origin: e.target.value})}
+              onFocus={() => setShowOriginSuggest(true)}
+              onBlur={() => setTimeout(() => setShowOriginSuggest(false), 150)}
+              required
+            />
+            {showOriginSuggest && (
+              <SuggestionsDropdown
+                query={form.origin}
+                onSelect={c => {
+                  setForm(f => ({ ...f, origin: c }));
+                  setShowOriginSuggest(false);
+                }}
+              />
+            )}
+          </div>
           {resolvedCodes.origin && <span style={{ fontSize: '0.7rem', color: 'var(--color-accent-blue)', marginTop: '0.25rem', display: 'block' }}>✓ Resolved: {resolvedCodes.origin}</span>}
         </div>
         <div>
           <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--color-text-secondary)', marginBottom: '0.4rem' }}>Destination</label>
-          <Input placeholder="Hyderabad, BOM, Goa..." value={form.destination} onChange={e => setForm({...form, destination: e.target.value})} required />
+          <div style={{ position: 'relative' }}>
+            <Input
+              placeholder="Destination"
+              value={form.destination}
+              onChange={e => setForm({...form, destination: e.target.value})}
+              onFocus={() => setShowDestSuggest(true)}
+              onBlur={() => setTimeout(() => setShowDestSuggest(false), 150)}
+              required
+            />
+            {showDestSuggest && (
+              <SuggestionsDropdown
+                query={form.destination}
+                onSelect={c => {
+                  setForm(f => ({ ...f, destination: c }));
+                  setShowDestSuggest(false);
+                }}
+              />
+            )}
+          </div>
           {resolvedCodes.destination && <span style={{ fontSize: '0.7rem', color: 'var(--color-accent-blue)', marginTop: '0.25rem', display: 'block' }}>✓ Resolved: {resolvedCodes.destination}</span>}
         </div>
         <div>
@@ -240,6 +345,7 @@ function WeatherTab() {
   const [loading, setLoading] = useState(false);
   const [weather, setWeather] = useState(null);
   const [error, setError] = useState(null);
+  const [showSuggest, setShowSuggest] = useState(false);
 
   const handleSearch = async (e) => {
     e.preventDefault();
@@ -258,13 +364,31 @@ function WeatherTab() {
 
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
-      <form onSubmit={handleSearch} style={{ display: 'flex', gap: '1rem', marginBottom: '2rem' }}>
-        <div style={{ flex: 1 }}>
-          <Input placeholder="Enter city (e.g. Goa, Mumbai)" value={city} onChange={e => setCity(e.target.value)} required />
+      <form onSubmit={handleSearch} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '2rem' }}>
+        <div style={{ display: 'flex', gap: '1rem' }}>
+          <div style={{ flex: 1, position: 'relative' }}>
+            <Input
+              placeholder="City"
+              value={city}
+              onChange={e => setCity(e.target.value)}
+              onFocus={() => setShowSuggest(true)}
+              onBlur={() => setTimeout(() => setShowSuggest(false), 150)}
+              required
+            />
+            {showSuggest && (
+              <SuggestionsDropdown
+                query={city}
+                onSelect={c => {
+                  setCity(c);
+                  setShowSuggest(false);
+                }}
+              />
+            )}
+          </div>
+          <Button type="submit" disabled={loading} style={{ background: '#F59E0B', borderColor: '#F59E0B', display: 'flex', gap: '0.5rem' }}>
+            {loading ? <div className="animate-spin" style={{ width: 16, height: 16, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: 'white', borderRadius: '50%' }} /> : <Search size={16} />} Check Weather
+          </Button>
         </div>
-        <Button type="submit" disabled={loading} style={{ background: '#F59E0B', borderColor: '#F59E0B', display: 'flex', gap: '0.5rem' }}>
-          {loading ? <div className="animate-spin" style={{ width: 16, height: 16, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: 'white', borderRadius: '50%' }} /> : <Search size={16} />} Check Weather
-        </Button>
       </form>
 
       {error && <div style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', padding: '1rem', borderRadius: 12, border: '1px solid rgba(239, 68, 68, 0.2)' }}>{error}</div>}
@@ -302,6 +426,69 @@ function WeatherTab() {
   )
 }
 
+// ── EXPLORE MAP COMPONENT ───────────────────────────────────────────────────
+function ExploreMap({ places, coords, type }) {
+  const isAttr = type === 'attractions';
+  const { mapRef, mapContainerRef, map, mapLoaded } = useMapbox({
+    style: 'mapbox://styles/mapbox/streets-v12',
+    center: coords || [78.9629, 20.5937],
+    zoom: coords ? 13 : 4,
+  })
+  
+  const [selectedEntity, setSelectedEntity] = useState(null)
+
+  // Fly to new coordinates when city search changes
+  useEffect(() => {
+    if (map && coords) {
+      map.flyTo({ center: coords, zoom: 13, speed: 1.5 })
+    }
+  }, [map, coords])
+
+  // Normalise places to map markers format
+  const markers = (places || []).map((place, idx) => {
+    const lat = place.coordinates?.lat;
+    const lon = place.coordinates?.lon;
+    if (!lat || !lon) return null;
+    return {
+      _id: place.id || place.fsqId || `${type}-${idx}`,
+      _entityType: isAttr ? 'Attraction' : 'Restaurant',
+      name: place.name,
+      location: { type: 'Point', coordinates: [lon, lat] },
+      address: place.address || '',
+      category: place.category || (isAttr ? 'Attraction' : 'Restaurant'),
+      averageRating: place.rating || 0,
+      image: place.photo || place.image || DEFAULT_IMAGES[isAttr ? 'Attraction' : 'Restaurant'],
+      priceInfo: place.priceTier ? { level: place.priceTier } : null,
+      isOpenNow: place.isOpen ?? null,
+    }
+  }).filter(Boolean);
+
+  return (
+    <div style={{ height: 500, borderRadius: 16, overflow: 'hidden', border: '1px solid var(--color-border)', position: 'relative' }}>
+      <MapContainer ref={mapContainerRef} className="h-full">
+        {map && mapLoaded && markers.map((marker) => (
+          <MapMarker
+            key={marker._id}
+            map={map}
+            coordinates={marker.location.coordinates}
+            type={marker._entityType}
+            data={marker}
+            onClick={setSelectedEntity}
+          />
+        ))}
+
+        {map && mapLoaded && selectedEntity && (
+          <MapPopup
+            map={map}
+            entity={selectedEntity}
+            onClose={() => setSelectedEntity(null)}
+          />
+        )}
+      </MapContainer>
+    </div>
+  )
+}
+
 // ── PLACES TAB (Attractions & Restaurants) ──────────────────────────────────
 function PlacesTab({ type }) {
   const isAttr = type === 'attractions';
@@ -310,17 +497,31 @@ function PlacesTab({ type }) {
   const [city, setCity] = useState('');
   const [loading, setLoading] = useState(false);
   const [places, setPlaces] = useState(null);
+  const [coords, setCoords] = useState(null);
+  const [viewMode, setViewMode] = useState('grid');
   const [error, setError] = useState(null);
+  const [showSuggest, setShowSuggest] = useState(false);
 
   const handleSearch = async (e) => {
     e.preventDefault();
     if (!city) return;
-    setLoading(true); setError(null); setPlaces(null);
+    setLoading(true); setError(null); setPlaces(null); setCoords(null);
     try {
       const res = isAttr 
         ? await travelApi.searchAttractionsByCity(city) 
         : await travelApi.searchRestaurantsByCity(city);
-      setPlaces(isAttr ? res.data.data.attractions : res.data.data.restaurants);
+      
+      if (isAttr) {
+        setPlaces(res.data.data.attractions);
+        if (res.data.data.coordinates) {
+          setCoords([res.data.data.coordinates.lon, res.data.data.coordinates.lat]);
+        }
+      } else {
+        setPlaces(res.data.data.restaurants);
+        if (res.data.data.geo) {
+          setCoords([res.data.data.geo.lon, res.data.data.geo.lat]);
+        }
+      }
     } catch (err) {
       setError(err.response?.data?.message || `Failed to fetch ${type}`);
     } finally {
@@ -330,13 +531,31 @@ function PlacesTab({ type }) {
 
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
-      <form onSubmit={handleSearch} style={{ display: 'flex', gap: '1rem', marginBottom: '2rem' }}>
-        <div style={{ flex: 1 }}>
-          <Input placeholder={`Enter city to find ${type}...`} value={city} onChange={e => setCity(e.target.value)} required />
+      <form onSubmit={handleSearch} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '2rem' }}>
+        <div style={{ display: 'flex', gap: '1rem' }}>
+          <div style={{ flex: 1, position: 'relative' }}>
+            <Input
+              placeholder="City"
+              value={city}
+              onChange={e => setCity(e.target.value)}
+              onFocus={() => setShowSuggest(true)}
+              onBlur={() => setTimeout(() => setShowSuggest(false), 150)}
+              required
+            />
+            {showSuggest && (
+              <SuggestionsDropdown
+                query={city}
+                onSelect={c => {
+                  setCity(c);
+                  setShowSuggest(false);
+                }}
+              />
+            )}
+          </div>
+          <Button type="submit" disabled={loading} style={{ background: color, borderColor: color, display: 'flex', gap: '0.5rem' }}>
+            {loading ? <div className="animate-spin" style={{ width: 16, height: 16, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: 'white', borderRadius: '50%' }} /> : <Search size={16} />} Find {isAttr ? 'Attractions' : 'Dining'}
+          </Button>
         </div>
-        <Button type="submit" disabled={loading} style={{ background: color, borderColor: color, display: 'flex', gap: '0.5rem' }}>
-          {loading ? <div className="animate-spin" style={{ width: 16, height: 16, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: 'white', borderRadius: '50%' }} /> : <Search size={16} />} Find {isAttr ? 'Attractions' : 'Dining'}
-        </Button>
       </form>
 
       {error && <div style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', padding: '1rem', borderRadius: 12, border: '1px solid rgba(239, 68, 68, 0.2)' }}>{error}</div>}
@@ -344,34 +563,73 @@ function PlacesTab({ type }) {
       {places && places.length === 0 && <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--color-text-muted)' }}>No {type} found in this area.</div>}
 
       {places && places.length > 0 && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.25rem' }}>
-          {places.map((place, idx) => (
-            <div key={idx} style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--color-border)', borderRadius: 16, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-              <div style={{ height: 160, background: place.photo ? `url(${place.photo}) center/cover` : 'var(--color-bg-card)', borderBottom: '1px solid var(--color-border)', display: 'flex', alignItems: 'flex-end', padding: '1rem', position: 'relative' }}>
-                {!place.photo && <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-text-muted)', opacity: 0.5 }}><MapPin size={32} /></div>}
-                {place.rating > 0 && (
-                  <span style={{ background: 'rgba(0,0,0,0.7)', color: '#FCD34D', padding: '0.2rem 0.6rem', borderRadius: 99, fontSize: '0.75rem', fontWeight: 700, backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
-                    ★ {place.rating}
-                  </span>
-                )}
-              </div>
-              <div style={{ padding: '1.25rem', flex: 1, display: 'flex', flexDirection: 'column' }}>
-                <h4 style={{ fontWeight: 700, fontSize: '1.1rem', marginBottom: '0.25rem' }} className="line-clamp-1" title={place.name}>{place.name}</h4>
-                <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.85rem', marginBottom: '0.75rem', textTransform: 'capitalize' }} className="line-clamp-1">{place.category}</p>
-                {place.address && <p style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', marginBottom: '1rem', display: 'flex', gap: '0.375rem', alignItems: 'flex-start' }}><MapPin size={12} style={{ marginTop: 2, flexShrink: 0 }} /> <span className="line-clamp-2">{place.address}</span></p>}
-                
-                <div style={{ marginTop: 'auto', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                  {!isAttr && place.priceTier > 0 && (
-                    <span style={{ fontSize: '0.75rem', background: 'rgba(255,255,255,0.05)', padding: '0.2rem 0.5rem', borderRadius: 6, color: '#10B981', fontWeight: 600 }}>{'$'.repeat(place.priceTier)}</span>
-                  )}
-                  {place.isOpen !== undefined && (
-                    <span style={{ fontSize: '0.75rem', background: place.isOpen ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)', color: place.isOpen ? '#10B981' : '#EF4444', padding: '0.2rem 0.5rem', borderRadius: 6, fontWeight: 600 }}>{place.isOpen ? 'Open Now' : 'Closed'}</span>
-                  )}
+        <>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginBottom: '1.25rem' }}>
+            <button
+              onClick={() => setViewMode('grid')}
+              style={{
+                padding: '0.4rem 0.8rem', borderRadius: 8, fontSize: '0.8rem', fontWeight: 600,
+                background: viewMode === 'grid' ? color : 'rgba(255,255,255,0.03)',
+                color: viewMode === 'grid' ? '#0b1020' : 'var(--color-text-secondary)',
+                border: '1px solid rgba(255,255,255,0.08)', cursor: 'pointer', transition: 'all 0.2s'
+              }}
+            >
+              Grid View
+            </button>
+            <button
+              onClick={() => setViewMode('map')}
+              style={{
+                padding: '0.4rem 0.8rem', borderRadius: 8, fontSize: '0.8rem', fontWeight: 600,
+                background: viewMode === 'map' ? color : 'rgba(255,255,255,0.03)',
+                color: viewMode === 'map' ? '#0b1020' : 'var(--color-text-secondary)',
+                border: '1px solid rgba(255,255,255,0.08)', cursor: 'pointer', transition: 'all 0.2s'
+              }}
+            >
+              Map View
+            </button>
+          </div>
+
+          {viewMode === 'grid' ? (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.25rem' }}>
+              {places.map((place, idx) => (
+                <div key={idx} style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--color-border)', borderRadius: 16, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                  <div style={{ height: 160, borderBottom: '1px solid var(--color-border)', display: 'flex', alignItems: 'flex-end', padding: '1rem', position: 'relative', overflow: 'hidden' }}>
+                    <img
+                      src={place.photo || DEFAULT_IMAGES[isAttr ? 'Attraction' : 'Restaurant']}
+                      alt={place.name}
+                      style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', zIndex: 0 }}
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = DEFAULT_IMAGES[isAttr ? 'Attraction' : 'Restaurant'];
+                      }}
+                    />
+                    {place.rating > 0 && (
+                      <span style={{ position: 'relative', zIndex: 1, background: 'rgba(0,0,0,0.7)', color: '#FCD34D', padding: '0.2rem 0.6rem', borderRadius: 99, fontSize: '0.75rem', fontWeight: 700, backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
+                        ★ {place.rating}
+                      </span>
+                    )}
+                  </div>
+                  <div style={{ padding: '1.25rem', flex: 1, display: 'flex', flexDirection: 'column' }}>
+                    <h4 style={{ fontWeight: 700, fontSize: '1.1rem', marginBottom: '0.25rem' }} className="line-clamp-1" title={place.name}>{place.name}</h4>
+                    <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.85rem', marginBottom: '0.75rem', textTransform: 'capitalize' }} className="line-clamp-1">{place.category}</p>
+                    {place.address && <p style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', marginBottom: '1rem', display: 'flex', gap: '0.375rem', alignItems: 'flex-start' }}><MapPin size={12} style={{ marginTop: 2, flexShrink: 0 }} /> <span className="line-clamp-2">{place.address}</span></p>}
+                    
+                    <div style={{ marginTop: 'auto', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                      {!isAttr && place.priceTier > 0 && (
+                        <span style={{ fontSize: '0.75rem', background: 'rgba(255,255,255,0.05)', padding: '0.2rem 0.5rem', borderRadius: 6, color: '#10B981', fontWeight: 600 }}>{'$'.repeat(place.priceTier)}</span>
+                      )}
+                      {place.isOpen !== undefined && (
+                        <span style={{ fontSize: '0.75rem', background: place.isOpen ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)', color: place.isOpen ? '#10B981' : '#EF4444', padding: '0.2rem 0.5rem', borderRadius: 6, fontWeight: 600 }}>{place.isOpen ? 'Open Now' : 'Closed'}</span>
+                      )}
+                    </div>
+                  </div>
                 </div>
-              </div>
+              ))}
             </div>
-          ))}
-        </div>
+          ) : (
+            <ExploreMap places={places} coords={coords} type={type} />
+          )}
+        </>
       )}
     </motion.div>
   )

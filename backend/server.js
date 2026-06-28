@@ -86,7 +86,7 @@ connectDB().then(async () => {
       }
 
       // 2. Cache warming (repeat every 25m, run once on boot after 15s)
-      if (queueService.refreshQueue) {
+      if (queueService.refreshQueue && process.env.ENABLE_CACHE_WARMING === 'true') {
         await queueService.addJob('refresh', 'warm-all', { action: 'warm-all' }, {
           repeat: { every: 25 * 60 * 1000 }
         })
@@ -115,4 +115,4 @@ process.on('unhandledRejection', (err) => {
   server.close(() => {
     process.exit(1)
   })
-})
+})// force reload 6

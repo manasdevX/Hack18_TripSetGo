@@ -21,8 +21,8 @@ function buildQuery(lat, lon, radiusM, limit) {
   return `
 [out:json][timeout:15];
 (
-  node["amenity"~"^(restaurant|cafe|fast_food|pub|bar|food_court)$"]${around};
-  way["amenity"~"^(restaurant|cafe|fast_food|pub|bar|food_court)$"]${around};
+  node["amenity"~"^(restaurant|cafe|fast_food|pub|bar|food_court)$"]["name"]${around};
+  way["amenity"~"^(restaurant|cafe|fast_food|pub|bar|food_court)$"]["name"]${around};
 );
 out center tags ${limit};
 `.trim()

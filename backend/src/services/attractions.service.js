@@ -28,7 +28,11 @@
 //   - `lastFetchedAt` tracks data freshness
 //   - DB errors are logged and swallowed — never block the API response
 // ─────────────────────────────────────────────────────────────────────────────
-const otmProvider   = require('./travel/providers/opentripmap.provider')
+const overpassProvider      = require('./travel/providers/overpass.provider')
+const fsqAttrProvider       = require('./travel/providers/foursquare.attraction.provider')
+const travelApiService      = require('./travel/travelApi.service')
+const attractionAgg         = require('./travel/aggregators/attractions.aggregator')
+const providerRegistry      = require('./travel/providerRegistry')
 const cacheService  = require('./cache.service')
 const Attraction    = require('../models/Attraction.model')
 const logger        = require('../utils/logger')
@@ -85,38 +89,43 @@ function sortAttractions(attractions) {
  * @param {string} [city]  — Optional city tag for the record
  */
 async function persistAttractions(attractions, city) {
-  const withXid = attractions.filter(a => a.xid)
-  if (!withXid.length) return
+  const withId = attractions.filter(a => a.xid || a.id)
+  if (!withId.length) return
 
-  const ops = withXid.map(a => ({
-    updateOne: {
-      filter: { xid: a.xid },
-      update: {
-        $set: {
-          name:             a.name,
-          category:         a.category,
-          description:      a.description || undefined,
-          location: {
-            type:        'Point',
-            coordinates: [a.coordinates.lon, a.coordinates.lat],
+  const ops = withId.map(a => {
+    const xid = a.xid || a.id
+    const lon = a.coordinates?.lon || a.coordinates?.lng || 0
+    const lat = a.coordinates?.lat || 0
+    return {
+      updateOne: {
+        filter: { xid },
+        update: {
+          $set: {
+            name:             a.name,
+            category:         a.category,
+            description:      a.description || undefined,
+            location: {
+              type:        'Point',
+              coordinates: [lon, lat],
+            },
+            city:             city || a.city || a.address?.split(',').pop()?.trim() || 'Unknown',
+            images:           a.images?.length ? a.images : (a.image ? [a.image] : []),
+            popularityScore:  a.popularityScore || 0,
+            kinds:            a.tags || [],
+            website:          a.website || undefined,
+            wikidata:         a.wikidata || undefined,
+            wikipedia:        a.wikipedia || undefined,
+            address:          a.address || undefined,
+            phone:            a.phone || undefined,
+            openingHours:     a.openingHours || undefined,
+            source:           a.source || 'OpenStreetMap',
+            lastFetchedAt:    new Date(),
           },
-          city:             city || a.address?.split(',').pop()?.trim() || 'Unknown',
-          images:           a.images?.length ? a.images : (a.image ? [a.image] : []),
-          popularityScore:  a.popularityScore,
-          kinds:            a.tags || [],
-          website:          a.website || undefined,
-          wikidata:         a.wikidata || undefined,
-          wikipedia:        a.wikipedia || undefined,
-          address:          a.address || undefined,
-          phone:            a.phone || undefined,
-          openingHours:     a.openingHours || undefined,
-          source:           a.source || 'OpenTripMap',
-          lastFetchedAt:    new Date(),
         },
+        upsert: true,
       },
-      upsert: true,
-    },
-  }))
+    }
+  })
 
   try {
     const result = await Attraction.bulkWrite(ops, { ordered: false })
@@ -151,12 +160,10 @@ async function searchByCategory(city, categoryIds, opts = {}) {
 
   logger.info(`[AttractionsService] CACHE MISS category="${categoryIds}" city="${city}"`)
 
-  // Reuse geocodeCity logic from hotels or travelApi, or just rely on OTM for geocoding
-  // Since we already have OTM for city→lat/lon, let's use it
-  const { geo } = await otmProvider.fetchAttractionsByCity({ city, radiusM: 1000, limit: 1 })
+  // Geocode city to lat/lon using our Nominatim/Mapbox geocoder
+  const geo = await travelApiService.geocodeDestination(city)
   if (!geo) return { attractions: [], geo: null, total: 0, cached: false }
 
-  const fsqAttrProvider = require('./travel/providers/foursquare.attraction.provider')
   const attractions = await fsqAttrProvider._search({ lat: geo.lat, lon: geo.lon, radiusM: radius, limit, categoryIds })
 
   const result = { attractions, geo, total: attractions.length, cached: false }
@@ -172,7 +179,7 @@ async function searchByCategory(city, categoryIds, opts = {}) {
  *
  * Flow:
  *   1. Check Redis cache (namespace: attractions:city)
- *   2. On MISS: OTM geocode + radius fetch
+ *   2. On MISS: geocode + radius fetch using Overpass + FSQ fallback
  *   3. Sort results by popularity/category
  *   4. Store in cache (fire-and-forget)
  *   5. Persist to MongoDB (fire-and-forget)
@@ -182,7 +189,7 @@ async function searchByCategory(city, categoryIds, opts = {}) {
  * @param {Object} [opts]
  * @param {number} [opts.limit=20]      — Max results (1–50)
  * @param {number} [opts.radius=12000]  — Search radius in meters
- * @param {string} [opts.kinds]         — Comma-separated OTM kinds
+ * @param {string} [opts.kinds]         — Comma-separated categories
  * @returns {Promise<{ attractions: NormalisedAttraction[], geo: Object|null, total: number, cached: boolean }>}
  */
 async function searchByCity(city, opts = {}) {
@@ -201,16 +208,25 @@ async function searchByCity(city, opts = {}) {
     return { ...cached, cached: true }
   }
 
-  logger.info(`[AttractionsService] CACHE MISS city="${city}" — fetching from OTM`)
+  logger.info(`[AttractionsService] CACHE MISS city="${city}" — fetching from Overpass/FSQ`)
 
-  // ── OTM Fetch ─────────────────────────────────────────────────────────────
-  const { attractions: raw, geo } = await otmProvider.fetchAttractionsByCity({
-    city,
+  // ── Geocode ────────────────────────────────────────────────────────────────
+  const geo = await travelApiService.geocodeDestination(city)
+  if (!geo) {
+    logger.warn(`[AttractionsService] Cannot geocode city "${city}"`)
+    return { attractions: [], geo: null, total: 0, cached: false }
+  }
+
+  // ── Registry Fetch ─────────────────────────────────────────────────────────
+  const attrResult = await providerRegistry.fetchAttractions({
+    lat:     geo.lat,
+    lon:     geo.lon,
     radiusM: radius,
     limit,
     kinds,
   })
 
+  const raw = attractionAgg.aggregate(attrResult.primary, attrResult.secondary, limit)
   const attractions = sortAttractions(raw)
   const result = { attractions, geo, total: attractions.length, cached: false }
 
@@ -235,7 +251,7 @@ async function searchByCity(city, opts = {}) {
  * @param {Object} [opts]
  * @param {number} [opts.radius=5000]   — Search radius in meters (max 50000)
  * @param {number} [opts.limit=20]      — Max results (1–50)
- * @param {string} [opts.kinds]         — Comma-separated OTM kinds
+ * @param {string} [opts.kinds]         — Comma-separated categories
  * @returns {Promise<{ attractions: NormalisedAttraction[], total: number, cached: boolean }>}
  */
 async function searchNearby(lat, lon, opts = {}) {
@@ -257,10 +273,10 @@ async function searchNearby(lat, lon, opts = {}) {
     return { ...cached, cached: true }
   }
 
-  logger.info(`[AttractionsService] CACHE MISS nearby=(${rLat},${rLon}) — fetching from OTM`)
+  logger.info(`[AttractionsService] CACHE MISS nearby=(${rLat},${rLon}) — fetching from Overpass/FSQ`)
 
-  // ── OTM Fetch ─────────────────────────────────────────────────────────────
-  const raw = await otmProvider.fetchAttractions({
+  // ── Registry Fetch ─────────────────────────────────────────────────────────
+  const attrResult = await providerRegistry.fetchAttractions({
     lat:     rLat,
     lon:     rLon,
     radiusM: radius,
@@ -268,6 +284,7 @@ async function searchNearby(lat, lon, opts = {}) {
     kinds,
   })
 
+  const raw = attractionAgg.aggregate(attrResult.primary, attrResult.secondary, limit)
   const attractions = sortAttractions(raw)
   const result = { attractions, total: attractions.length, cached: false }
 
@@ -285,10 +302,10 @@ async function searchNearby(lat, lon, opts = {}) {
 // ── getAttractionDetail ───────────────────────────────────────────────────────
 
 /**
- * Get full details for a single attraction by its OTM xid.
- * Checks DB first for a recently-cached record; fetches from OTM on miss.
+ * Get full details for a single attraction by its unique ID.
+ * Checks DB first for a recently-cached record; fetches from provider on miss.
  *
- * @param {string} xid — OTM unique attraction ID
+ * @param {string} xid — unique attraction ID (osm:... or fsq:...)
  * @param {Object} [opts]
  * @param {boolean} [opts.forceRefresh=false] — Bypass cache and DB, always re-fetch
  * @returns {Promise<NormalisedAttraction | null>}
@@ -320,9 +337,9 @@ async function getAttractionDetail(xid, opts = {}) {
 
           // Reshape DB record to NormalisedAttraction schema
           const fromDB = {
-            id:             `otm:${dbRecord.xid}`,
+            id:             dbRecord.xid,
             xid:            dbRecord.xid,
-            source:         dbRecord.source || 'OpenTripMap',
+            source:         dbRecord.source || 'OpenStreetMap',
             name:           dbRecord.name,
             category:       dbRecord.category,
             rating:         dbRecord.averageRating || null,
@@ -355,10 +372,16 @@ async function getAttractionDetail(xid, opts = {}) {
     }
   }
 
-  logger.info(`[AttractionsService] CACHE/DB MISS detail xid="${xid}" — fetching from OTM`)
+  logger.info(`[AttractionsService] CACHE/DB MISS detail xid="${xid}" — fetching from provider`)
 
-  // ── OTM Fetch ─────────────────────────────────────────────────────────────
-  const detail = await otmProvider.fetchAttractionDetail(xid)
+  // ── Provider Fetch ────────────────────────────────────────────────────────
+  let detail = null
+  if (xid.startsWith('osm:')) {
+    detail = await overpassProvider.fetchAttractionDetail(xid)
+  } else if (xid.startsWith('fsq:')) {
+    detail = await fsqAttrProvider.getAttractionDetail(xid.replace(/^fsq:/, ''))
+  }
+
   if (!detail) return null
 
   const result = { ...detail, cached: false }
@@ -390,21 +413,21 @@ async function invalidateCity(city) {
 // ── getProviderHealth ─────────────────────────────────────────────────────────
 
 /**
- * Return health status of the OTM provider.
+ * Return health status of the Overpass provider.
  * @returns {Promise<Object>}
  */
 async function getProviderHealth() {
-  return otmProvider.healthStatus()
+  return overpassProvider.healthStatus()
 }
 
 // ── isProviderEnabled ─────────────────────────────────────────────────────────
 
 /**
- * Check if OTM provider is configured and active.
+ * Check if Overpass provider is active. Overpass is keyless, so always true.
  * @returns {boolean}
  */
 function isProviderEnabled() {
-  return !!otmProvider.config?.enabled
+  return true
 }
 
 module.exports = {

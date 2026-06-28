@@ -83,7 +83,16 @@ class ApiKeyRotator {
    * Returns true if at least one key is available (not suspended).
    */
   hasAvailableKeys() {
-    return this.next() !== null
+    if (this.keys.length === 0) return false
+    const now = Date.now()
+    const total = this.keys.length
+    for (let i = 0; i < total; i++) {
+      const suspendedUntil = this._suspended[i]
+      if (!suspendedUntil || now >= suspendedUntil) {
+        return true
+      }
+    }
+    return false
   }
 
   /**

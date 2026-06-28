@@ -32,6 +32,7 @@ const https  = require('https')
 const { URL } = require('url')
 
 const hotelProvider = require('./travel/providers/foursquare.hotel.provider')
+const osmHotelProvider = require('./travel/providers/overpass.hotel.provider')
 const cacheService  = require('./cache.service')
 const logger        = require('../utils/logger')
 
@@ -256,13 +257,32 @@ async function searchByCity(city, opts = {}) {
   }
 
   // ── FSQ Fetch ──────────────────────────────────────────────────────────────
-  const raw = await hotelProvider.searchByCity({
-    lat: geo.lat,
-    lon: geo.lon,
-    city,
-    radiusM: radius,
-    limit,
-  })
+  let raw = []
+  try {
+    raw = await hotelProvider.searchByCity({
+      lat: geo.lat,
+      lon: geo.lon,
+      city,
+      radiusM: radius,
+      limit,
+    })
+  } catch (err) {
+    logger.warn(`[HotelsService] Foursquare searchByCity failed, falling back to Overpass: ${err.message}`)
+  }
+
+  if (!raw || raw.length === 0) {
+    logger.info(`[HotelsService] Using keyless Overpass fallback for city="${city}"`)
+    try {
+      raw = await osmHotelProvider.searchByCity({
+        lat: geo.lat,
+        lon: geo.lon,
+        radiusM: radius,
+        limit,
+      })
+    } catch (osmErr) {
+      logger.error(`[HotelsService] Overpass fallback failed: ${osmErr.message}`)
+    }
+  }
 
   const userCoords = { lat: geo.lat, lon: geo.lon }
   const enriched   = enrichWithDistance(raw, userCoords)
@@ -310,7 +330,21 @@ async function searchNearby(lat, lon, opts = {}) {
   logger.info(`[HotelsService] CACHE MISS nearby=(${rLat},${rLon}) — fetching from FSQ`)
 
   // ── FSQ Fetch ──────────────────────────────────────────────────────────────
-  const raw  = await hotelProvider.searchNearby(rLat, rLon, { radiusM: radius, limit })
+  let raw = []
+  try {
+    raw  = await hotelProvider.searchNearby(rLat, rLon, { radiusM: radius, limit })
+  } catch (err) {
+    logger.warn(`[HotelsService] Foursquare searchNearby failed, falling back to Overpass: ${err.message}`)
+  }
+
+  if (!raw || raw.length === 0) {
+    logger.info(`[HotelsService] Using keyless Overpass fallback for nearby=(${rLat}, ${rLon})`)
+    try {
+      raw = await osmHotelProvider.searchNearby(rLat, rLon, { radiusM: radius, limit })
+    } catch (osmErr) {
+      logger.error(`[HotelsService] Overpass fallback failed: ${osmErr.message}`)
+    }
+  }
   const userCoords = { lat: rLat, lon: rLon }
   const hotels = sortHotels(enrichWithDistance(raw, userCoords))
 
@@ -349,9 +383,17 @@ async function getHotelDetail(fsqId, opts = {}) {
     }
   }
 
-  logger.info(`[HotelsService] CACHE MISS detail fsqId="${fsqId}" — fetching from FSQ`)
-
-  const detail = await hotelProvider.getHotelDetail(fsqId)
+  let detail = null
+  if (fsqId.startsWith('osm-')) {
+    detail = await osmHotelProvider.getHotelDetail(fsqId)
+  } else {
+    try {
+      detail = await hotelProvider.getHotelDetail(fsqId)
+    } catch (err) {
+      logger.warn(`[HotelsService] getHotelDetail failed, falling back to Overpass: ${err.message}`)
+      detail = await osmHotelProvider.getHotelDetail(fsqId)
+    }
+  }
   if (!detail) return null
 
   const result = { ...detail, cached: false }
@@ -371,7 +413,7 @@ async function getProviderHealth() {
 }
 
 function isProviderEnabled() {
-  return !!hotelProvider.config?.enabled
+  return true // Overpass keyless fallback is always enabled
 }
 
 module.exports = {

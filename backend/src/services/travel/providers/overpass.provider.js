@@ -60,23 +60,17 @@ function buildQuery(lat, lon, radiusM, limit) {
   return `
 [out:json][timeout:25];
 (
-  node["tourism"~"^(attraction|museum|viewpoint|gallery|zoo|aquarium|theme_park)$"]${around};
-  way["tourism"~"^(attraction|museum|viewpoint|gallery|zoo|aquarium|theme_park)$"]${around};
+  node["tourism"~"^(attraction|museum|viewpoint|gallery|zoo|aquarium|theme_park)$"]["name"]${around};
+  way["tourism"~"^(attraction|museum|viewpoint|gallery|zoo|aquarium|theme_park)$"]["name"]${around};
 
-  node["leisure"~"^(park|nature_reserve|garden)$"]${around};
-  way["leisure"~"^(park|nature_reserve|garden)$"]${around};
+  node["leisure"~"^(park|nature_reserve|garden)$"]["name"]${around};
+  way["leisure"~"^(park|nature_reserve|garden)$"]["name"]${around};
 
-  node["historic"~"^(monument|castle|fort|ruins|archaeological_site|memorial|building|manor|mosque|church|temple)$"]${around};
-  way["historic"~"^(monument|castle|fort|ruins|archaeological_site|memorial|building|manor|mosque|church|temple)$"]${around};
+  node["historic"~"^(monument|castle|fort|ruins|archaeological_site|memorial|building|manor|mosque|church|temple)$"]["name"]${around};
+  way["historic"~"^(monument|castle|fort|ruins|archaeological_site|memorial|building|manor|mosque|church|temple)$"]["name"]${around};
 
-  node["natural"~"^(peak|waterfall|beach|hot_spring|cave_entrance)$"]${around};
-  way["natural"~"^(peak|waterfall|beach|hot_spring|cave_entrance)$"]${around};
-)->.all;
-(
-  node.all["wikipedia"];
-  node.all["wikidata"];
-  way.all["wikipedia"];
-  way.all["wikidata"];
+  node["natural"~"^(peak|waterfall|beach|hot_spring|cave_entrance)$"]["name"]${around};
+  way["natural"~"^(peak|waterfall|beach|hot_spring|cave_entrance)$"]["name"]${around};
 );
 out center tags ${limit};
 `.trim()
@@ -250,6 +244,44 @@ class OverpassProvider extends BaseProvider {
 
       return sliced
     })
+  }
+
+  async fetchAttractionDetail(xid) {
+    if (!xid?.startsWith('osm:')) return null
+    const parts = xid.split(':')
+    const type = parts[1] // 'node', 'way', or 'relation'
+    const id = parseInt(parts[2], 10)
+    if (!type || isNaN(id)) return null
+
+    const query = `[out:json]; ${type}(${id}); out center tags;`
+    try {
+      const raw = await postToOverpass(query, this.timeout)
+      const elements = adapter.parseOverpassResponse(raw)
+      if (!elements.length) return null
+      
+      const normalised = adapter.normalise(elements[0])
+      if (normalised && (!normalised.photo || !normalised.photo.startsWith('http'))) {
+        try {
+          const { fetchWikiImage } = require('../utils/wikipediaImage')
+          const wikiImg = await fetchWikiImage(normalised.name, normalised.wikipedia)
+          if (wikiImg) {
+            normalised.photo = wikiImg
+            normalised.image = wikiImg
+          }
+        } catch (e) {}
+      }
+
+      if (normalised && (!normalised.photo || !normalised.photo.startsWith('http'))) {
+        const fallback = getFallbackAttractionImage(normalised.category)
+        normalised.photo = fallback
+        normalised.image = fallback
+      }
+
+      return normalised
+    } catch (err) {
+      travelLogger.warn(this.name, `fetchAttractionDetail failed for ${xid}: ${err.message}`)
+      return null
+    }
   }
 
   // ── Hotels & Weather ──────────────────────────────────────────────────────
